@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ShoppingBag, Heart } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
 import type { Product } from "@/lib/products";
 import { useCart } from "@/lib/cart";
 import { formatPrice } from "@/lib/utils";
@@ -41,21 +41,14 @@ export default function ProductCard({ product }: { product: Product }) {
               </span>
             )}
 
-            {/* Hover actions */}
-            <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+            {/* Hover action */}
+            <div className="absolute bottom-4 right-4 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
               <button
                 onClick={handleQuickAdd}
                 className="w-10 h-10 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-burgundy hover:text-white shadow-[0_4px_16px_rgba(0,0,0,0.1)] transition-all duration-200"
                 aria-label={`Add ${product.name} to cart`}
               >
                 <ShoppingBag className="w-4 h-4" strokeWidth={1.5} />
-              </button>
-              <button
-                onClick={(e) => e.preventDefault()}
-                className="w-10 h-10 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-burgundy hover:text-white shadow-[0_4px_16px_rgba(0,0,0,0.1)] transition-all duration-200"
-                aria-label={`Save ${product.name}`}
-              >
-                <Heart className="w-4 h-4" strokeWidth={1.5} />
               </button>
             </div>
           </div>

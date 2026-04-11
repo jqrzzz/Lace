@@ -17,7 +17,10 @@ export default function AdminProductsPage() {
             {PRODUCTS.length} veils in catalog
           </p>
         </div>
-        <button className="inline-flex items-center gap-2 px-5 py-2.5 bg-burgundy text-white text-sm rounded-full hover:bg-burgundy/90 transition-colors">
+        <button
+          onClick={() => alert("Product management will be available once Supabase is connected.")}
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-burgundy text-white text-sm rounded-full hover:bg-burgundy/90 transition-colors"
+        >
           <Plus className="w-4 h-4" />
           Add Product
         </button>
@@ -102,6 +105,7 @@ export default function AdminProductsPage() {
                         <Eye className="w-4 h-4" />
                       </Link>
                       <button
+                        onClick={() => alert("Product editing will be available once Supabase is connected.")}
                         className="p-2 text-warm-gray hover:text-charcoal transition-colors"
                         title="Edit"
                       >

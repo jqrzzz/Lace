@@ -1,6 +1,6 @@
 "use client";
 
-import { X, Plus, Minus, ShoppingBag, Heart } from "lucide-react";
+import { X, Plus, Minus, ShoppingBag, Heart, Lock } from "lucide-react";
 import Link from "next/link";
 import { useCart } from "@/lib/cart";
 import { formatPrice } from "@/lib/utils";
@@ -132,9 +132,10 @@ export default function CartDrawer() {
             <Link
               href="/cart"
               onClick={cart.closeCart}
-              className="btn-luxe block w-full py-3.5 bg-burgundy text-white text-sm tracking-[0.06em] text-center rounded-full"
+              className="btn-luxe flex items-center justify-center gap-2 w-full py-3.5 bg-burgundy text-white text-sm tracking-[0.06em] text-center rounded-full"
             >
-              Checkout — {formatPrice(total)}
+              <Lock className="w-3.5 h-3.5" strokeWidth={1.5} />
+              View Cart & Checkout
             </Link>
 
             <button

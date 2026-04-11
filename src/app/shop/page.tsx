@@ -1,17 +1,32 @@
 "use client";
 
-import { useState } from "react";
-import { Heart } from "lucide-react";
+import { Suspense, useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { Heart, ShoppingBag } from "lucide-react";
+import Link from "next/link";
 import ProductCard from "@/components/shop/ProductCard";
 import { PRODUCTS, COLLECTIONS, STYLES } from "@/lib/products";
 import { cn } from "@/lib/utils";
 
 type FilterType = "all" | "collection" | "style";
 
-export default function ShopPage() {
+function ShopContent() {
+  const searchParams = useSearchParams();
   const [filterType, setFilterType] = useState<FilterType>("all");
   const [filterValue, setFilterValue] = useState<string>("");
   const [sortBy, setSortBy] = useState<string>("featured");
+
+  useEffect(() => {
+    const collection = searchParams.get("collection");
+    const style = searchParams.get("style");
+    if (collection && COLLECTIONS.includes(collection)) {
+      setFilterType("collection");
+      setFilterValue(collection);
+    } else if (style && STYLES.includes(style)) {
+      setFilterType("style");
+      setFilterValue(style);
+    }
+  }, [searchParams]);
 
   const filtered =
     filterType === "all"
@@ -118,10 +133,22 @@ export default function ShopPage() {
           </div>
 
           {sorted.length === 0 && (
-            <div className="text-center py-24">
-              <p className="text-warm-gray font-heading text-lg">
-                No veils found. Try a different filter.
+            <div className="text-center py-24 animate-fade-up">
+              <div className="w-16 h-16 rounded-full bg-blush/30 flex items-center justify-center mx-auto mb-5">
+                <ShoppingBag className="w-7 h-7 text-rose-gold" strokeWidth={1.5} />
+              </div>
+              <p className="font-heading text-xl text-charcoal mb-2">
+                No veils match this filter
               </p>
+              <p className="text-sm text-warm-gray mb-6">
+                Try a different filter or browse all veils.
+              </p>
+              <button
+                onClick={() => { setFilterType("all"); setFilterValue(""); }}
+                className="btn-luxe inline-flex items-center gap-2 px-7 py-3 bg-burgundy text-white text-sm tracking-[0.04em] rounded-full"
+              >
+                View All Veils
+              </button>
             </div>
           )}
         </div>
@@ -138,12 +165,26 @@ export default function ShopPage() {
             Buy one. Give one.
           </h2>
           <div className="gold-line mx-auto mb-4 opacity-30" />
-          <p className="text-sm text-soft-gray leading-relaxed">
+          <p className="text-sm text-soft-gray leading-relaxed mb-6">
             With each veil you buy, one is gifted to a sister in need. Beauty
             shared with purpose.
           </p>
+          <Link
+            href="/mission"
+            className="text-sm text-gold hover:text-gold-light transition-colors duration-300"
+          >
+            Learn more about our mission →
+          </Link>
         </div>
       </section>
     </>
+  );
+}
+
+export default function ShopPage() {
+  return (
+    <Suspense>
+      <ShopContent />
+    </Suspense>
   );
 }

@@ -29,7 +29,10 @@ export default function AdminMissionPage() {
             Track donated veils and manage destinations
           </p>
         </div>
-        <button className="inline-flex items-center gap-2 px-5 py-2.5 bg-burgundy text-white text-sm rounded-full hover:bg-burgundy/90 transition-colors">
+        <button
+          onClick={() => alert("Destination management will be available once Supabase is connected.")}
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-burgundy text-white text-sm rounded-full hover:bg-burgundy/90 transition-colors"
+        >
           <Plus className="w-4 h-4" />
           Add Destination
         </button>
@@ -95,7 +98,10 @@ export default function AdminMissionPage() {
               Add a church community to start tracking your mission. Once enough
               veils are collected, you can ship them and share the impact.
             </p>
-            <button className="inline-flex items-center gap-2 px-5 py-2.5 bg-burgundy text-white text-sm rounded-full hover:bg-burgundy/90 transition-colors">
+            <button
+              onClick={() => alert("Destination management will be available once Supabase is connected.")}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-burgundy text-white text-sm rounded-full hover:bg-burgundy/90 transition-colors"
+            >
               <Plus className="w-4 h-4" />
               Add First Destination
             </button>

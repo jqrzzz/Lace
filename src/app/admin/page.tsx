@@ -99,9 +99,18 @@ export default function AdminDashboard() {
           {RECENT_ORDERS.length === 0 ? (
             <div className="text-center py-12">
               <ShoppingBag className="w-10 h-10 text-soft-gray mx-auto mb-3" />
-              <p className="text-sm text-warm-gray">
+              <p className="text-sm text-warm-gray mb-4">
                 No orders yet. Share your store to start receiving orders!
               </p>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText("https://lacebylaluz.com");
+                  alert("Store URL copied to clipboard!");
+                }}
+                className="text-xs text-burgundy hover:underline"
+              >
+                Copy store link
+              </button>
             </div>
           ) : (
             <div className="space-y-3">

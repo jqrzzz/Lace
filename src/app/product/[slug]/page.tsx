@@ -11,6 +11,7 @@ import {
   Plus,
   Check,
   Sparkles,
+  Share2,
 } from "lucide-react";
 import { getProduct, PRODUCTS } from "@/lib/products";
 import { useCart } from "@/lib/cart";
@@ -29,11 +30,19 @@ export default function ProductPage() {
 
   if (!product) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-32 text-center">
-        <h1 className="font-heading text-3xl text-charcoal mb-4">
+      <div className="max-w-7xl mx-auto px-4 py-32 text-center animate-fade-up">
+        <div className="w-16 h-16 rounded-full bg-blush/30 flex items-center justify-center mx-auto mb-5">
+          <ShoppingBag className="w-7 h-7 text-rose-gold" strokeWidth={1.5} />
+        </div>
+        <h1 className="font-heading text-3xl text-charcoal mb-3">
           Veil Not Found
         </h1>
-        <Link href="/shop" className="text-burgundy hover:underline">
+        <p className="text-warm-gray mb-6">This veil may have been moved or is no longer available.</p>
+        <Link
+          href="/shop"
+          className="btn-luxe inline-flex items-center gap-2 px-7 py-3 bg-burgundy text-white text-sm tracking-[0.04em] rounded-full"
+        >
+          <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
           Back to Shop
         </Link>
       </div>
@@ -153,6 +162,7 @@ export default function ProductPage() {
                       )}
                       style={{ backgroundColor: v.colorHex }}
                       title={v.color}
+                      aria-label={`Select color: ${v.color}`}
                     >
                       {selectedColor === i && (
                         <Check className="w-4 h-4 text-burgundy absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 drop-shadow-md" />
@@ -207,8 +217,20 @@ export default function ProductPage() {
                     <><ShoppingBag className="w-4 h-4" strokeWidth={1.5} /> Add to Cart — {formatPrice(product.price * quantity)}</>
                   )}
                 </button>
-                <button className="w-12 h-12 border border-border rounded-full flex items-center justify-center text-warm-gray hover:text-burgundy hover:border-burgundy hover:bg-blush/20 transition-all duration-300">
-                  <Heart className="w-5 h-5" strokeWidth={1.5} />
+                <button
+                  onClick={() => {
+                    if (navigator.share) {
+                      navigator.share({ title: `${product.name} — Lace by La Luz`, url: window.location.href });
+                    } else {
+                      navigator.clipboard.writeText(window.location.href);
+                      alert("Link copied to clipboard!");
+                    }
+                  }}
+                  className="w-12 h-12 border border-border rounded-full flex items-center justify-center text-warm-gray hover:text-burgundy hover:border-burgundy hover:bg-blush/20 transition-all duration-300"
+                  aria-label="Share this veil"
+                  title="Share"
+                >
+                  <Share2 className="w-5 h-5" strokeWidth={1.5} />
                 </button>
               </div>
 

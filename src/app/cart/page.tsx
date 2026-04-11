@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -9,6 +10,7 @@ import {
   ShoppingBag,
   Heart,
   Lock,
+  Loader2,
 } from "lucide-react";
 import { useCart } from "@/lib/cart";
 import { formatPrice } from "@/lib/utils";
@@ -17,6 +19,38 @@ export default function CartPage() {
   const cart = useCart();
   const total = cart.totalPrice();
   const itemCount = cart.totalItems();
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutError, setCheckoutError] = useState("");
+
+  const handleCheckout = async () => {
+    setCheckoutLoading(true);
+    setCheckoutError("");
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: cart.items.map((i) => ({
+            productId: i.productId,
+            name: i.name,
+            price: i.price,
+            color: i.color,
+            quantity: i.quantity,
+          })),
+        }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setCheckoutError(data.error || "Something went wrong. Please try again.");
+        setCheckoutLoading(false);
+      }
+    } catch {
+      setCheckoutError("Unable to connect to checkout. Please try again.");
+      setCheckoutLoading(false);
+    }
+  };
 
   if (cart.items.length === 0) {
     return (
@@ -156,10 +190,23 @@ export default function CartPage() {
                 </p>
               </div>
 
-              <button className="btn-luxe w-full py-4 bg-burgundy text-white text-sm tracking-[0.06em] rounded-full flex items-center justify-center gap-2 mb-3">
-                <Lock className="w-4 h-4" strokeWidth={1.5} />
-                Proceed to Checkout
+              <button
+                onClick={handleCheckout}
+                disabled={checkoutLoading}
+                className="btn-luxe w-full py-4 bg-burgundy text-white text-sm tracking-[0.06em] rounded-full flex items-center justify-center gap-2 mb-3 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {checkoutLoading ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Processing…</>
+                ) : (
+                  <><Lock className="w-4 h-4" strokeWidth={1.5} /> Proceed to Checkout</>
+                )}
               </button>
+
+              {checkoutError && (
+                <p className="text-[11px] text-center text-red-600 mb-2">
+                  {checkoutError}
+                </p>
+              )}
 
               <p className="text-[10px] text-center text-soft-gray">
                 Secure checkout powered by Stripe

@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { Heart } from "lucide-react";
+import { Heart, Check } from "lucide-react";
 
 export default function Footer() {
+  const [subscribed, setSubscribed] = useState(false);
+
   return (
     <footer className="relative bg-charcoal text-pearl overflow-hidden">
       {/* Top gold accent */}
@@ -88,19 +91,36 @@ export default function Footer() {
             <p className="text-sm text-soft-gray mb-5 leading-[1.8]">
               Be the first to know about new veils and mission updates.
             </p>
-            <form className="flex gap-2" onSubmit={(e) => e.preventDefault()}>
-              <input
-                type="email"
-                placeholder="Your email"
-                className="flex-1 px-4 py-2.5 bg-white/[0.06] border border-white/[0.12] rounded-full text-sm text-white placeholder:text-soft-gray/60 focus:outline-none focus:border-gold/50 focus:bg-white/[0.08] transition-all duration-300"
-              />
-              <button
-                type="submit"
-                className="px-5 py-2.5 bg-gradient-to-r from-gold to-gold-light text-charcoal text-sm font-medium rounded-full hover:shadow-[0_4px_20px_rgba(201,169,110,0.3)] transition-all duration-300"
+            {subscribed ? (
+              <div className="flex items-center gap-2 px-4 py-3 bg-white/[0.06] border border-gold/20 rounded-full">
+                <Check className="w-4 h-4 text-gold" strokeWidth={2} />
+                <span className="text-sm text-gold">You&apos;re on the list!</span>
+              </div>
+            ) : (
+              <form
+                className="flex gap-2"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const form = e.target as HTMLFormElement;
+                  const email = (form.elements.namedItem("footer-email") as HTMLInputElement)?.value;
+                  if (email) setSubscribed(true);
+                }}
               >
-                Join
-              </button>
-            </form>
+                <input
+                  name="footer-email"
+                  type="email"
+                  required
+                  placeholder="Your email"
+                  className="flex-1 px-4 py-2.5 bg-white/[0.06] border border-white/[0.12] rounded-full text-sm text-white placeholder:text-soft-gray/60 focus:outline-none focus:border-gold/50 focus:bg-white/[0.08] transition-all duration-300"
+                />
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 bg-gradient-to-r from-gold to-gold-light text-charcoal text-sm font-medium rounded-full hover:shadow-[0_4px_20px_rgba(201,169,110,0.3)] transition-all duration-300"
+                >
+                  Join
+                </button>
+              </form>
+            )}
           </div>
         </div>
 

@@ -109,6 +109,13 @@ export default function AdminLayout({
           ))}
         </div>
 
+        {/* Pre-launch banner */}
+        <div className="bg-gold/10 border-b border-gold/20 px-4 py-2.5 text-center">
+          <p className="text-xs text-gold-dark">
+            <span className="font-medium">Pre-launch mode</span> — Connect Stripe and Supabase in your Vercel environment to go live.
+          </p>
+        </div>
+
         <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
     </div>
