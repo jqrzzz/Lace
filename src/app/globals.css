@@ -21,8 +21,41 @@
 
   --font-heading: 'Playfair Display', Georgia, serif;
   --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+
+  --animate-fade-in: fade-in 0.7s ease-out both;
+  --animate-fade-up: fade-up 0.7s ease-out both;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-shimmer: shimmer 3s ease-in-out infinite;
+  --animate-lace-drift: lace-drift 20s linear infinite;
 }
 
+/* ── Keyframes ── */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes shimmer {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.7; }
+}
+@keyframes lace-drift {
+  from { background-position: 0 0; }
+  to { background-position: 200px 200px; }
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(201,169,110,0.1); }
+  50% { box-shadow: 0 0 40px rgba(201,169,110,0.25); }
+}
+
+/* ── Base ── */
 html {
   scroll-behavior: smooth;
 }
@@ -32,6 +65,7 @@ body {
   color: var(--color-charcoal);
   background: var(--color-ivory);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -42,10 +76,158 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 ::selection {
-  background: var(--color-rose);
+  background: var(--color-burgundy);
   color: white;
 }
 
-::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: var(--color-cream); }
-::-webkit-scrollbar-thumb { background: var(--color-rose-gold); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: var(--color-rose-gold); border-radius: 99px; }
+
+/* ── Lace Pattern Backgrounds ── */
+.lace-pattern {
+  background-image:
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,0.5) 0%, transparent 45%),
+    radial-gradient(circle at 0% 0%, rgba(232,196,206,0.15) 0%, transparent 40%),
+    radial-gradient(circle at 100% 100%, rgba(232,196,206,0.15) 0%, transparent 40%),
+    radial-gradient(circle at 50% 50%, transparent 30%, rgba(245,225,230,0.08) 31%, rgba(245,225,230,0.08) 32%, transparent 33%);
+  background-size: 60px 60px, 120px 120px, 120px 120px, 60px 60px;
+  animation: lace-drift 20s linear infinite;
+}
+
+.lace-overlay {
+  background-image:
+    radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(255,249,245,0.03) 41%, rgba(255,249,245,0.03) 43%, transparent 44%),
+    radial-gradient(ellipse at 0% 50%, transparent 40%, rgba(255,249,245,0.03) 41%, rgba(255,249,245,0.03) 43%, transparent 44%),
+    radial-gradient(ellipse at 100% 50%, transparent 40%, rgba(255,249,245,0.03) 41%, rgba(255,249,245,0.03) 43%, transparent 44%);
+  background-size: 40px 40px;
+}
+
+.lace-border-top {
+  background-image: url("data:image/svg+xml,%3Csvg width='120' height='16' viewBox='0 0 120 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 16 Q15 0 30 16 Q45 0 60 16 Q75 0 90 16 Q105 0 120 16' fill='none' stroke='%23E8C4CE' stroke-width='1' opacity='0.5'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-size: 120px 16px;
+  background-position: center top;
+}
+
+.lace-border-bottom {
+  background-image: url("data:image/svg+xml,%3Csvg width='120' height='16' viewBox='0 0 120 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0 Q15 16 30 0 Q45 16 60 0 Q75 16 90 0 Q105 16 120 0' fill='none' stroke='%23E8C4CE' stroke-width='1' opacity='0.5'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-size: 120px 16px;
+  background-position: center bottom;
+}
+
+/* ── Glass Card ── */
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(232, 222, 216, 0.5);
+  box-shadow:
+    0 4px 24px rgba(44, 37, 39, 0.04),
+    0 1px 3px rgba(44, 37, 39, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* ── Luxury Card ── */
+.luxury-card {
+  background: white;
+  border: 1px solid var(--color-border-light);
+  border-radius: 1.25rem;
+  box-shadow:
+    0 4px 20px rgba(44, 37, 39, 0.04),
+    0 1px 3px rgba(44, 37, 39, 0.02);
+  transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.luxury-card:hover {
+  box-shadow:
+    0 20px 60px rgba(44, 37, 39, 0.08),
+    0 4px 12px rgba(44, 37, 39, 0.04);
+  transform: translateY(-4px);
+  border-color: var(--color-rose);
+}
+
+/* ── Gold Accent Line ── */
+.gold-line {
+  width: 60px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-gold), transparent);
+}
+
+.gold-line-wide {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-gold), transparent);
+}
+
+/* ── Section Divider ── */
+.section-divider {
+  position: relative;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-border), transparent);
+}
+
+.section-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-gold);
+  box-shadow: 0 0 12px rgba(201,169,110,0.3);
+}
+
+/* ── Luxury Button ── */
+.btn-luxe {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.btn-luxe::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent 50%, rgba(255,255,255,0.05));
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.btn-luxe:hover::before {
+  opacity: 1;
+}
+
+.btn-luxe:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(139,58,74,0.25);
+}
+
+/* ── Gradient Text ── */
+.text-gradient-gold {
+  background: linear-gradient(135deg, var(--color-gold-dark), var(--color-gold), var(--color-gold-light));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Product Lace Texture ── */
+.product-lace {
+  background-image:
+    radial-gradient(circle at 25% 25%, rgba(255,255,255,0.6) 0%, transparent 30%),
+    radial-gradient(circle at 75% 75%, rgba(255,255,255,0.4) 0%, transparent 30%),
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,0.5) 0%, transparent 25%),
+    radial-gradient(circle at 25% 75%, rgba(255,255,255,0.3) 0%, transparent 20%),
+    radial-gradient(circle at 75% 25%, rgba(255,255,255,0.3) 0%, transparent 20%);
+  background-size: 50px 50px;
+}
+
+/* ── Staggered Animations ── */
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
+.stagger-5 { animation-delay: 0.5s; }
+.stagger-6 { animation-delay: 0.6s; }

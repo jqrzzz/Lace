@@ -10,87 +10,128 @@ const FEATURED = PRODUCTS.slice(0, 3);
 export default function HomePage() {
   return (
     <>
-      {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-blush/40 via-ivory to-champagne/40" />
-        <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(circle_at_50%_50%,#2C2527_1px,transparent_1px)] bg-[length:24px_24px]" />
+      {/* ── Hero ── */}
+      <section className="relative overflow-hidden min-h-[90vh] flex items-center">
+        {/* Layered background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blush/50 via-ivory via-60% to-champagne/30" />
+        <div className="absolute inset-0 bg-gradient-to-t from-ivory via-transparent to-transparent" />
+        <div className="absolute inset-0 lace-pattern opacity-40" />
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-            <div className="max-w-xl">
-              <p className="text-xs tracking-[0.3em] uppercase text-gold font-medium mb-4">
-                Lace by La Luz
-              </p>
-              <h1 className="font-heading text-5xl sm:text-6xl lg:text-7xl text-charcoal leading-[1.05] mb-6">
+        {/* Decorative orbs */}
+        <div className="absolute top-20 right-[15%] w-[400px] h-[400px] rounded-full bg-rose/20 blur-[100px] animate-float" />
+        <div className="absolute bottom-20 left-[10%] w-[300px] h-[300px] rounded-full bg-gold/10 blur-[80px] animate-float" style={{ animationDelay: "3s" }} />
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-0 w-full">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+            <div className="max-w-xl animate-fade-up">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/60 backdrop-blur-sm rounded-full border border-border-light mb-6">
+                <span className="w-1.5 h-1.5 rounded-full bg-gold animate-shimmer" />
+                <span className="text-[11px] tracking-[0.2em] uppercase text-gold-dark font-medium">
+                  Lace by La Luz
+                </span>
+              </div>
+
+              <h1 className="font-heading text-5xl sm:text-6xl lg:text-[4.5rem] text-charcoal leading-[1.05] mb-6">
                 Elegant Veils,
                 <br />
                 <span className="text-burgundy italic">Shared with Purpose</span>
               </h1>
-              <p className="text-lg text-warm-gray leading-relaxed mb-8 max-w-md">
+
+              <div className="gold-line mb-6 opacity-60" />
+
+              <p className="text-lg text-warm-gray leading-relaxed mb-10 max-w-md">
                 Handcrafted Bali lace veils created to honor beauty, faith, and
                 sisterhood. For every veil you buy, one is gifted to a sister in
                 need.
               </p>
-              <div className="flex flex-wrap gap-3">
+
+              <div className="flex flex-wrap gap-3 mb-10">
                 <Link
                   href="/shop"
-                  className="inline-flex items-center gap-2 px-8 py-4 bg-burgundy text-white text-sm tracking-wide rounded-full hover:bg-burgundy/90 transition-colors"
+                  className="btn-luxe inline-flex items-center gap-2.5 px-8 py-4 bg-burgundy text-white text-sm tracking-[0.06em] rounded-full"
                 >
                   Shop the Collection
                   <ArrowRight className="w-4 h-4" />
                 </Link>
                 <Link
                   href="/mission"
-                  className="inline-flex items-center gap-2 px-8 py-4 border border-charcoal/20 text-charcoal text-sm tracking-wide rounded-full hover:bg-charcoal hover:text-white transition-colors"
+                  className="inline-flex items-center gap-2 px-8 py-4 bg-white/70 backdrop-blur-sm border border-charcoal/10 text-charcoal text-sm tracking-[0.04em] rounded-full hover:bg-white hover:border-charcoal/20 hover:shadow-lg transition-all duration-300"
                 >
                   Our Mission
                 </Link>
               </div>
-              <p className="mt-8 text-sm font-medium text-charcoal flex items-center gap-2">
-                <Heart className="w-4 h-4 text-rose-gold fill-rose-gold" />
-                Buy one. Give one. Share beauty with a sister in need.
-              </p>
+
+              <div className="flex items-center gap-3 text-sm">
+                <div className="flex -space-x-1">
+                  <span className="w-7 h-7 rounded-full bg-gradient-to-br from-rose to-blush border-2 border-ivory" />
+                  <span className="w-7 h-7 rounded-full bg-gradient-to-br from-champagne to-gold-light border-2 border-ivory" />
+                  <span className="w-7 h-7 rounded-full bg-gradient-to-br from-pearl to-cream border-2 border-ivory" />
+                </div>
+                <p className="text-warm-gray">
+                  <span className="font-medium text-charcoal">Buy one. Give one.</span>{" "}
+                  Share beauty with a sister.
+                </p>
+              </div>
             </div>
 
             {/* Hero Visual */}
-            <div className="relative hidden lg:block">
-              <div className="aspect-[3/4] rounded-3xl bg-gradient-to-br from-rose/30 via-blush/50 to-champagne/40 border border-border-light shadow-2xl overflow-hidden">
-                <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_30%_20%,white_0%,transparent_50%)] bg-[length:40px_40px]" />
-                <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-white/40 to-transparent" />
+            <div className="relative hidden lg:block animate-fade-up" style={{ animationDelay: "0.2s" }}>
+              <div className="aspect-[3/4] rounded-[2rem] bg-gradient-to-br from-rose/25 via-blush/40 via-60% to-champagne/30 border border-white/60 shadow-[0_30px_80px_rgba(139,58,74,0.12)] overflow-hidden relative">
+                {/* Lace texture inside */}
+                <div className="absolute inset-0 product-lace opacity-40" />
+                <div className="absolute inset-0 bg-gradient-to-t from-white/60 via-transparent to-white/20" />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center">
-                    <Sparkles className="w-12 h-12 text-gold/40 mx-auto mb-3" />
-                    <p className="text-sm text-warm-gray/60 tracking-widest uppercase">
-                      Product photography
+                    <div className="w-20 h-20 rounded-full bg-white/50 backdrop-blur-sm flex items-center justify-center mx-auto mb-4 border border-white/60">
+                      <Sparkles className="w-8 h-8 text-gold/60" />
+                    </div>
+                    <p className="text-[11px] text-warm-gray/50 tracking-[0.2em] uppercase font-medium">
+                      Product Photography
                     </p>
-                    <p className="text-xs text-warm-gray/40 mt-1">Coming soon</p>
+                    <p className="text-[10px] text-warm-gray/30 mt-1">Coming soon</p>
                   </div>
                 </div>
               </div>
-              <div className="absolute -bottom-4 -left-4 bg-white rounded-2xl shadow-lg px-5 py-3 border border-border-light">
-                <p className="text-xs text-gold font-medium tracking-wide uppercase">
+
+              {/* Floating badges */}
+              <div className="absolute -bottom-5 -left-5 glass-card rounded-2xl px-5 py-3.5 animate-float">
+                <p className="text-[11px] text-gold-dark font-semibold tracking-[0.08em] uppercase">
                   Free Shipping
                 </p>
-                <p className="text-[10px] text-warm-gray">On orders over $75</p>
+                <p className="text-[10px] text-warm-gray mt-0.5">On orders over $75</p>
+              </div>
+              <div className="absolute -top-3 -right-3 glass-card rounded-2xl px-4 py-3 animate-float" style={{ animationDelay: "2s" }}>
+                <p className="text-[10px] text-burgundy font-semibold flex items-center gap-1.5">
+                  <Heart className="w-3 h-3 fill-burgundy" />
+                  Buy 1, Give 1
+                </p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Mission Band */}
-      <section className="bg-charcoal text-pearl py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-14">
-            <p className="text-xs tracking-[0.3em] uppercase text-gold mb-3">
+      {/* ── Lace Divider ── */}
+      <div className="section-divider" />
+
+      {/* ── Mission Band ── */}
+      <section className="relative bg-charcoal text-pearl py-24 overflow-hidden">
+        <div className="absolute inset-0 lace-overlay opacity-30" />
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent" />
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16 animate-fade-up">
+            <p className="text-[11px] tracking-[0.35em] uppercase text-gradient-gold font-medium mb-4">
               Our Promise
             </p>
-            <h2 className="font-heading text-3xl sm:text-4xl text-white">
+            <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-white mb-4">
               How Buy One, Give One Works
             </h2>
+            <div className="gold-line mx-auto mt-5" />
           </div>
 
-          <div className="grid sm:grid-cols-3 gap-8">
+          <div className="grid sm:grid-cols-3 gap-10 lg:gap-16">
             {[
               {
                 icon: Sparkles,
@@ -110,18 +151,18 @@ export default function HomePage() {
                 title: "We Gift One to a Sister",
                 desc: "Your purchase helps us send a veil to a woman at a sister church who needs one.",
               },
-            ].map((item) => (
-              <div key={item.step} className="text-center group">
-                <div className="w-16 h-16 mx-auto mb-5 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-gold/10 group-hover:border-gold/30 transition-colors">
-                  <item.icon className="w-6 h-6 text-gold" />
+            ].map((item, i) => (
+              <div key={item.step} className={`text-center group animate-fade-up stagger-${i + 1}`}>
+                <div className="w-[72px] h-[72px] mx-auto mb-6 rounded-2xl bg-gradient-to-br from-white/8 to-white/3 border border-white/10 flex items-center justify-center group-hover:border-gold/40 group-hover:shadow-[0_0_30px_rgba(201,169,110,0.15)] transition-all duration-500">
+                  <item.icon className="w-6 h-6 text-gold" strokeWidth={1.5} />
                 </div>
-                <p className="text-[10px] tracking-[0.3em] uppercase text-gold mb-2">
+                <p className="text-[10px] tracking-[0.35em] uppercase text-gold/80 mb-3 font-medium">
                   Step {item.step}
                 </p>
-                <h3 className="font-heading text-xl text-white mb-2">
+                <h3 className="font-heading text-xl text-white mb-3">
                   {item.title}
                 </h3>
-                <p className="text-sm text-soft-gray leading-relaxed max-w-xs mx-auto">
+                <p className="text-sm text-soft-gray leading-relaxed max-w-[280px] mx-auto">
                   {item.desc}
                 </p>
               </div>
@@ -130,34 +171,39 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Featured Collection */}
-      <section className="py-20 lg:py-28">
+      {/* ── Featured Collection ── */}
+      <section className="py-24 lg:py-32 relative">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-end justify-between mb-12">
+          <div className="flex items-end justify-between mb-14 animate-fade-up">
             <div>
-              <p className="text-xs tracking-[0.3em] uppercase text-gold mb-3">
+              <p className="text-[11px] tracking-[0.35em] uppercase text-gold font-medium mb-3">
                 Curated for You
               </p>
-              <h2 className="font-heading text-3xl sm:text-4xl text-charcoal">
+              <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-charcoal">
                 Featured Veils
               </h2>
+              <div className="gold-line mt-4 opacity-50" />
             </div>
             <Link
               href="/shop"
-              className="hidden sm:inline-flex items-center gap-2 text-sm text-warm-gray hover:text-charcoal transition-colors"
+              className="hidden sm:inline-flex items-center gap-2 text-sm text-warm-gray hover:text-burgundy group transition-colors duration-300"
             >
               View All
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
             </Link>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {FEATURED.map((product) => (
-              <ProductCard key={product.id} product={product} />
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-7">
+            {FEATURED.map((product, i) => (
+              <div key={product.id} className={`animate-fade-up stagger-${i + 1}`}>
+                <ProductCard product={product} />
+              </div>
             ))}
           </div>
 
-          <div className="sm:hidden mt-8 text-center">
+          <div className="sm:hidden mt-10 text-center">
             <Link
               href="/shop"
               className="inline-flex items-center gap-2 text-sm text-warm-gray"
@@ -169,86 +215,99 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Founder Preview */}
-      <section className="bg-cream py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="aspect-square rounded-3xl bg-gradient-to-br from-rose/20 via-blush/30 to-champagne/20 border border-border-light flex items-center justify-center">
-              <div className="text-center">
-                <Heart className="w-10 h-10 text-rose-gold/40 mx-auto mb-2" />
-                <p className="text-sm text-warm-gray/60 tracking-widest uppercase">
+      {/* ── Founder Preview ── */}
+      <section className="relative bg-cream py-24 overflow-hidden">
+        <div className="absolute inset-0 lace-pattern opacity-20" />
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-14 items-center">
+            <div className="aspect-[4/5] rounded-[2rem] bg-gradient-to-br from-rose/15 via-blush/25 to-champagne/15 border border-border-light/60 flex items-center justify-center shadow-[0_20px_60px_rgba(44,37,39,0.06)] overflow-hidden relative">
+              <div className="absolute inset-0 product-lace opacity-30" />
+              <div className="text-center relative">
+                <Heart className="w-10 h-10 text-rose-gold/30 mx-auto mb-3" />
+                <p className="text-[11px] text-warm-gray/50 tracking-[0.2em] uppercase">
                   Founder photo
                 </p>
-                <p className="text-xs text-warm-gray/40 mt-1">Coming soon</p>
+                <p className="text-[10px] text-warm-gray/30 mt-1">Coming soon</p>
               </div>
             </div>
 
-            <div>
-              <p className="text-xs tracking-[0.3em] uppercase text-gold mb-3">
+            <div className="animate-fade-up">
+              <p className="text-[11px] tracking-[0.35em] uppercase text-gold font-medium mb-3">
                 Our Story
               </p>
-              <h2 className="font-heading text-3xl sm:text-4xl text-charcoal mb-6">
+              <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-charcoal mb-4">
                 From the Heart
                 <br />
-                of a Mother
+                <span className="italic text-burgundy">of a Mother</span>
               </h2>
-              <p className="text-warm-gray leading-relaxed mb-4">
+              <div className="gold-line mb-6 opacity-50" />
+              <p className="text-warm-gray leading-[1.8] mb-4">
                 Lace by La Luz began with a simple desire — to create beautiful
                 veils that honor reverence while supporting women who may not
                 have one of their own.
               </p>
-              <p className="text-warm-gray leading-relaxed mb-8">
+              <p className="text-warm-gray leading-[1.8] mb-8">
                 Every thread carries a promise: when one sister buys a veil,
                 another sister receives one. This isn&apos;t just fashion — it&apos;s
                 faith in action, beauty shared forward.
               </p>
               <Link
                 href="/story"
-                className="inline-flex items-center gap-2 text-sm font-medium text-burgundy hover:text-burgundy/80 transition-colors"
+                className="inline-flex items-center gap-2 text-sm font-medium text-burgundy hover:text-burgundy/80 group transition-colors duration-300"
               >
                 Read Our Full Story
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
               </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Why Lace by La Luz */}
-      <section className="py-20">
+      {/* ── Why Lace by La Luz ── */}
+      <section className="py-24 relative">
+        <div className="absolute top-0 left-0 right-0 section-divider" />
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-14">
-            <p className="text-xs tracking-[0.3em] uppercase text-gold mb-3">
+          <div className="text-center mb-16 animate-fade-up">
+            <p className="text-[11px] tracking-[0.35em] uppercase text-gold font-medium mb-3">
               The Difference
             </p>
-            <h2 className="font-heading text-3xl sm:text-4xl text-charcoal">
+            <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-charcoal mb-4">
               Why Lace by La Luz
             </h2>
+            <div className="gold-line mx-auto mt-4 opacity-50" />
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {[
               {
+                icon: "✦",
                 title: "Sacred Luxury",
                 desc: "Premium presentation meets reverent purpose. Feel beautiful, always.",
               },
               {
+                icon: "❋",
                 title: "Bali Lace Quality",
                 desc: "Hand-selected fabrics with intricate detail that lasts for years.",
               },
               {
+                icon: "♡",
                 title: "Meaningful Mission",
                 desc: "Every purchase sends a veil to a sister church community in need.",
               },
               {
+                icon: "✿",
                 title: "Made with Love",
                 desc: "From packaging to delivery, every detail is intentional and personal.",
               },
-            ].map((item) => (
+            ].map((item, i) => (
               <div
                 key={item.title}
-                className="bg-white rounded-2xl border border-border-light p-6 text-center hover:shadow-lg hover:border-rose/30 transition-all"
+                className={`luxury-card p-7 text-center animate-fade-up stagger-${i + 1}`}
               >
+                <span className="text-2xl text-gold block mb-4">{item.icon}</span>
                 <h3 className="font-heading text-lg text-charcoal mb-2">
                   {item.title}
                 </h3>
@@ -261,20 +320,28 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="bg-gradient-to-br from-burgundy to-burgundy/90 py-20">
-        <div className="max-w-2xl mx-auto px-4 text-center">
-          <Heart className="w-8 h-8 text-rose/60 mx-auto mb-4" />
-          <h2 className="font-heading text-3xl sm:text-4xl text-white mb-4">
+      {/* ── Final CTA ── */}
+      <section className="relative bg-gradient-to-br from-charcoal via-burgundy/90 to-charcoal py-28 overflow-hidden">
+        <div className="absolute inset-0 lace-overlay opacity-20" />
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent" />
+        <div className="absolute top-10 left-[20%] w-[300px] h-[300px] rounded-full bg-rose/10 blur-[100px]" />
+        <div className="absolute bottom-10 right-[20%] w-[250px] h-[250px] rounded-full bg-gold/5 blur-[80px]" />
+
+        <div className="relative max-w-2xl mx-auto px-4 text-center animate-fade-up">
+          <div className="w-14 h-14 rounded-full bg-white/10 border border-white/15 flex items-center justify-center mx-auto mb-6 backdrop-blur-sm">
+            <Heart className="w-6 h-6 text-rose/70" strokeWidth={1.5} />
+          </div>
+          <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-white mb-5">
             Give Beauty Forward
           </h2>
-          <p className="text-rose/80 mb-8 leading-relaxed">
+          <div className="gold-line mx-auto mb-6 opacity-40" />
+          <p className="text-rose/60 mb-10 leading-relaxed text-lg">
             Every veil you purchase helps gift one to a sister who needs it.
             Together, we&apos;re building a community of grace.
           </p>
           <Link
             href="/shop"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-white text-burgundy text-sm font-medium tracking-wide rounded-full hover:bg-ivory transition-colors"
+            className="btn-luxe inline-flex items-center gap-2.5 px-10 py-4 bg-white text-burgundy text-sm font-medium tracking-[0.06em] rounded-full hover:bg-ivory"
           >
             Shop the Collection
             <ArrowRight className="w-4 h-4" />

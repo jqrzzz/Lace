@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, Clock, Heart, Send, Check } from "lucide-react";
+import { Mail, Clock, Heart, Send, Check, Sparkles } from "lucide-react";
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
@@ -14,15 +14,20 @@ export default function ContactPage() {
   return (
     <>
       {/* Hero */}
-      <section className="bg-gradient-to-b from-blush/20 to-ivory border-b border-border-light py-20">
-        <div className="max-w-3xl mx-auto px-4 text-center">
-          <p className="text-xs tracking-[0.3em] uppercase text-gold mb-3">
+      <section className="relative bg-gradient-to-b from-blush/30 via-rose/5 to-ivory overflow-hidden py-28">
+        <div className="lace-pattern absolute inset-0 opacity-25 pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,theme(colors.blush/30)_0%,transparent_70%)] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+
+        <div className="relative max-w-3xl mx-auto px-4 text-center animate-fade-up">
+          <p className="text-[10px] tracking-[0.35em] uppercase text-gold mb-4 font-medium">
             Contact
           </p>
-          <h1 className="font-heading text-4xl sm:text-5xl text-charcoal mb-6">
-            We&apos;re Here to Help
+          <div className="gold-line mx-auto mb-8" />
+          <h1 className="font-heading text-5xl sm:text-6xl text-charcoal mb-6 leading-tight">
+            We&apos;re Here <span className="italic text-burgundy">to Help</span>
           </h1>
-          <p className="text-lg text-warm-gray max-w-xl mx-auto">
+          <p className="text-lg text-warm-gray max-w-xl mx-auto leading-relaxed">
             Questions about veils, orders, or our mission? Send us a message and
             we&apos;ll reply with care.
           </p>
@@ -30,25 +35,26 @@ export default function ContactPage() {
       </section>
 
       {/* Contact Grid */}
-      <section className="py-16">
+      <section className="py-20">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-5 gap-10">
             {/* Form */}
-            <div className="lg:col-span-3">
-              <div className="bg-white rounded-2xl border border-border-light p-6 sm:p-8">
-                <h2 className="font-heading text-2xl text-charcoal mb-6">
+            <div className="lg:col-span-3 animate-fade-up">
+              <div className="luxury-card rounded-2xl p-7 sm:p-9">
+                <h2 className="font-heading text-2xl text-charcoal mb-2">
                   Send a Message
                 </h2>
+                <div className="gold-line mb-7 opacity-40" />
 
                 {submitted ? (
-                  <div className="text-center py-12">
-                    <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Check className="w-8 h-8 text-green-600" />
+                  <div className="text-center py-16">
+                    <div className="w-18 h-18 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-5 w-[72px] h-[72px]">
+                      <Check className="w-8 h-8 text-green-600" strokeWidth={1.5} />
                     </div>
                     <h3 className="font-heading text-xl text-charcoal mb-2">
                       Message Sent
                     </h3>
-                    <p className="text-warm-gray">
+                    <p className="text-warm-gray leading-relaxed">
                       Thank you for reaching out. We&apos;ll get back to you within
                       1-2 business days.
                     </p>
@@ -63,10 +69,7 @@ export default function ContactPage() {
                   <form onSubmit={handleSubmit} className="space-y-5">
                     <div className="grid sm:grid-cols-2 gap-5">
                       <div>
-                        <label
-                          htmlFor="name"
-                          className="block text-sm font-medium text-charcoal mb-2"
-                        >
+                        <label htmlFor="name" className="block text-[13px] font-medium text-charcoal mb-2">
                           Name
                         </label>
                         <input
@@ -74,15 +77,12 @@ export default function ContactPage() {
                           name="name"
                           type="text"
                           required
-                          className="w-full px-4 py-3 border border-border rounded-xl text-sm text-charcoal focus:outline-none focus:border-gold transition-colors bg-ivory"
+                          className="w-full px-4 py-3 border border-border rounded-xl text-sm text-charcoal focus:outline-none focus:border-gold focus:shadow-[0_0_0_3px_rgba(201,169,110,0.1)] transition-all duration-200 bg-ivory/50"
                           placeholder="Your name"
                         />
                       </div>
                       <div>
-                        <label
-                          htmlFor="email"
-                          className="block text-sm font-medium text-charcoal mb-2"
-                        >
+                        <label htmlFor="email" className="block text-[13px] font-medium text-charcoal mb-2">
                           Email
                         </label>
                         <input
@@ -90,23 +90,20 @@ export default function ContactPage() {
                           name="email"
                           type="email"
                           required
-                          className="w-full px-4 py-3 border border-border rounded-xl text-sm text-charcoal focus:outline-none focus:border-gold transition-colors bg-ivory"
+                          className="w-full px-4 py-3 border border-border rounded-xl text-sm text-charcoal focus:outline-none focus:border-gold focus:shadow-[0_0_0_3px_rgba(201,169,110,0.1)] transition-all duration-200 bg-ivory/50"
                           placeholder="your@email.com"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label
-                        htmlFor="subject"
-                        className="block text-sm font-medium text-charcoal mb-2"
-                      >
+                      <label htmlFor="subject" className="block text-[13px] font-medium text-charcoal mb-2">
                         Subject
                       </label>
                       <select
                         id="subject"
                         name="subject"
-                        className="w-full px-4 py-3 border border-border rounded-xl text-sm text-charcoal focus:outline-none focus:border-gold transition-colors bg-ivory"
+                        className="w-full px-4 py-3 border border-border rounded-xl text-sm text-charcoal focus:outline-none focus:border-gold transition-all duration-200 bg-ivory/50"
                       >
                         <option>Product Question</option>
                         <option>Order Support</option>
@@ -118,10 +115,7 @@ export default function ContactPage() {
                     </div>
 
                     <div>
-                      <label
-                        htmlFor="message"
-                        className="block text-sm font-medium text-charcoal mb-2"
-                      >
+                      <label htmlFor="message" className="block text-[13px] font-medium text-charcoal mb-2">
                         Message
                       </label>
                       <textarea
@@ -129,16 +123,16 @@ export default function ContactPage() {
                         name="message"
                         rows={6}
                         required
-                        className="w-full px-4 py-3 border border-border rounded-xl text-sm text-charcoal focus:outline-none focus:border-gold transition-colors bg-ivory resize-y"
+                        className="w-full px-4 py-3 border border-border rounded-xl text-sm text-charcoal focus:outline-none focus:border-gold focus:shadow-[0_0_0_3px_rgba(201,169,110,0.1)] transition-all duration-200 bg-ivory/50 resize-y"
                         placeholder="How can we help?"
                       />
                     </div>
 
                     <button
                       type="submit"
-                      className="inline-flex items-center gap-2 px-8 py-3.5 bg-burgundy text-white text-sm tracking-wide rounded-full hover:bg-burgundy/90 transition-colors"
+                      className="btn-luxe inline-flex items-center gap-2.5 px-8 py-3.5 bg-burgundy text-white text-sm tracking-[0.06em] rounded-full"
                     >
-                      <Send className="w-4 h-4" />
+                      <Send className="w-4 h-4" strokeWidth={1.5} />
                       Send Message
                     </button>
                   </form>
@@ -147,19 +141,17 @@ export default function ContactPage() {
             </div>
 
             {/* Details */}
-            <div className="lg:col-span-2 space-y-6">
-              <div className="bg-white rounded-2xl border border-border-light p-6">
-                <Mail className="w-5 h-5 text-gold mb-3" />
+            <div className="lg:col-span-2 space-y-5 animate-fade-up stagger-2">
+              <div className="luxury-card rounded-2xl p-6">
+                <Mail className="w-5 h-5 text-gold mb-3" strokeWidth={1.5} />
                 <h3 className="font-heading text-lg text-charcoal mb-2">
                   Email Us
                 </h3>
-                <p className="text-sm text-warm-gray">
-                  hello@lacebylaluz.com
-                </p>
+                <p className="text-sm text-warm-gray">hello@lacebylaluz.com</p>
               </div>
 
-              <div className="bg-white rounded-2xl border border-border-light p-6">
-                <Clock className="w-5 h-5 text-gold mb-3" />
+              <div className="luxury-card rounded-2xl p-6">
+                <Clock className="w-5 h-5 text-gold mb-3" strokeWidth={1.5} />
                 <h3 className="font-heading text-lg text-charcoal mb-2">
                   Response Time
                 </h3>
@@ -168,14 +160,28 @@ export default function ContactPage() {
                 </p>
               </div>
 
-              <div className="bg-blush/30 rounded-2xl border border-rose/20 p-6">
-                <Heart className="w-5 h-5 text-burgundy mb-3" />
+              <div className="relative rounded-2xl p-6 overflow-hidden bg-gradient-to-br from-blush/30 to-rose/15 border border-rose/20">
+                <div className="lace-pattern absolute inset-0 opacity-15 pointer-events-none" />
+                <div className="relative">
+                  <Heart className="w-5 h-5 text-burgundy mb-3" strokeWidth={1.5} />
+                  <h3 className="font-heading text-lg text-charcoal mb-2">
+                    We&apos;d Love to Hear From You
+                  </h3>
+                  <p className="text-sm text-warm-gray leading-relaxed">
+                    Whether it&apos;s a product question, a mission idea, or just a
+                    kind word — your message matters to us.
+                  </p>
+                </div>
+              </div>
+
+              <div className="luxury-card rounded-2xl p-6">
+                <Sparkles className="w-5 h-5 text-gold mb-3" strokeWidth={1.5} />
                 <h3 className="font-heading text-lg text-charcoal mb-2">
-                  We&apos;d Love to Hear From You
+                  Wholesale & Press
                 </h3>
-                <p className="text-sm text-warm-gray">
-                  Whether it&apos;s a product question, a mission idea, or just a
-                  kind word — your message matters to us.
+                <p className="text-sm text-warm-gray leading-relaxed">
+                  Interested in carrying our veils or featuring our mission?
+                  Select the relevant subject above.
                 </p>
               </div>
             </div>

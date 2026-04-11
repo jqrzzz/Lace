@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Heart, Plus } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -63,15 +63,20 @@ export default function FAQPage() {
   return (
     <>
       {/* Hero */}
-      <section className="bg-gradient-to-b from-blush/20 to-ivory border-b border-border-light py-20">
-        <div className="max-w-3xl mx-auto px-4 text-center">
-          <p className="text-xs tracking-[0.3em] uppercase text-gold mb-3">
+      <section className="relative bg-gradient-to-b from-blush/30 via-rose/5 to-ivory overflow-hidden py-28">
+        <div className="lace-pattern absolute inset-0 opacity-25 pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,theme(colors.blush/30)_0%,transparent_70%)] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+
+        <div className="relative max-w-3xl mx-auto px-4 text-center animate-fade-up">
+          <p className="text-[10px] tracking-[0.35em] uppercase text-gold mb-4 font-medium">
             FAQ
           </p>
-          <h1 className="font-heading text-4xl sm:text-5xl text-charcoal mb-6">
-            Questions, Answered
+          <div className="gold-line mx-auto mb-8" />
+          <h1 className="font-heading text-5xl sm:text-6xl text-charcoal mb-6 leading-tight">
+            Questions, <span className="italic text-burgundy">Answered</span>
           </h1>
-          <p className="text-lg text-warm-gray max-w-xl mx-auto">
+          <p className="text-lg text-warm-gray max-w-xl mx-auto leading-relaxed">
             Everything you need to know about our veils, shipping, care, and
             mission.
           </p>
@@ -79,22 +84,22 @@ export default function FAQPage() {
       </section>
 
       {/* FAQ List */}
-      <section className="py-16">
+      <section className="py-20">
         <div className="max-w-3xl mx-auto px-4 sm:px-6">
           <div className="space-y-3">
-            {FAQS.map((faq) => (
+            {FAQS.map((faq, i) => (
               <details
                 key={faq.q}
-                className="group bg-white rounded-2xl border border-border-light overflow-hidden"
+                className={`group luxury-card rounded-2xl overflow-hidden animate-fade-up stagger-${Math.min((i % 4) + 1, 6)}`}
               >
-                <summary className="px-6 py-5 text-base font-medium text-charcoal cursor-pointer flex items-center justify-between gap-4 hover:bg-cream/30 transition-colors">
+                <summary className="px-6 py-5 text-[15px] font-medium text-charcoal cursor-pointer flex items-center justify-between gap-4 hover:bg-cream/30 transition-colors duration-200">
                   <span>{faq.q}</span>
-                  <span className="text-xl text-warm-gray group-open:rotate-45 transition-transform flex-shrink-0">
-                    +
-                  </span>
+                  <div className="w-6 h-6 rounded-full border border-border flex items-center justify-center flex-shrink-0 group-hover:border-gold group-open:border-burgundy group-open:bg-burgundy/5 transition-all duration-300">
+                    <Plus className="w-3.5 h-3.5 text-warm-gray group-open:rotate-45 group-open:text-burgundy transition-all duration-300" strokeWidth={1.5} />
+                  </div>
                 </summary>
-                <div className="px-6 pb-5">
-                  <p className="text-sm text-warm-gray leading-relaxed">
+                <div className="px-6 pb-5 border-t border-border-light/50">
+                  <p className="text-sm text-warm-gray leading-[1.8] pt-4">
                     {faq.a}
                   </p>
                 </div>
@@ -105,17 +110,22 @@ export default function FAQPage() {
       </section>
 
       {/* Still Need Help */}
-      <section className="bg-cream py-16">
-        <div className="max-w-2xl mx-auto px-4 text-center">
-          <h2 className="font-heading text-3xl text-charcoal mb-4">
+      <section className="relative bg-cream py-20 overflow-hidden">
+        <div className="lace-pattern absolute inset-0 opacity-15 pointer-events-none" />
+        <div className="absolute top-0 left-0 right-0 section-divider" />
+
+        <div className="relative max-w-2xl mx-auto px-4 text-center animate-fade-up">
+          <Heart className="w-6 h-6 text-gold/50 mx-auto mb-4" strokeWidth={1.5} />
+          <h2 className="font-heading text-3xl sm:text-4xl text-charcoal mb-4">
             Still Have Questions?
           </h2>
-          <p className="text-warm-gray mb-8">
+          <div className="gold-line mx-auto mb-5 opacity-40" />
+          <p className="text-warm-gray mb-8 leading-relaxed">
             We&apos;re here for you. Reach out and we&apos;ll reply with care.
           </p>
           <Link
             href="/contact"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-burgundy text-white text-sm tracking-wide rounded-full hover:bg-burgundy/90 transition-colors"
+            className="btn-luxe inline-flex items-center gap-2.5 px-8 py-4 bg-burgundy text-white text-sm tracking-[0.06em] rounded-full"
           >
             Contact Us
             <ArrowRight className="w-4 h-4" />
