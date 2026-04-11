@@ -53,13 +53,19 @@ export default function AdminDashboard() {
   const handleAi = async () => {
     if (!aiPrompt.trim()) return;
     setAiLoading(true);
-    // Placeholder: In production this calls your AI API
-    setTimeout(() => {
-      setAiResponse(
-        `Here's a draft based on your request:\n\n"${aiPrompt}"\n\n[AI response will be generated here when API key is configured. This admin console is ready to connect to Claude API for product descriptions, social posts, and customer emails.]`
-      );
-      setAiLoading(false);
-    }, 1000);
+    setAiResponse("");
+    try {
+      const res = await fetch("/api/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: aiPrompt }),
+      });
+      const data = await res.json();
+      setAiResponse(data.response || data.error || "No response received.");
+    } catch {
+      setAiResponse("Failed to connect to AI assistant. Please try again.");
+    }
+    setAiLoading(false);
   };
 
   return (

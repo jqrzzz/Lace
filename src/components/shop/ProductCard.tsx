@@ -34,12 +34,19 @@ export default function ProductCard({ product }: { product: Product }) {
             <div className="absolute inset-0 product-lace opacity-30 group-hover:opacity-50 transition-opacity duration-500" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/[0.06] via-transparent to-white/20" />
 
-            {/* Collection badge */}
-            {product.collection === "Limited" && (
-              <span className="absolute top-4 left-4 px-3.5 py-1.5 bg-charcoal/80 backdrop-blur-sm text-gold text-[9px] tracking-[0.2em] uppercase font-medium rounded-full border border-gold/20">
-                Limited Edition
-              </span>
-            )}
+            {/* Badges */}
+            <div className="absolute top-4 left-4 flex flex-col gap-2">
+              {product.collection === "Limited" && (
+                <span className="px-3.5 py-1.5 bg-charcoal/80 backdrop-blur-sm text-gold text-[9px] tracking-[0.2em] uppercase font-medium rounded-full border border-gold/20">
+                  Limited Edition
+                </span>
+              )}
+              {product.preOrder && (
+                <span className="px-3.5 py-1.5 bg-burgundy/85 backdrop-blur-sm text-white text-[9px] tracking-[0.2em] uppercase font-medium rounded-full border border-burgundy/30">
+                  Pre-Order
+                </span>
+              )}
+            </div>
 
             {/* Hover action */}
             <div className="absolute bottom-4 right-4 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">

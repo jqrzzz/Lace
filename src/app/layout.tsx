@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
+import ShellWrapper from "@/components/layout/ShellWrapper";
+import { AuthProvider } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: {
@@ -19,12 +19,31 @@ export const metadata: Metadata = {
     "La Luz del Mundo",
     "Bali lace",
   ],
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL || "https://lacebylaluz.com"
+  ),
   openGraph: {
     title: "Lace by La Luz | Elegant Veils, Shared with Purpose",
     description:
       "Handcrafted lace veils rooted in beauty, reverence, and sisterhood. Buy one, give one.",
     siteName: "Lace by La Luz",
     type: "website",
+    locale: "en_US",
+    url: "/",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Lace by La Luz | Elegant Veils, Shared with Purpose",
+    description:
+      "Handcrafted lace veils rooted in beauty, reverence, and sisterhood. Buy one, give one.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
   },
 };
 
@@ -49,9 +68,24 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen flex flex-col bg-ivory text-charcoal antialiased">
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
+        <AuthProvider>
+          <ShellWrapper>{children}</ShellWrapper>
+        </AuthProvider>
+
+        {/* Analytics — replace with your tracking script */}
+        {process.env.NEXT_PUBLIC_GA_ID && (
+          <>
+            <script
+              async
+              src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
+            />
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${process.env.NEXT_PUBLIC_GA_ID}');`,
+              }}
+            />
+          </>
+        )}
       </body>
     </html>
   );

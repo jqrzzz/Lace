@@ -13,6 +13,7 @@ export interface Product {
   price: number;
   collection: string;
   style: string;
+  preOrder: boolean;
   variants: ProductVariant[];
   features: string[];
   care: string[];
@@ -33,6 +34,7 @@ export const PRODUCTS: Product[] = [
     price: 49,
     collection: "Signature",
     style: "Classic Lace",
+    preOrder: true,
     variants: [
       { color: "Ivory", colorHex: "#FFFAF0", inStock: true },
       { color: "Pearl White", colorHex: "#F5F0EB", inStock: true },
@@ -65,6 +67,7 @@ export const PRODUCTS: Product[] = [
     price: 52,
     collection: "Signature",
     style: "Floral Lace",
+    preOrder: true,
     variants: [
       { color: "Blush", colorHex: "#F5E1E6", inStock: true },
       { color: "Dusty Rose", colorHex: "#D4A0A8", inStock: true },
@@ -97,6 +100,7 @@ export const PRODUCTS: Product[] = [
     price: 56,
     collection: "Signature",
     style: "Classic Lace",
+    preOrder: true,
     variants: [
       { color: "Cream", colorHex: "#FDF5EE", inStock: true },
       { color: "Ivory", colorHex: "#FFFAF0", inStock: true },
@@ -128,6 +132,7 @@ export const PRODUCTS: Product[] = [
     price: 49,
     collection: "Essentials",
     style: "Minimal",
+    preOrder: true,
     variants: [
       { color: "White", colorHex: "#FFFFFF", inStock: true },
       { color: "Snow", colorHex: "#FAFAFA", inStock: true },
@@ -159,6 +164,7 @@ export const PRODUCTS: Product[] = [
     price: 58,
     collection: "Limited",
     style: "Embellished",
+    preOrder: true,
     variants: [
       { color: "Gold Ivory", colorHex: "#F5ECD7", inStock: true },
       { color: "Warm Gold", colorHex: "#E8D5A8", inStock: true },
@@ -190,6 +196,7 @@ export const PRODUCTS: Product[] = [
     price: 54,
     collection: "Signature",
     style: "Floral Lace",
+    preOrder: true,
     variants: [
       { color: "Ivory Floral", colorHex: "#FFF8F0", inStock: true },
       { color: "Blush Floral", colorHex: "#F8E4E8", inStock: true },

@@ -107,11 +107,18 @@ export default function ProductPage() {
                     </p>
                   </div>
                 </div>
-                {product.collection === "Limited" && (
-                  <span className="absolute top-5 left-5 px-4 py-1.5 bg-charcoal/80 backdrop-blur-sm text-gold text-[9px] tracking-[0.2em] uppercase font-medium rounded-full border border-gold/20">
-                    Limited Edition
-                  </span>
-                )}
+                <div className="absolute top-5 left-5 flex flex-col gap-2">
+                  {product.collection === "Limited" && (
+                    <span className="px-4 py-1.5 bg-charcoal/80 backdrop-blur-sm text-gold text-[9px] tracking-[0.2em] uppercase font-medium rounded-full border border-gold/20">
+                      Limited Edition
+                    </span>
+                  )}
+                  {product.preOrder && (
+                    <span className="px-4 py-1.5 bg-burgundy/85 backdrop-blur-sm text-white text-[9px] tracking-[0.2em] uppercase font-medium rounded-full border border-burgundy/30">
+                      Pre-Order
+                    </span>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-3 gap-3 mt-4">
@@ -135,9 +142,14 @@ export default function ProductPage() {
                 {product.name}
               </h1>
               <p className="text-base text-warm-gray mb-1 italic font-heading">{product.tagline}</p>
-              <p className="text-2xl font-heading text-charcoal mb-2">
+              <p className="text-2xl font-heading text-charcoal mb-1">
                 {formatPrice(product.price)}
               </p>
+              {product.preOrder && (
+                <p className="text-[11px] text-burgundy font-medium tracking-wide mb-2">
+                  Pre-Order — Ships when ready
+                </p>
+              )}
               <div className="gold-line mb-6 opacity-40" />
 
               <p className="text-warm-gray leading-[1.8] mb-8">
@@ -214,7 +226,7 @@ export default function ProductPage() {
                   {added ? (
                     <><Check className="w-4 h-4" strokeWidth={2} /> Added to Cart</>
                   ) : (
-                    <><ShoppingBag className="w-4 h-4" strokeWidth={1.5} /> Add to Cart — {formatPrice(product.price * quantity)}</>
+                    <><ShoppingBag className="w-4 h-4" strokeWidth={1.5} /> {product.preOrder ? "Pre-Order" : "Add to Cart"} — {formatPrice(product.price * quantity)}</>
                   )}
                 </button>
                 <button

@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ShoppingBag, Menu, X } from "lucide-react";
+import { ShoppingBag, Menu, X, User } from "lucide-react";
 import { useState } from "react";
 import { useCart } from "@/lib/cart";
+import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import CartDrawer from "./CartDrawer";
 
@@ -21,6 +22,7 @@ export default function Header() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const cart = useCart();
+  const { user } = useAuth();
   const itemCount = cart.totalItems();
 
   return (
@@ -60,7 +62,14 @@ export default function Header() {
               </nav>
 
               {/* Right Actions */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <Link
+                  href={user ? "/account" : "/login"}
+                  className="p-2.5 text-charcoal hover:text-burgundy transition-colors duration-300 rounded-full hover:bg-blush/30"
+                  aria-label={user ? "My account" : "Sign in"}
+                >
+                  <User className="w-[18px] h-[18px]" strokeWidth={1.5} />
+                </Link>
                 <button
                   onClick={cart.toggleCart}
                   className="relative p-2.5 text-charcoal hover:text-burgundy transition-colors duration-300 rounded-full hover:bg-blush/30"
