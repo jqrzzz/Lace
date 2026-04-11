@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import ShellWrapper from "@/components/layout/ShellWrapper";
+import CursorGlow from "@/components/ui/CursorGlow";
 import { AuthProvider } from "@/lib/auth";
 
 export const metadata: Metadata = {
@@ -68,6 +69,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen flex flex-col bg-ivory text-charcoal antialiased">
+        <CursorGlow />
         <AuthProvider>
           <ShellWrapper>{children}</ShellWrapper>
         </AuthProvider>

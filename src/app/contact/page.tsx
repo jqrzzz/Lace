@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Mail, Clock, Heart, Send, Check, Sparkles, Loader2 } from "lucide-react";
+import Reveal from "@/components/ui/Reveal";
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
@@ -48,7 +49,7 @@ export default function ContactPage() {
             Contact
           </p>
           <div className="gold-line mx-auto mb-8" />
-          <h1 className="font-heading text-5xl sm:text-6xl text-charcoal mb-6 leading-tight">
+          <h1 className="font-heading text-4xl sm:text-5xl text-charcoal mb-6 leading-tight">
             We&apos;re Here <span className="italic text-burgundy">to Help</span>
           </h1>
           <p className="text-lg text-warm-gray max-w-xl mx-auto leading-relaxed">
@@ -63,7 +64,7 @@ export default function ContactPage() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-5 gap-10">
             {/* Form */}
-            <div className="lg:col-span-3 animate-fade-up">
+            <Reveal className="lg:col-span-3">
               <div className="luxury-card rounded-2xl p-7 sm:p-9">
                 <h2 className="font-heading text-2xl text-charcoal mb-2">
                   Send a Message
@@ -72,7 +73,7 @@ export default function ContactPage() {
 
                 {submitted ? (
                   <div className="text-center py-16">
-                    <div className="w-18 h-18 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-5 w-[72px] h-[72px]">
+                    <div className="w-[72px] h-[72px] bg-green-50 rounded-full flex items-center justify-center mx-auto mb-5">
                       <Check className="w-8 h-8 text-green-600" strokeWidth={1.5} />
                     </div>
                     <h3 className="font-heading text-xl text-charcoal mb-2">
@@ -172,52 +173,60 @@ export default function ContactPage() {
                   </form>
                 )}
               </div>
-            </div>
+            </Reveal>
 
             {/* Details */}
-            <div className="lg:col-span-2 space-y-5 animate-fade-up stagger-2">
-              <div className="luxury-card rounded-2xl p-6">
-                <Mail className="w-5 h-5 text-gold mb-3" strokeWidth={1.5} />
-                <h3 className="font-heading text-lg text-charcoal mb-2">
-                  Email Us
-                </h3>
-                <p className="text-sm text-warm-gray">hello@lacebylaluz.com</p>
-              </div>
-
-              <div className="luxury-card rounded-2xl p-6">
-                <Clock className="w-5 h-5 text-gold mb-3" strokeWidth={1.5} />
-                <h3 className="font-heading text-lg text-charcoal mb-2">
-                  Response Time
-                </h3>
-                <p className="text-sm text-warm-gray">
-                  We typically respond within 1–2 business days.
-                </p>
-              </div>
-
-              <div className="relative rounded-2xl p-6 overflow-hidden bg-gradient-to-br from-blush/30 to-rose/15 border border-rose/20">
-                <div className="lace-pattern absolute inset-0 opacity-15 pointer-events-none" />
-                <div className="relative">
-                  <Heart className="w-5 h-5 text-burgundy mb-3" strokeWidth={1.5} />
+            <div className="lg:col-span-2 space-y-5">
+              <Reveal delay={0.1}>
+                <div className="luxury-card rounded-2xl p-6">
+                  <Mail className="w-5 h-5 text-gold mb-3" strokeWidth={1.5} />
                   <h3 className="font-heading text-lg text-charcoal mb-2">
-                    We&apos;d Love to Hear From You
+                    Email Us
                   </h3>
-                  <p className="text-sm text-warm-gray leading-relaxed">
-                    Whether it&apos;s a product question, a mission idea, or just a
-                    kind word — your message matters to us.
+                  <p className="text-sm text-warm-gray">hello@lacebylaluz.com</p>
+                </div>
+              </Reveal>
+
+              <Reveal delay={0.2}>
+                <div className="luxury-card rounded-2xl p-6">
+                  <Clock className="w-5 h-5 text-gold mb-3" strokeWidth={1.5} />
+                  <h3 className="font-heading text-lg text-charcoal mb-2">
+                    Response Time
+                  </h3>
+                  <p className="text-sm text-warm-gray">
+                    We typically respond within 1–2 business days.
                   </p>
                 </div>
-              </div>
+              </Reveal>
 
-              <div className="luxury-card rounded-2xl p-6">
-                <Sparkles className="w-5 h-5 text-gold mb-3" strokeWidth={1.5} />
-                <h3 className="font-heading text-lg text-charcoal mb-2">
-                  Wholesale & Press
-                </h3>
-                <p className="text-sm text-warm-gray leading-relaxed">
-                  Interested in carrying our veils or featuring our mission?
-                  Select the relevant subject above.
-                </p>
-              </div>
+              <Reveal delay={0.3}>
+                <div className="relative rounded-2xl p-6 overflow-hidden bg-gradient-to-br from-blush/30 to-rose/15 border border-rose/20">
+                  <div className="lace-pattern absolute inset-0 opacity-15 pointer-events-none" />
+                  <div className="relative">
+                    <Heart className="w-5 h-5 text-burgundy mb-3" strokeWidth={1.5} />
+                    <h3 className="font-heading text-lg text-charcoal mb-2">
+                      We&apos;d Love to Hear From You
+                    </h3>
+                    <p className="text-sm text-warm-gray leading-relaxed">
+                      Whether it&apos;s a product question, a mission idea, or just a
+                      kind word — your message matters to us.
+                    </p>
+                  </div>
+                </div>
+              </Reveal>
+
+              <Reveal delay={0.4}>
+                <div className="luxury-card rounded-2xl p-6">
+                  <Sparkles className="w-5 h-5 text-gold mb-3" strokeWidth={1.5} />
+                  <h3 className="font-heading text-lg text-charcoal mb-2">
+                    Wholesale & Press
+                  </h3>
+                  <p className="text-sm text-warm-gray leading-relaxed">
+                    Interested in carrying our veils or featuring our mission?
+                    Select the relevant subject above.
+                  </p>
+                </div>
+              </Reveal>
             </div>
           </div>
         </div>

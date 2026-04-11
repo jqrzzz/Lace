@@ -4,6 +4,8 @@ import Link from "next/link";
 import { ArrowRight, Heart, Gift, Package, Sparkles } from "lucide-react";
 import ProductCard from "@/components/shop/ProductCard";
 import { PRODUCTS } from "@/lib/products";
+import Reveal from "@/components/ui/Reveal";
+import GoldShimmer from "@/components/ui/GoldShimmer";
 
 const FEATURED = PRODUCTS.slice(0, 3);
 
@@ -17,9 +19,12 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-t from-ivory via-transparent to-transparent" />
         <div className="absolute inset-0 lace-pattern opacity-40" />
 
-        {/* Decorative orbs */}
-        <div className="absolute top-20 right-[15%] w-[400px] h-[400px] rounded-full bg-rose/20 blur-[100px] animate-float" />
-        <div className="absolute bottom-20 left-[10%] w-[300px] h-[300px] rounded-full bg-gold/10 blur-[80px] animate-float" style={{ animationDelay: "3s" }} />
+        {/* Gold shimmer particles */}
+        <GoldShimmer density="sparse" />
+
+        {/* Decorative orbs — hidden on mobile to prevent overflow */}
+        <div className="hidden sm:block absolute top-20 right-[15%] w-[400px] h-[400px] rounded-full bg-rose/20 blur-[100px] animate-float" />
+        <div className="hidden sm:block absolute bottom-20 left-[10%] w-[300px] h-[300px] rounded-full bg-gold/10 blur-[80px] animate-float" style={{ animationDelay: "3s" }} />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-0 w-full">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
@@ -31,7 +36,7 @@ export default function HomePage() {
                 </span>
               </div>
 
-              <h1 className="font-heading text-5xl sm:text-6xl lg:text-[4.5rem] text-charcoal leading-[1.05] mb-6">
+              <h1 className="font-heading text-4xl sm:text-5xl lg:text-[4.5rem] text-charcoal leading-[1.05] mb-6">
                 Elegant Veils,
                 <br />
                 <span className="text-burgundy italic">Shared with Purpose</span>
@@ -119,17 +124,20 @@ export default function HomePage() {
         <div className="absolute inset-0 lace-overlay opacity-30" />
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent" />
+        <GoldShimmer density="sparse" />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16 animate-fade-up">
-            <p className="text-[11px] tracking-[0.35em] uppercase text-gradient-gold font-medium mb-4">
-              Our Promise
-            </p>
-            <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-white mb-4">
-              How Buy One, Give One Works
-            </h2>
-            <div className="gold-line mx-auto mt-5" />
-          </div>
+          <Reveal>
+            <div className="text-center mb-16">
+              <p className="text-[11px] tracking-[0.35em] uppercase text-gradient-gold font-medium mb-4">
+                Our Promise
+              </p>
+              <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-white mb-4">
+                How Buy One, Give One Works
+              </h2>
+              <div className="gold-line mx-auto mt-5" />
+            </div>
+          </Reveal>
 
           <div className="grid sm:grid-cols-3 gap-10 lg:gap-16">
             {[
@@ -152,20 +160,22 @@ export default function HomePage() {
                 desc: "Your purchase helps us send a veil to a woman at a sister church who needs one.",
               },
             ].map((item, i) => (
-              <div key={item.step} className={`text-center group animate-fade-up stagger-${i + 1}`}>
-                <div className="w-[72px] h-[72px] mx-auto mb-6 rounded-2xl bg-gradient-to-br from-white/8 to-white/3 border border-white/10 flex items-center justify-center group-hover:border-gold/40 group-hover:shadow-[0_0_30px_rgba(201,169,110,0.15)] transition-all duration-500">
-                  <item.icon className="w-6 h-6 text-gold" strokeWidth={1.5} />
+              <Reveal key={item.step} delay={i * 0.12} direction="up">
+                <div className="text-center group">
+                  <div className="w-[72px] h-[72px] mx-auto mb-6 rounded-2xl bg-gradient-to-br from-white/8 to-white/3 border border-white/10 flex items-center justify-center group-hover:border-gold/40 group-hover:shadow-[0_0_30px_rgba(201,169,110,0.15)] transition-all duration-500">
+                    <item.icon className="w-6 h-6 text-gold" strokeWidth={1.5} />
+                  </div>
+                  <p className="text-[10px] tracking-[0.35em] uppercase text-gold/80 mb-3 font-medium">
+                    Step {item.step}
+                  </p>
+                  <h3 className="font-heading text-xl text-white mb-3">
+                    {item.title}
+                  </h3>
+                  <p className="text-sm text-soft-gray leading-relaxed max-w-[280px] mx-auto">
+                    {item.desc}
+                  </p>
                 </div>
-                <p className="text-[10px] tracking-[0.35em] uppercase text-gold/80 mb-3 font-medium">
-                  Step {item.step}
-                </p>
-                <h3 className="font-heading text-xl text-white mb-3">
-                  {item.title}
-                </h3>
-                <p className="text-sm text-soft-gray leading-relaxed max-w-[280px] mx-auto">
-                  {item.desc}
-                </p>
-              </div>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -176,30 +186,32 @@ export default function HomePage() {
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-end justify-between mb-14 animate-fade-up">
-            <div>
-              <p className="text-[11px] tracking-[0.35em] uppercase text-gold font-medium mb-3">
-                Curated for You
-              </p>
-              <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-charcoal">
-                Featured Veils
-              </h2>
-              <div className="gold-line mt-4 opacity-50" />
+          <Reveal>
+            <div className="flex items-end justify-between mb-14">
+              <div>
+                <p className="text-[11px] tracking-[0.35em] uppercase text-gold font-medium mb-3">
+                  Curated for You
+                </p>
+                <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-charcoal">
+                  Featured Veils
+                </h2>
+                <div className="gold-line mt-4 opacity-50" />
+              </div>
+              <Link
+                href="/shop"
+                className="hidden sm:inline-flex items-center gap-2 text-sm text-warm-gray hover:text-burgundy group transition-colors duration-300"
+              >
+                View All
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
+              </Link>
             </div>
-            <Link
-              href="/shop"
-              className="hidden sm:inline-flex items-center gap-2 text-sm text-warm-gray hover:text-burgundy group transition-colors duration-300"
-            >
-              View All
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
-            </Link>
-          </div>
+          </Reveal>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-7">
             {FEATURED.map((product, i) => (
-              <div key={product.id} className={`animate-fade-up stagger-${i + 1}`}>
+              <Reveal key={product.id} delay={i * 0.1} direction="up">
                 <ProductCard product={product} />
-              </div>
+              </Reveal>
             ))}
           </div>
 
@@ -222,45 +234,49 @@ export default function HomePage() {
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-14 items-center">
-            <div className="aspect-[4/5] rounded-[2rem] bg-gradient-to-br from-rose/15 via-blush/25 to-champagne/15 border border-border-light/60 flex items-center justify-center shadow-[0_20px_60px_rgba(44,37,39,0.06)] overflow-hidden relative">
-              <div className="absolute inset-0 product-lace opacity-30" />
-              <div className="text-center relative">
-                <Heart className="w-10 h-10 text-rose-gold/30 mx-auto mb-3" />
-                <p className="text-[11px] text-warm-gray/50 tracking-[0.2em] uppercase">
-                  Founder photo
-                </p>
-                <p className="text-[10px] text-warm-gray/30 mt-1">Coming soon</p>
+            <Reveal direction="left">
+              <div className="aspect-[4/5] rounded-[2rem] bg-gradient-to-br from-rose/15 via-blush/25 to-champagne/15 border border-border-light/60 flex items-center justify-center shadow-[0_20px_60px_rgba(44,37,39,0.06)] overflow-hidden relative">
+                <div className="absolute inset-0 product-lace opacity-30" />
+                <div className="text-center relative">
+                  <Heart className="w-10 h-10 text-rose-gold/30 mx-auto mb-3" />
+                  <p className="text-[11px] text-warm-gray/50 tracking-[0.2em] uppercase">
+                    Founder photo
+                  </p>
+                  <p className="text-[10px] text-warm-gray/30 mt-1">Coming soon</p>
+                </div>
               </div>
-            </div>
+            </Reveal>
 
-            <div className="animate-fade-up">
-              <p className="text-[11px] tracking-[0.35em] uppercase text-gold font-medium mb-3">
-                Our Story
-              </p>
-              <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-charcoal mb-4">
-                From the Heart
-                <br />
-                <span className="italic text-burgundy">of a Mother</span>
-              </h2>
-              <div className="gold-line mb-6 opacity-50" />
-              <p className="text-warm-gray leading-[1.8] mb-4">
-                Lace by La Luz began with a simple desire — to create beautiful
-                veils that honor reverence while supporting women who may not
-                have one of their own.
-              </p>
-              <p className="text-warm-gray leading-[1.8] mb-8">
-                Every thread carries a promise: when one sister buys a veil,
-                another sister receives one. This isn&apos;t just fashion — it&apos;s
-                faith in action, beauty shared forward.
-              </p>
-              <Link
-                href="/story"
-                className="inline-flex items-center gap-2 text-sm font-medium text-burgundy hover:text-burgundy/80 group transition-colors duration-300"
-              >
-                Read Our Full Story
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
-              </Link>
-            </div>
+            <Reveal direction="right" delay={0.15}>
+              <div>
+                <p className="text-[11px] tracking-[0.35em] uppercase text-gold font-medium mb-3">
+                  Our Story
+                </p>
+                <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-charcoal mb-4">
+                  From the Heart
+                  <br />
+                  <span className="italic text-burgundy">of a Mother</span>
+                </h2>
+                <div className="gold-line mb-6 opacity-50" />
+                <p className="text-warm-gray leading-[1.8] mb-4">
+                  Lace by La Luz began with a simple desire — to create beautiful
+                  veils that honor reverence while supporting women who may not
+                  have one of their own.
+                </p>
+                <p className="text-warm-gray leading-[1.8] mb-8">
+                  Every thread carries a promise: when one sister buys a veil,
+                  another sister receives one. This isn&apos;t just fashion — it&apos;s
+                  faith in action, beauty shared forward.
+                </p>
+                <Link
+                  href="/story"
+                  className="inline-flex items-center gap-2 text-sm font-medium text-burgundy hover:text-burgundy/80 group transition-colors duration-300"
+                >
+                  Read Our Full Story
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
+                </Link>
+              </div>
+            </Reveal>
           </div>
         </div>
       </section>
@@ -270,15 +286,17 @@ export default function HomePage() {
         <div className="absolute top-0 left-0 right-0 section-divider" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16 animate-fade-up">
-            <p className="text-[11px] tracking-[0.35em] uppercase text-gold font-medium mb-3">
-              The Difference
-            </p>
-            <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-charcoal mb-4">
-              Why Lace by La Luz
-            </h2>
-            <div className="gold-line mx-auto mt-4 opacity-50" />
-          </div>
+          <Reveal>
+            <div className="text-center mb-16">
+              <p className="text-[11px] tracking-[0.35em] uppercase text-gold font-medium mb-3">
+                The Difference
+              </p>
+              <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-charcoal mb-4">
+                Why Lace by La Luz
+              </h2>
+              <div className="gold-line mx-auto mt-4 opacity-50" />
+            </div>
+          </Reveal>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {[
@@ -303,18 +321,17 @@ export default function HomePage() {
                 desc: "From packaging to delivery, every detail is intentional and personal.",
               },
             ].map((item, i) => (
-              <div
-                key={item.title}
-                className={`luxury-card p-7 text-center animate-fade-up stagger-${i + 1}`}
-              >
-                <span className="text-2xl text-gold block mb-4">{item.icon}</span>
-                <h3 className="font-heading text-lg text-charcoal mb-2">
-                  {item.title}
-                </h3>
-                <p className="text-sm text-warm-gray leading-relaxed">
-                  {item.desc}
-                </p>
-              </div>
+              <Reveal key={item.title} delay={i * 0.1} direction="scale">
+                <div className="luxury-card p-7 text-center">
+                  <span className="text-2xl text-gold block mb-4">{item.icon}</span>
+                  <h3 className="font-heading text-lg text-charcoal mb-2">
+                    {item.title}
+                  </h3>
+                  <p className="text-sm text-warm-gray leading-relaxed">
+                    {item.desc}
+                  </p>
+                </div>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -324,29 +341,32 @@ export default function HomePage() {
       <section className="relative bg-gradient-to-br from-charcoal via-burgundy/90 to-charcoal py-28 overflow-hidden">
         <div className="absolute inset-0 lace-overlay opacity-20" />
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent" />
-        <div className="absolute top-10 left-[20%] w-[300px] h-[300px] rounded-full bg-rose/10 blur-[100px]" />
-        <div className="absolute bottom-10 right-[20%] w-[250px] h-[250px] rounded-full bg-gold/5 blur-[80px]" />
+        <GoldShimmer density="normal" />
+        <div className="hidden sm:block absolute top-10 left-[20%] w-[300px] h-[300px] rounded-full bg-rose/10 blur-[100px]" />
+        <div className="hidden sm:block absolute bottom-10 right-[20%] w-[250px] h-[250px] rounded-full bg-gold/5 blur-[80px]" />
 
-        <div className="relative max-w-2xl mx-auto px-4 text-center animate-fade-up">
-          <div className="w-14 h-14 rounded-full bg-white/10 border border-white/15 flex items-center justify-center mx-auto mb-6 backdrop-blur-sm">
-            <Heart className="w-6 h-6 text-rose/70" strokeWidth={1.5} />
+        <Reveal>
+          <div className="relative max-w-2xl mx-auto px-4 text-center">
+            <div className="w-14 h-14 rounded-full bg-white/10 border border-white/15 flex items-center justify-center mx-auto mb-6 backdrop-blur-sm">
+              <Heart className="w-6 h-6 text-rose/70" strokeWidth={1.5} />
+            </div>
+            <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-white mb-5">
+              Give Beauty Forward
+            </h2>
+            <div className="gold-line mx-auto mb-6 opacity-40" />
+            <p className="text-rose/60 mb-10 leading-relaxed text-lg">
+              Every veil you purchase helps gift one to a sister who needs it.
+              Together, we&apos;re building a community of grace.
+            </p>
+            <Link
+              href="/shop"
+              className="btn-luxe inline-flex items-center gap-2.5 px-10 py-4 bg-white text-burgundy text-sm font-medium tracking-[0.06em] rounded-full hover:bg-ivory"
+            >
+              Shop the Collection
+              <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
-          <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-white mb-5">
-            Give Beauty Forward
-          </h2>
-          <div className="gold-line mx-auto mb-6 opacity-40" />
-          <p className="text-rose/60 mb-10 leading-relaxed text-lg">
-            Every veil you purchase helps gift one to a sister who needs it.
-            Together, we&apos;re building a community of grace.
-          </p>
-          <Link
-            href="/shop"
-            className="btn-luxe inline-flex items-center gap-2.5 px-10 py-4 bg-white text-burgundy text-sm font-medium tracking-[0.06em] rounded-full hover:bg-ivory"
-          >
-            Shop the Collection
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
+        </Reveal>
       </section>
     </>
   );

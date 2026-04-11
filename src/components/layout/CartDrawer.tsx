@@ -20,7 +20,7 @@ export default function CartDrawer() {
       />
 
       {/* Drawer */}
-      <div className="fixed right-0 top-0 bottom-0 w-full max-w-[420px] bg-ivory z-50 shadow-[−20px_0_60px_rgba(44,37,39,0.15)] flex flex-col">
+      <div className="fixed right-0 top-0 bottom-0 w-full sm:max-w-[420px] bg-ivory z-50 shadow-[-20px_0_60px_rgba(44,37,39,0.15)] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-border/60">
           <div>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Heart, Plus } from "lucide-react";
 import type { Metadata } from "next";
+import Reveal from "@/components/ui/Reveal";
 
 export const metadata: Metadata = {
   title: "FAQ",
@@ -73,7 +74,7 @@ export default function FAQPage() {
             FAQ
           </p>
           <div className="gold-line mx-auto mb-8" />
-          <h1 className="font-heading text-5xl sm:text-6xl text-charcoal mb-6 leading-tight">
+          <h1 className="font-heading text-4xl sm:text-5xl text-charcoal mb-6 leading-tight">
             Questions, <span className="italic text-burgundy">Answered</span>
           </h1>
           <p className="text-lg text-warm-gray max-w-xl mx-auto leading-relaxed">
@@ -88,22 +89,21 @@ export default function FAQPage() {
         <div className="max-w-3xl mx-auto px-4 sm:px-6">
           <div className="space-y-3">
             {FAQS.map((faq, i) => (
-              <details
-                key={faq.q}
-                className={`group luxury-card rounded-2xl overflow-hidden animate-fade-up stagger-${Math.min((i % 4) + 1, 6)}`}
-              >
-                <summary className="px-6 py-5 text-[15px] font-medium text-charcoal cursor-pointer flex items-center justify-between gap-4 hover:bg-cream/30 transition-colors duration-200">
-                  <span>{faq.q}</span>
-                  <div className="w-6 h-6 rounded-full border border-border flex items-center justify-center flex-shrink-0 group-hover:border-gold group-open:border-burgundy group-open:bg-burgundy/5 transition-all duration-300">
-                    <Plus className="w-3.5 h-3.5 text-warm-gray group-open:rotate-45 group-open:text-burgundy transition-all duration-300" strokeWidth={1.5} />
+              <Reveal key={faq.q} delay={(i % 4) * 0.08}>
+                <details className="group luxury-card rounded-2xl overflow-hidden">
+                  <summary className="px-6 py-5 text-[15px] font-medium text-charcoal cursor-pointer flex items-center justify-between gap-4 hover:bg-cream/30 transition-colors duration-200">
+                    <span>{faq.q}</span>
+                    <div className="w-6 h-6 rounded-full border border-border flex items-center justify-center flex-shrink-0 group-hover:border-gold group-open:border-burgundy group-open:bg-burgundy/5 transition-all duration-300">
+                      <Plus className="w-3.5 h-3.5 text-warm-gray group-open:rotate-45 group-open:text-burgundy transition-all duration-300" strokeWidth={1.5} />
+                    </div>
+                  </summary>
+                  <div className="px-6 pb-5 border-t border-border-light/50">
+                    <p className="text-sm text-warm-gray leading-[1.8] pt-4">
+                      {faq.a}
+                    </p>
                   </div>
-                </summary>
-                <div className="px-6 pb-5 border-t border-border-light/50">
-                  <p className="text-sm text-warm-gray leading-[1.8] pt-4">
-                    {faq.a}
-                  </p>
-                </div>
-              </details>
+                </details>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -114,23 +114,25 @@ export default function FAQPage() {
         <div className="lace-pattern absolute inset-0 opacity-15 pointer-events-none" />
         <div className="absolute top-0 left-0 right-0 section-divider" />
 
-        <div className="relative max-w-2xl mx-auto px-4 text-center animate-fade-up">
-          <Heart className="w-6 h-6 text-gold/50 mx-auto mb-4" strokeWidth={1.5} />
-          <h2 className="font-heading text-3xl sm:text-4xl text-charcoal mb-4">
-            Still Have Questions?
-          </h2>
-          <div className="gold-line mx-auto mb-5 opacity-40" />
-          <p className="text-warm-gray mb-8 leading-relaxed">
-            We&apos;re here for you. Reach out and we&apos;ll reply with care.
-          </p>
-          <Link
-            href="/contact"
-            className="btn-luxe inline-flex items-center gap-2.5 px-8 py-4 bg-burgundy text-white text-sm tracking-[0.06em] rounded-full"
-          >
-            Contact Us
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
+        <Reveal>
+          <div className="relative max-w-2xl mx-auto px-4 text-center">
+            <Heart className="w-6 h-6 text-gold/50 mx-auto mb-4" strokeWidth={1.5} />
+            <h2 className="font-heading text-3xl sm:text-4xl text-charcoal mb-4">
+              Still Have Questions?
+            </h2>
+            <div className="gold-line mx-auto mb-5 opacity-40" />
+            <p className="text-warm-gray mb-8 leading-relaxed">
+              We&apos;re here for you. Reach out and we&apos;ll reply with care.
+            </p>
+            <Link
+              href="/contact"
+              className="btn-luxe inline-flex items-center gap-2.5 px-8 py-4 bg-burgundy text-white text-sm tracking-[0.06em] rounded-full"
+            >
+              Contact Us
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </Reveal>
       </section>
     </>
   );

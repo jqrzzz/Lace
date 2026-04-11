@@ -61,7 +61,7 @@ export default function Footer() {
                 href="https://instagram.com/lacebylaluz"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 rounded-full bg-white/[0.06] border border-white/[0.1] flex items-center justify-center text-soft-gray hover:text-white hover:border-gold/40 hover:bg-white/[0.1] transition-all duration-300"
+                className="w-10 h-10 rounded-full bg-white/[0.06] border border-white/[0.1] flex items-center justify-center text-soft-gray hover:text-white hover:border-gold/40 hover:bg-white/[0.1] transition-all duration-300"
                 aria-label="Instagram"
               >
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -72,7 +72,7 @@ export default function Footer() {
                 href="https://tiktok.com/@lacebylaluz"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 rounded-full bg-white/[0.06] border border-white/[0.1] flex items-center justify-center text-soft-gray hover:text-white hover:border-gold/40 hover:bg-white/[0.1] transition-all duration-300"
+                className="w-10 h-10 rounded-full bg-white/[0.06] border border-white/[0.1] flex items-center justify-center text-soft-gray hover:text-white hover:border-gold/40 hover:bg-white/[0.1] transition-all duration-300"
                 aria-label="TikTok"
               >
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -83,7 +83,7 @@ export default function Footer() {
                 href="https://facebook.com/lacebylaluz"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 rounded-full bg-white/[0.06] border border-white/[0.1] flex items-center justify-center text-soft-gray hover:text-white hover:border-gold/40 hover:bg-white/[0.1] transition-all duration-300"
+                className="w-10 h-10 rounded-full bg-white/[0.06] border border-white/[0.1] flex items-center justify-center text-soft-gray hover:text-white hover:border-gold/40 hover:bg-white/[0.1] transition-all duration-300"
                 aria-label="Facebook"
               >
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -175,7 +175,7 @@ export default function Footer() {
                 <span className="text-sm text-gold">You&apos;re on the list!</span>
               </div>
             ) : (
-              <form className="flex gap-2" onSubmit={handleNewsletterSubmit}>
+              <form className="flex flex-col sm:flex-row gap-2" onSubmit={handleNewsletterSubmit}>
                 <input
                   name="footer-email"
                   type="email"
