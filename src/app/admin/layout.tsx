@@ -1,0 +1,123 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  LayoutDashboard,
+  ShoppingBag,
+  ClipboardList,
+  Heart,
+  Sparkles,
+  ArrowLeft,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+
+const NAV = [
+  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin/products", label: "Products", icon: ShoppingBag },
+  { href: "/admin/orders", label: "Orders", icon: ClipboardList },
+  { href: "/admin/mission", label: "Mission", icon: Heart },
+];
+
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const pathname = usePathname();
+
+  return (
+    <div className="min-h-screen bg-cream flex">
+      {/* Sidebar */}
+      <aside className="w-64 bg-charcoal text-pearl flex-shrink-0 hidden lg:flex flex-col">
+        <div className="px-6 py-6 border-b border-white/10">
+          <div className="flex flex-col">
+            <span className="font-heading text-xl tracking-[0.15em] uppercase text-white">
+              Lace
+            </span>
+            <span className="text-[9px] tracking-[0.25em] uppercase text-rose-gold -mt-0.5">
+              Admin Console
+            </span>
+          </div>
+        </div>
+
+        <nav className="flex-1 px-3 py-4 space-y-1">
+          {NAV.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-colors",
+                pathname === item.href
+                  ? "bg-white/10 text-white"
+                  : "text-soft-gray hover:text-white hover:bg-white/5"
+              )}
+            >
+              <item.icon className="w-4 h-4" />
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+
+        <div className="px-3 pb-4">
+          <div className="bg-gold/10 rounded-xl px-4 py-3 border border-gold/20">
+            <div className="flex items-center gap-2 mb-1">
+              <Sparkles className="w-3.5 h-3.5 text-gold" />
+              <span className="text-xs font-medium text-gold">AI Assistant</span>
+            </div>
+            <p className="text-[10px] text-soft-gray">
+              Ask me to write product descriptions, social posts, or draft customer emails.
+            </p>
+          </div>
+        </div>
+
+        <Link
+          href="/"
+          className="flex items-center gap-2 px-6 py-4 text-sm text-soft-gray hover:text-white border-t border-white/10 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Store
+        </Link>
+      </aside>
+
+      {/* Main */}
+      <div className="flex-1 flex flex-col min-h-screen">
+        {/* Mobile header */}
+        <div className="lg:hidden bg-charcoal text-white px-4 py-3 flex items-center justify-between">
+          <span className="font-heading text-lg tracking-wide">Admin</span>
+          <Link href="/" className="text-sm text-soft-gray">
+            Back to Store
+          </Link>
+        </div>
+
+        {/* Mobile nav */}
+        <div className="lg:hidden bg-white border-b border-border flex overflow-x-auto">
+          {NAV.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "flex items-center gap-2 px-4 py-3 text-sm whitespace-nowrap border-b-2 transition-colors",
+                pathname === item.href
+                  ? "border-burgundy text-burgundy"
+                  : "border-transparent text-warm-gray"
+              )}
+            >
+              <item.icon className="w-4 h-4" />
+              {item.label}
+            </Link>
+          ))}
+        </div>
+
+        {/* Pre-launch banner */}
+        <div className="bg-gold/10 border-b border-gold/20 px-4 py-2.5 text-center">
+          <p className="text-xs text-gold-dark">
+            <span className="font-medium">Pre-launch mode</span> — Connect Stripe and Supabase in your Vercel environment to go live.
+          </p>
+        </div>
+
+        <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
+      </div>
+    </div>
+  );
+}
