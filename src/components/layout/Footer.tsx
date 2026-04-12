@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Heart, Check } from "lucide-react";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 
 export default function Footer() {
   const [subscribed, setSubscribed] = useState(false);
@@ -195,17 +196,39 @@ export default function Footer() {
           </div>
         </div>
 
+        {/* Heritage line — La Luz Del Mundo */}
+        <div className="border-t border-white/[0.08] pt-8 pb-6">
+          <div className="flex flex-col items-center text-center gap-2">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.05] border border-gold/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-gold" />
+              <span className="text-[10px] tracking-[0.3em] uppercase text-gold font-medium">
+                Our Heritage
+              </span>
+            </div>
+            <p className="text-[13px] text-pearl/90 leading-relaxed max-w-xl">
+              Proudly rooted in{" "}
+              <span className="italic text-gold-light">La Luz del Mundo</span>{" "}
+              — our family has worshipped in this community for over fifty
+              years. Every veil we make carries that legacy of faith and
+              sisterhood.
+            </p>
+          </div>
+        </div>
+
         {/* Bottom Bar */}
         <div className="border-t border-white/[0.08] py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-[11px] text-soft-gray/60">
             &copy; {new Date().getFullYear()} Lace by La Luz. All rights
             reserved.
           </p>
-          <p className="text-[11px] text-soft-gray/60 flex items-center gap-1.5">
-            Made with{" "}
-            <Heart className="w-3 h-3 text-rose-gold fill-rose-gold" /> for
-            sisters everywhere
-          </p>
+          <div className="flex items-center gap-5">
+            <ThemeToggle />
+            <p className="text-[11px] text-soft-gray/60 flex items-center gap-1.5">
+              Made with{" "}
+              <Heart className="w-3 h-3 text-rose-gold fill-rose-gold" /> for
+              sisters everywhere
+            </p>
+          </div>
         </div>
       </div>
     </footer>

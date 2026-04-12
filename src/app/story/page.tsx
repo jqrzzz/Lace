@@ -212,6 +212,68 @@ export default function StoryPage() {
         </div>
       </section>
 
+      {/* ── La Luz Del Mundo Heritage ── */}
+      <section className="relative py-28 bg-gradient-to-b from-ivory via-blush/15 to-ivory overflow-hidden">
+        <div className="lace-pattern absolute inset-0 opacity-[0.12] pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_50%,theme(colors.gold/10)_0%,transparent_60%)] pointer-events-none" />
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent" />
+
+        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <Reveal>
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/60 backdrop-blur-sm rounded-full border border-gold/25 mb-7">
+              <span className="w-1.5 h-1.5 rounded-full bg-gold" />
+              <span className="text-[10px] tracking-[0.35em] uppercase text-gold-dark font-medium">
+                Our Heritage
+              </span>
+            </div>
+
+            <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-charcoal mb-4 leading-[1.1]">
+              Rooted in{" "}
+              <span className="italic text-burgundy">La Luz del Mundo</span>
+            </h2>
+            <div className="gold-line mx-auto mb-8" />
+
+            <p className="text-[11px] tracking-[0.3em] uppercase text-gold mb-6 font-medium">
+              Three Generations · Over Fifty Years
+            </p>
+
+            <div className="space-y-5 text-warm-gray leading-[1.9] max-w-2xl mx-auto">
+              <p>
+                Our family has called{" "}
+                <span className="text-charcoal font-medium">
+                  La Luz del Mundo
+                </span>{" "}
+                home for more than fifty years. Three generations of women in
+                our family have walked into worship wearing a veil — our
+                grandmothers, our mothers, and now us.
+              </p>
+              <p>
+                In our community, the veil is more than a garment. It is a
+                prayer expressed in thread, a mark of reverence, and a
+                centuries-old symbol of sisterhood. Every piece we craft is
+                shaped by that memory — the softness of our grandmother&apos;s
+                lace, the quiet dignity of women preparing for prayer, the
+                tenderness passed from one sister to the next.
+              </p>
+              <p>
+                Lace by La Luz is our way of honoring that heritage — and of
+                sharing it. For every veil purchased, one is gifted to a
+                sister in a growing church community, so that no woman feels
+                she cannot participate in something sacred for lack of a
+                veil.
+              </p>
+            </div>
+
+            <div className="mt-10 inline-flex items-center gap-2 text-[11px] tracking-[0.25em] uppercase text-gold/80 font-medium">
+              <span className="w-8 h-px bg-gold/40" />
+              Faith, beauty, sisterhood
+              <span className="w-8 h-px bg-gold/40" />
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
       {/* ── Craft Section ── */}
       <section className="relative py-28 bg-ivory overflow-hidden">
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />

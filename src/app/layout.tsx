@@ -3,6 +3,12 @@ import "./globals.css";
 import ShellWrapper from "@/components/layout/ShellWrapper";
 import CursorGlow from "@/components/ui/CursorGlow";
 import { AuthProvider } from "@/lib/auth";
+import { ThemeProvider } from "@/lib/theme";
+
+// Runs synchronously in <head> before paint — prevents a flash of the wrong
+// theme. Reads the saved preference from localStorage, falling back to the
+// system color scheme.
+const themeInitScript = `(function(){try{var t=localStorage.getItem('theme');var m=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;if(t==='dark'||(!t&&m)){document.documentElement.classList.add('dark');}}catch(e){}})();`;
 
 export const metadata: Metadata = {
   title: {
@@ -54,9 +60,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       {/* Google Fonts loaded via link tags — works on Vercel, fallback to system fonts locally */}
       <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
@@ -69,10 +76,12 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen flex flex-col bg-ivory text-charcoal antialiased">
-        <CursorGlow />
-        <AuthProvider>
-          <ShellWrapper>{children}</ShellWrapper>
-        </AuthProvider>
+        <ThemeProvider>
+          <CursorGlow />
+          <AuthProvider>
+            <ShellWrapper>{children}</ShellWrapper>
+          </AuthProvider>
+        </ThemeProvider>
 
         {/* Analytics — replace with your tracking script */}
         {process.env.NEXT_PUBLIC_GA_ID && (

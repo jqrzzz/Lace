@@ -10,14 +10,15 @@
   --color-rose-gold: #D4A0A8;
   --color-mauve: #C08490;
   --color-burgundy: #8B3A4A;
-  --color-gold: #C9A96E;
-  --color-gold-light: #DFC08A;
-  --color-gold-dark: #A6844A;
+  --color-gold: #C19640;
+  --color-gold-light: #DAB46B;
+  --color-gold-dark: #936E20;
   --color-charcoal: #2C2527;
-  --color-warm-gray: #6B5B5E;
+  --color-warm-gray: #5A4A4D;
   --color-soft-gray: #A89A9D;
   --color-border: #E8DED8;
   --color-border-light: #F0EAE5;
+  --color-paper: #FFFFFF;
 
   --font-heading: 'Playfair Display', Georgia, serif;
   --font-body: 'Inter', system-ui, -apple-system, sans-serif;
@@ -28,6 +29,84 @@
   --animate-shimmer: shimmer 3s ease-in-out infinite;
   --animate-lace-drift: lace-drift 20s linear infinite;
 }
+
+/* ── Dark Mode Token Overrides ────────────────────────────────
+   The .dark class is set on <html> by the ThemeProvider and the
+   inline no-flash script in layout.tsx. We override surface/text/
+   border tokens so most of the app flips automatically. Semantic
+   brand tokens (burgundy, gold) shift slightly lighter so they
+   remain readable on darker surfaces.
+   ─────────────────────────────────────────────────────────── */
+.dark {
+  --color-ivory: #151012;
+  --color-cream: #1C1718;
+  --color-pearl: #24201E;
+  --color-champagne: #2A2421;
+  --color-blush: #3A2B30;
+  --color-rose: #4D3A3F;
+  --color-rose-gold: #B88A90;
+  --color-mauve: #CD9AA3;
+  --color-burgundy: #D4959E;
+  --color-gold: #E0B470;
+  --color-gold-light: #EFCE94;
+  --color-gold-dark: #BF9550;
+  --color-warm-gray: #A89598;
+  --color-soft-gray: #887A7D;
+  --color-border: #3A3235;
+  --color-border-light: #2E2729;
+  --color-paper: #1C1718;
+}
+
+.dark body {
+  background: var(--color-ivory);
+  color: #F0E8E2;
+}
+
+/* In light mode charcoal = primary text; in dark mode we want text
+   bright but bg-charcoal sections should still stay dark. So we
+   keep --color-charcoal unchanged and override the text utility. */
+.dark .text-charcoal { color: #F0E8E2; }
+
+/* Surfaces that were hardcoded to bg-white need an override */
+.dark .bg-white { background-color: var(--color-paper); }
+.dark .bg-ivory { background-color: var(--color-ivory); }
+
+/* Luxury + glass cards: deeper surface with subtle warmth */
+.dark .luxury-card {
+  background: var(--color-paper);
+  border-color: var(--color-border);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.35),
+    0 1px 3px rgba(0, 0, 0, 0.25);
+}
+.dark .luxury-card:hover {
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.45),
+    0 4px 12px rgba(0, 0, 0, 0.25);
+  border-color: var(--color-rose-gold);
+}
+.dark .glass-card {
+  background: rgba(36, 32, 30, 0.7);
+  border-color: rgba(58, 50, 53, 0.8);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* Input / select fields tinted to dark surface */
+.dark input,
+.dark textarea,
+.dark select {
+  background-color: rgba(36, 32, 30, 0.5);
+  color: #F0E8E2;
+  border-color: var(--color-border);
+}
+.dark input::placeholder,
+.dark textarea::placeholder { color: var(--color-soft-gray); }
+
+/* Scrollbar tuned for dark surfaces */
+.dark ::-webkit-scrollbar-track { background: var(--color-cream); }
+.dark ::-webkit-scrollbar-thumb { background: var(--color-gold-dark); }
 
 /* ── Keyframes ── */
 @keyframes fade-in {
@@ -145,7 +224,7 @@ h1, h2, h3, h4, h5, h6 {
 /* ── Luxury Card ── */
 .luxury-card {
   position: relative;
-  background: white;
+  background: var(--color-paper);
   border: 1px solid var(--color-border-light);
   border-radius: 1.25rem;
   box-shadow:
@@ -171,7 +250,7 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: inherit;
   background: radial-gradient(
     350px circle at var(--glow-x, 50%) var(--glow-y, 50%),
-    rgba(201, 169, 110, 0.08),
+    rgba(218, 180, 107, 0.1),
     transparent 60%
   );
   opacity: 0;
