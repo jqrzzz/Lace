@@ -32,46 +32,90 @@
 }
 
 /* ── Dark Mode Token Overrides ────────────────────────────────
-   The .dark class is set on <html> by the ThemeProvider and the
-   inline no-flash script in layout.tsx. We override surface/text/
-   border tokens so most of the app flips automatically. Semantic
-   brand tokens (burgundy, gold) shift slightly lighter so they
-   remain readable on darker surfaces.
+   Warm plum + rose-tinted darks (not muddy brown) so the app reads
+   romantic and soft, not like blocky chocolate. Surfaces gain a
+   pink undertone; accents shift to bright rose-pink for readability
+   on dark. Background-utility classes that embed color names are
+   remapped below so white-on-pink buttons stay legible.
    ─────────────────────────────────────────────────────────── */
 .dark {
-  --color-ivory: #151012;
-  --color-cream: #1C1718;
-  --color-pearl: #24201E;
-  --color-champagne: #2A2421;
-  --color-blush: #3A2B30;
-  --color-rose: #4D3A3F;
-  --color-rose-gold: #B88A90;
-  --color-mauve: #CD9AA3;
-  --color-burgundy: #D4959E;
-  --color-gold: #E0B470;
-  --color-gold-light: #EFCE94;
-  --color-gold-dark: #BF9550;
-  --color-warm-gray: #A89598;
-  --color-soft-gray: #887A7D;
-  --color-border: #3A3235;
-  --color-border-light: #2E2729;
-  --color-paper: #1C1718;
-  --color-ink: #F0E8E2;
+  --color-ivory: #1A1015;
+  --color-cream: #231620;
+  --color-pearl: #2C1B26;
+  --color-champagne: #36222C;
+  --color-blush: #4A2D37;
+  --color-rose: #613843;
+  --color-rose-gold: #E7B3BB;
+  --color-mauve: #EDB4BE;
+  --color-burgundy: #F5B0B9;        /* used for TEXT — bright pink on dark */
+  --color-gold: #F0C57E;
+  --color-gold-light: #F9D9A2;
+  --color-gold-dark: #D0A25E;
+  --color-warm-gray: #C9AEB3;
+  --color-soft-gray: #9A8287;
+  --color-border: #43303A;
+  --color-border-light: #372730;
+  --color-paper: #251725;
+  --color-ink: #F7E8EE;
 }
 
 .dark body {
-  background: var(--color-ivory);
-  color: #F0E8E2;
+  color: #F7E8EE;
+  background:
+    radial-gradient(ellipse 900px 600px at 15% 0%, rgba(245,176,185,0.08), transparent 60%),
+    radial-gradient(ellipse 1100px 700px at 85% 100%, rgba(208,162,94,0.06), transparent 65%),
+    radial-gradient(ellipse 700px 500px at 50% 50%, rgba(97,56,67,0.12), transparent 70%),
+    var(--color-ivory);
+  background-attachment: fixed;
 }
+
+/* Buttons/pills using bg-burgundy need a *dark* pink background in
+   dark mode so white text stays readable (the burgundy token itself
+   is now a light pink reserved for text). */
+.dark .bg-burgundy { background-color: #7B2C3D; }
+.dark .bg-burgundy\/90 { background-color: rgba(123,44,61,0.92); }
+.dark .bg-burgundy\/20 { background-color: rgba(123,44,61,0.28); }
+.dark .bg-burgundy\/10 { background-color: rgba(123,44,61,0.18); }
+.dark .hover\:bg-burgundy:hover { background-color: #8E354A; }
+.dark .hover\:bg-burgundy\/90:hover { background-color: rgba(142,53,74,0.95); }
+.dark .border-burgundy { border-color: #B6505F; }
+
+/* Same treatment for charcoal: gradient headers use `bg-charcoal`
+   or `from-charcoal` — deepen slightly and warm with plum. */
+.dark .bg-charcoal { background-color: #1E1219; }
+.dark .from-charcoal { --tw-gradient-from: #1E1219; }
+.dark .to-charcoal { --tw-gradient-to: #1E1219; }
+.dark .from-burgundy { --tw-gradient-from: #7B2C3D; }
+.dark .to-burgundy { --tw-gradient-to: #7B2C3D; }
 
 /* In light mode charcoal = primary text; in dark mode we want text
    bright but bg-charcoal sections should still stay dark. So we
    keep --color-charcoal unchanged and override the text utility. */
-.dark .text-charcoal { color: #F0E8E2; }
+.dark .text-charcoal { color: #F7E8EE; }
+.dark .text-warm-gray { color: #C9AEB3; }
 
 /* Surfaces that were hardcoded to bg-white need an override */
 .dark .bg-white { background-color: var(--color-paper); }
 .dark .bg-ivory { background-color: var(--color-ivory); }
+
+/* Add a faint pink grain to the big neutral surfaces so they don't
+   read as flat lego blocks — subtle radial glows, no drift. */
+.dark .bg-cream,
+.dark .bg-pearl,
+.dark .bg-champagne {
+  background-image:
+    radial-gradient(ellipse 400px 300px at 20% 10%, rgba(245,176,185,0.07), transparent 60%),
+    radial-gradient(ellipse 500px 400px at 90% 100%, rgba(208,162,94,0.05), transparent 65%);
+}
+.dark .bg-cream { background-color: var(--color-cream); }
+.dark .bg-pearl { background-color: var(--color-pearl); }
+.dark .bg-champagne { background-color: var(--color-champagne); }
+.dark .bg-blush { background-color: var(--color-blush); }
+.dark .bg-blush\/30 { background-color: rgba(74,45,55,0.55); }
+.dark .bg-blush\/20 { background-color: rgba(74,45,55,0.45); }
+.dark .bg-champagne\/40 { background-color: rgba(54,34,44,0.55); }
+
+/* Luxury card in dark mode: soft plum card with rose hover halo. */
 
 /* Luxury + glass cards: deeper surface with subtle warmth */
 .dark .luxury-card {
@@ -188,6 +232,31 @@ h1, h2, h3, h4, h5, h6 {
     radial-gradient(circle at 50% 50%, transparent 30%, rgba(245,225,230,0.08) 31%, rgba(245,225,230,0.08) 32%, transparent 33%);
   background-size: 60px 60px, 120px 120px, 120px 120px, 60px 60px;
   animation: lace-drift 20s linear infinite;
+}
+
+/* Dark-mode version: pink motes on plum so surfaces feel like
+   candlelight on fabric, not flat lego blocks. */
+.dark .lace-pattern {
+  background-image:
+    radial-gradient(circle at 50% 50%, rgba(245,176,185,0.08) 0%, transparent 45%),
+    radial-gradient(circle at 0% 0%, rgba(231,179,187,0.10) 0%, transparent 40%),
+    radial-gradient(circle at 100% 100%, rgba(208,162,94,0.08) 0%, transparent 40%),
+    radial-gradient(circle at 50% 50%, transparent 30%, rgba(245,176,185,0.05) 31%, rgba(245,176,185,0.05) 32%, transparent 33%);
+}
+
+.dark .lace-overlay {
+  background-image:
+    radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(245,176,185,0.05) 41%, rgba(245,176,185,0.05) 43%, transparent 44%),
+    radial-gradient(ellipse at 0% 50%, transparent 40%, rgba(245,176,185,0.05) 41%, rgba(245,176,185,0.05) 43%, transparent 44%),
+    radial-gradient(ellipse at 100% 50%, transparent 40%, rgba(245,176,185,0.05) 41%, rgba(245,176,185,0.05) 43%, transparent 44%);
+}
+
+/* Dark-mode SVG lace borders use a rose-gold stroke so the trim is visible. */
+.dark .lace-border-top {
+  background-image: url("data:image/svg+xml,%3Csvg width='120' height='16' viewBox='0 0 120 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 16 Q15 0 30 16 Q45 0 60 16 Q75 0 90 16 Q105 0 120 16' fill='none' stroke='%23E7B3BB' stroke-width='1' opacity='0.55'/%3E%3C/svg%3E");
+}
+.dark .lace-border-bottom {
+  background-image: url("data:image/svg+xml,%3Csvg width='120' height='16' viewBox='0 0 120 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0 Q15 16 30 0 Q45 16 60 0 Q75 16 90 0 Q105 16 120 0' fill='none' stroke='%23E7B3BB' stroke-width='1' opacity='0.55'/%3E%3C/svg%3E");
 }
 
 .lace-overlay {
