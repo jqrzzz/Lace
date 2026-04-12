@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Check, X, Clock, ShieldAlert, DollarSign, Pencil } from "lucide-react";
 import type { ApprovalRow, ApprovalRisk } from "@/lib/lace/types";
 import { cn } from "@/lib/utils";
+import { formatValue, timeLeft } from "@/lib/format";
 
 const RISK_STYLE: Record<
   ApprovalRisk,
@@ -30,14 +31,6 @@ const RISK_STYLE: Record<
     icon: ShieldAlert,
   },
 };
-
-function timeLeft(expiresAt: string) {
-  const h = (new Date(expiresAt).getTime() - Date.now()) / 3600_000;
-  if (h < 0) return "expired";
-  if (h < 1) return `${Math.round(h * 60)}m left`;
-  if (h < 24) return `${Math.round(h)}h left`;
-  return `${Math.round(h / 24)}d left`;
-}
 
 export default function ApprovalsQueue({
   initialPending,
@@ -164,7 +157,7 @@ export default function ApprovalsQueue({
                                 {k.replace(/_/g, " ")}
                               </dt>
                               <dd className="text-charcoal flex-1 break-words">
-                                {formatPayloadValue(v)}
+                                {formatValue(v)}
                               </dd>
                             </div>
                           ))}
@@ -254,17 +247,3 @@ export default function ApprovalsQueue({
   );
 }
 
-function formatPayloadValue(v: unknown): string {
-  if (v === null || v === undefined || v === "") return "—";
-  if (typeof v === "number" && String(v).length >= 3 && v % 1 === 0) {
-    // heuristic: treat 3+ digit integers as "maybe cents" when key suggests price/amount
-    return String(v);
-  }
-  if (typeof v === "string") return v;
-  if (typeof v === "number" || typeof v === "boolean") return String(v);
-  try {
-    return JSON.stringify(v);
-  } catch {
-    return String(v);
-  }
-}

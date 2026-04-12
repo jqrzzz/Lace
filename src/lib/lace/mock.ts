@@ -5,9 +5,9 @@
 // locally). Also seeds the in-browser console so mom can click
 // through a live-looking store before a single real order lands.
 //
-// When Phase 2 ships the real queries, nothing here gets deleted —
-// the query layer picks DB vs mock based on config, and the mock
-// stays useful for Storybook / tests / demos.
+// Nothing here gets deleted when the real DB comes online — the
+// query layer picks DB vs mock based on config, and this mock stays
+// useful for Storybook / tests / demos.
 // ─────────────────────────────────────────────────────────────
 
 import type {

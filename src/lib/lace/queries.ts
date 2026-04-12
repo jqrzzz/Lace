@@ -6,8 +6,8 @@
 //
 // Dev-mode contract: if SUPABASE_SERVICE_ROLE_KEY is missing, we
 // return in-memory mock data so the console renders fully without
-// any env vars. When Phase 2 applies the migrations, flipping the
-// env var is the ONLY thing that needs to change — callers don't.
+// any env vars. Once the lace.* migrations are applied, each function
+// swaps its `if (!db)` branch for a real select — callers don't change.
 //
 // Every function is async even when currently mocked, so we can
 // add real DB calls later without touching the call sites.
@@ -45,7 +45,7 @@ export function isLiveData(): boolean {
 export async function listProducts(): Promise<Product[]> {
   const db = getLaceDb();
   if (!db) return PRODUCTS;
-  // TODO(phase2): read from lace.products once the schema is applied.
+  // When the lace.products table is live, replace with a real select.
   return PRODUCTS;
 }
 
@@ -62,7 +62,7 @@ export async function listOrders(opts?: {
       : MOCK_ORDERS;
     return rows.slice(0, opts?.limit ?? rows.length);
   }
-  // TODO(phase2): real select + row mapping.
+  // When the lace.orders table is live, replace with a real select.
   return MOCK_ORDERS;
 }
 
@@ -166,13 +166,3 @@ export async function getTodayBriefing() {
   return MOCK_BRIEFING;
 }
 
-// Re-export types for convenience.
-export type {
-  AgentMessage,
-  AgentSession,
-  ApprovalRow,
-  CustomerSummary,
-  InboxMessage,
-  MissionRecipientSummary,
-  OrderSummary,
-} from "./types";

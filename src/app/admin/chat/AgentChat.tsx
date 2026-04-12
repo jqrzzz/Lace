@@ -271,8 +271,8 @@ function MessageBubble({ message }: { message: AgentMessage }) {
   );
 }
 
-// Canned demo responses. Keeps the UI feeling alive without needing
-// a real Claude call. Replaced in Phase 3 by /api/agent tool-use.
+// Offline fallback used only when /api/agent/turn throws. Keeps the
+// UI alive in disconnected demos — real replies come from the API.
 async function demoReply(userText: string): Promise<string> {
   await new Promise((r) => setTimeout(r, 600 + Math.random() * 400));
   const t = userText.toLowerCase();
@@ -291,5 +291,5 @@ async function demoReply(userText: string): Promise<string> {
   if (t.includes("nairobi")) {
     return "Sisters of Nairobi: 30 veils gifted across 2 shipments. Sister Grace replied to your thank-you note yesterday — it's in your inbox.";
   }
-  return "I can help with that. (Demo mode — Phase 3 will wire me to real Claude tool-use so I can actually pull the data and act on it.)";
+  return "I can help with that. (Offline fallback — try again in a moment.)";
 }

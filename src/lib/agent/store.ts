@@ -2,9 +2,9 @@
 // Lace — In-memory agent store (dev + demo).
 //
 // Holds approvals, agent messages, and audit entries in process
-// memory while we iterate on the console. When Phase 2 applies
-// the migrations, every function here gets a sibling that writes
-// to lace.* tables — callers (chat, API, cron) keep their shape.
+// memory while we iterate on the console. Every function here gets
+// a DB-backed sibling once the lace.* tables are live; callers
+// (chat, API, cron) keep their shape.
 //
 // Seeds from mock.ts on first access so the console boots with a
 // live-feeling queue. Subsequent writes (from /admin/chat, from

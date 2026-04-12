@@ -20,19 +20,9 @@ import {
 import { briefingProse } from "@/lib/agent/format";
 import { computeScorecard } from "@/lib/lace/scorecard";
 import { PLAYBOOKS } from "@/lib/agent/playbooks";
+import { formatCents, timeAgo } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
-
-function cents(c: number) {
-  return `$${(c / 100).toFixed(0)}`;
-}
-
-function timeAgo(iso: string) {
-  const h = (Date.now() - new Date(iso).getTime()) / 3600_000;
-  if (h < 1) return `${Math.max(1, Math.round(h * 60))}m ago`;
-  if (h < 24) return `${Math.round(h)}h ago`;
-  return `${Math.round(h / 24)}d ago`;
-}
 
 export default async function AdminOverview() {
   const [briefing, approvals, inbox, recent] = await Promise.all([
@@ -50,7 +40,7 @@ export default async function AdminOverview() {
     {
       label: "New orders today",
       value: briefing.newOrders.toString(),
-      hint: cents(briefing.revenueCents) + " in revenue",
+      hint: formatCents(briefing.revenueCents) + " in revenue",
       icon: ShoppingBag,
       href: "/admin/orders",
     },
@@ -292,7 +282,7 @@ export default async function AdminOverview() {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-medium text-charcoal">
-                      {cents(o.total_cents)}
+                      {formatCents(o.total_cents)}
                     </p>
                     <p className="text-xs text-warm-gray capitalize">
                       {o.status}
