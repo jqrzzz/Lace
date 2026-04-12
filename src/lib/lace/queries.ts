@@ -15,14 +15,16 @@
 
 import { getLaceDb, isLaceDbConfigured } from "@/lib/db";
 import {
-  MOCK_APPROVALS,
   MOCK_BRIEFING,
   MOCK_CUSTOMERS,
-  MOCK_INBOX,
-  MOCK_MESSAGES,
   MOCK_ORDERS,
-  MOCK_SESSIONS,
 } from "./mock";
+import {
+  listApprovalsStore,
+  listInboxStore,
+  listMessagesStore,
+  listSessionsStore,
+} from "@/lib/agent/store";
 import type {
   AgentMessage,
   AgentSession,
@@ -100,12 +102,9 @@ export async function listInbox(
   status?: InboxMessage["status"]
 ): Promise<InboxMessage[]> {
   const db = getLaceDb();
-  if (!db) {
-    return status
-      ? MOCK_INBOX.filter((m) => m.status === status)
-      : MOCK_INBOX;
-  }
-  return MOCK_INBOX;
+  const rows = listInboxStore();
+  if (!db) return status ? rows.filter((m) => m.status === status) : rows;
+  return rows;
 }
 
 // ── Mission ────────────────────────────────────────────────────
@@ -134,28 +133,19 @@ export async function listMissionRecipients(): Promise<
 export async function listApprovals(
   status: ApprovalRow["status"] = "pending"
 ): Promise<ApprovalRow[]> {
-  const db = getLaceDb();
-  if (!db) return MOCK_APPROVALS.filter((a) => a.status === status);
-  return MOCK_APPROVALS.filter((a) => a.status === status);
+  return listApprovalsStore(status);
 }
 
 // ── Agent sessions + messages ──────────────────────────────────
 
 export async function listSessions(): Promise<AgentSession[]> {
-  const db = getLaceDb();
-  if (!db) return MOCK_SESSIONS;
-  return MOCK_SESSIONS;
+  return listSessionsStore();
 }
 
 export async function listMessages(
   sessionId: string
 ): Promise<AgentMessage[]> {
-  const db = getLaceDb();
-  if (!db)
-    return MOCK_MESSAGES.filter((m) => m.session_id === sessionId).sort(
-      (a, b) => a.turn - b.turn
-    );
-  return MOCK_MESSAGES.filter((m) => m.session_id === sessionId);
+  return listMessagesStore(sessionId);
 }
 
 // ── Briefing (today's numbers) ─────────────────────────────────

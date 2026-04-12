@@ -5,6 +5,8 @@ import { Check, X, Clock, ShieldAlert, DollarSign, Pencil } from "lucide-react";
 import type { ApprovalRow, ApprovalRisk } from "@/lib/lace/types";
 import { cn } from "@/lib/utils";
 import { formatValue, timeLeft } from "@/lib/format";
+import { fetchJSON, ApiClientError } from "@/lib/client";
+import { useToast } from "@/components/ui/Toast";
 
 const RISK_STYLE: Record<
   ApprovalRisk,
@@ -47,20 +49,70 @@ export default function ApprovalsQueue({
   const [tab, setTab] = useState<"pending" | "history">("pending");
   const [noteFor, setNoteFor] = useState<string | null>(null);
   const [note, setNote] = useState("");
+  const [deciding, setDeciding] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  function decide(id: string, decision: "approved" | "denied") {
+  async function decide(id: string, decision: "approved" | "denied") {
     const row = pending.find((r) => r.id === id);
-    if (!row) return;
-    const updated: ApprovalRow = {
+    if (!row || deciding) return;
+
+    // Optimistic: remove from pending, tuck into the right history tab.
+    const optimistic: ApprovalRow = {
       ...row,
       status: decision,
       executed_at: decision === "approved" ? new Date().toISOString() : null,
     };
     setPending((p) => p.filter((r) => r.id !== id));
-    if (decision === "approved") setApproved((a) => [updated, ...a]);
-    else setDenied((d) => [updated, ...d]);
+    if (decision === "approved") setApproved((a) => [optimistic, ...a]);
+    else setDenied((d) => [optimistic, ...d]);
     setNoteFor(null);
+    const savedNote = note;
     setNote("");
+    setDeciding(id);
+
+    try {
+      const { data } = await fetchJSON<{
+        approval: ApprovalRow;
+        effects: string[];
+      }>("/api/agent/approvals/decide", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ id, decision, note: savedNote || undefined }),
+      });
+
+      // Reconcile with server truth (keeps executed_at consistent).
+      if (decision === "approved") {
+        setApproved((a) =>
+          a.map((r) => (r.id === id ? data.approval : r))
+        );
+        toast(
+          data.effects.length > 0
+            ? `Approved — ${data.effects[0]}`
+            : "Approved.",
+          "success"
+        );
+      } else {
+        setDenied((d) =>
+          d.map((r) => (r.id === id ? data.approval : r))
+        );
+        toast("Denied.", "info");
+      }
+    } catch (err) {
+      // Roll back the optimistic move.
+      setPending((p) => [row, ...p]);
+      if (decision === "approved") {
+        setApproved((a) => a.filter((r) => r.id !== id));
+      } else {
+        setDenied((d) => d.filter((r) => r.id !== id));
+      }
+      const msg =
+        err instanceof ApiClientError
+          ? err.message
+          : "Couldn't save that decision.";
+      toast(msg, "error");
+    } finally {
+      setDeciding(null);
+    }
   }
 
   return (
@@ -177,14 +229,16 @@ export default function ApprovalsQueue({
                       <div className="flex gap-2">
                         <button
                           onClick={() => decide(row.id, "approved")}
-                          className="inline-flex items-center gap-2 bg-burgundy text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-burgundy/90 transition-colors"
+                          disabled={deciding === row.id}
+                          className="inline-flex items-center gap-2 bg-burgundy text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-burgundy/90 transition-colors disabled:opacity-60"
                         >
                           <Check className="w-4 h-4" />
                           Approve
                         </button>
                         <button
                           onClick={() => decide(row.id, "denied")}
-                          className="inline-flex items-center gap-2 bg-white border border-border text-charcoal px-5 py-2.5 rounded-xl text-sm font-medium hover:border-red-600 hover:text-red-700 transition-colors"
+                          disabled={deciding === row.id}
+                          className="inline-flex items-center gap-2 bg-white border border-border text-charcoal px-5 py-2.5 rounded-xl text-sm font-medium hover:border-red-600 hover:text-red-700 transition-colors disabled:opacity-60"
                         >
                           <X className="w-4 h-4" />
                           Deny
