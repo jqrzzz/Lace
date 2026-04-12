@@ -29,7 +29,7 @@ export default function HomePage() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-0 w-full">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             <div className="max-w-xl animate-fade-up">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/60 backdrop-blur-sm rounded-full border border-border-light mb-6">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-pearl/60 backdrop-blur-sm rounded-full border border-border-light mb-6">
                 <span className="w-1.5 h-1.5 rounded-full bg-gold animate-shimmer" />
                 <span className="text-[11px] tracking-[0.2em] uppercase text-gold-dark font-medium">
                   Lace by La Luz

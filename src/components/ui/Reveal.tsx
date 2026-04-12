@@ -23,10 +23,21 @@ export default function Reveal({
 }: RevealProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
 
   useEffect(() => {
+    const mql = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+    if (mql?.matches) setReduceMotion(true);
+
     const el = ref.current;
     if (!el) return;
+
+    // When reduced motion is requested, skip the observer dance entirely —
+    // content is revealed immediately without transform/opacity animation.
+    if (mql?.matches) {
+      setIsVisible(true);
+      return;
+    }
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -59,7 +70,9 @@ export default function Reveal({
         transform: isVisible
           ? "translateY(0) translateX(0) scale(1)"
           : transforms[direction],
-        transition: `opacity ${duration}s cubic-bezier(0.22, 1, 0.36, 1) ${delay}s, transform ${duration}s cubic-bezier(0.22, 1, 0.36, 1) ${delay}s`,
+        transition: reduceMotion
+          ? "none"
+          : `opacity ${duration}s cubic-bezier(0.22, 1, 0.36, 1) ${delay}s, transform ${duration}s cubic-bezier(0.22, 1, 0.36, 1) ${delay}s`,
         willChange: isVisible ? "auto" : "opacity, transform",
       }}
     >

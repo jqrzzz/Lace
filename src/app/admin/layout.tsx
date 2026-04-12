@@ -9,14 +9,24 @@ import {
   Heart,
   Sparkles,
   ArrowLeft,
+  ShieldCheck,
+  MessageSquare,
+  Inbox,
+  Zap,
+  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/products", label: "Products", icon: ShoppingBag },
+  { href: "/admin", label: "Overview", icon: LayoutDashboard },
+  { href: "/admin/approvals", label: "Approvals", icon: ShieldCheck },
+  { href: "/admin/chat", label: "Agent Chat", icon: MessageSquare },
+  { href: "/admin/playbooks", label: "Playbooks", icon: Zap },
+  { href: "/admin/inbox", label: "Inbox", icon: Inbox },
   { href: "/admin/orders", label: "Orders", icon: ClipboardList },
+  { href: "/admin/products", label: "Products", icon: ShoppingBag },
   { href: "/admin/mission", label: "Mission", icon: Heart },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
 export default function AdminLayout({
@@ -60,15 +70,18 @@ export default function AdminLayout({
         </nav>
 
         <div className="px-3 pb-4">
-          <div className="bg-gold/10 rounded-xl px-4 py-3 border border-gold/20">
+          <Link
+            href="/admin/chat"
+            className="block bg-gold/10 rounded-xl px-4 py-3 border border-gold/20 hover:bg-gold/15 transition-colors"
+          >
             <div className="flex items-center gap-2 mb-1">
               <Sparkles className="w-3.5 h-3.5 text-gold" />
-              <span className="text-xs font-medium text-gold">AI Assistant</span>
+              <span className="text-xs font-medium text-gold">Ask Luz</span>
             </div>
             <p className="text-[10px] text-soft-gray">
-              Ask me to write product descriptions, social posts, or draft customer emails.
+              Your AI assistant — ask anything about the store, customers, or write something for you.
             </p>
-          </div>
+          </Link>
         </div>
 
         <Link

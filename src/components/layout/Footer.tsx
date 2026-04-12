@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Heart, Check } from "lucide-react";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 
 export default function Footer() {
   const [subscribed, setSubscribed] = useState(false);
@@ -126,6 +127,10 @@ export default function Footer() {
               {[
                 { href: "/story", label: "Our Story" },
                 { href: "/mission", label: "Buy One, Give One" },
+                { href: "/journey", label: "Our Journey" },
+                { href: "/journal", label: "Journal" },
+                { href: "/centennial", label: "100 Years · Centennial" },
+                { href: "/founder", label: "Founder's Letter" },
                 { href: "/faq", label: "FAQ" },
                 { href: "/contact", label: "Contact Us" },
               ].map((link) => (
@@ -145,6 +150,8 @@ export default function Footer() {
             </h4>
             <ul className="space-y-3">
               {[
+                { href: "/wholesale", label: "Wholesale" },
+                { href: "/press", label: "Press" },
                 { href: "/privacy", label: "Privacy Policy" },
                 { href: "/terms", label: "Terms of Service" },
                 { href: "/returns", label: "Returns & Exchanges" },
@@ -195,17 +202,46 @@ export default function Footer() {
           </div>
         </div>
 
+        {/* Heritage line — La Luz Del Mundo Centennial */}
+        <div className="border-t border-white/[0.08] pt-8 pb-6">
+          <div className="flex flex-col items-center text-center gap-3">
+            <Link
+              href="/centennial"
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-gold/15 via-gold/10 to-gold/15 border border-gold/30 shadow-[0_0_20px_rgba(224,180,112,0.15)] hover:border-gold/60 hover:shadow-[0_0_30px_rgba(224,180,112,0.25)] transition-all duration-300"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />
+              <span className="text-[10px] tracking-[0.3em] uppercase text-gold font-medium">
+                Centennial · 1926 – 2026
+              </span>
+            </Link>
+            <p className="text-[13px] text-pearl/90 leading-relaxed max-w-xl">
+              Proudly rooted in{" "}
+              <span className="italic text-gold-light">La Luz del Mundo</span>
+              , celebrating{" "}
+              <span className="text-gold-light font-medium">
+                100 years of faith
+              </span>{" "}
+              this year. Three generations of our family have worshipped in
+              this community — every veil we craft is a tribute to that
+              century of sisterhood.
+            </p>
+          </div>
+        </div>
+
         {/* Bottom Bar */}
         <div className="border-t border-white/[0.08] py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-[11px] text-soft-gray/60">
             &copy; {new Date().getFullYear()} Lace by La Luz. All rights
             reserved.
           </p>
-          <p className="text-[11px] text-soft-gray/60 flex items-center gap-1.5">
-            Made with{" "}
-            <Heart className="w-3 h-3 text-rose-gold fill-rose-gold" /> for
-            sisters everywhere
-          </p>
+          <div className="flex items-center gap-5">
+            <ThemeToggle />
+            <p className="text-[11px] text-soft-gray/60 flex items-center gap-1.5">
+              Made with{" "}
+              <Heart className="w-3 h-3 text-rose-gold fill-rose-gold" /> for
+              sisters everywhere
+            </p>
+          </div>
         </div>
       </div>
     </footer>
