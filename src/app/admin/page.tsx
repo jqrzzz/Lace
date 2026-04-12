@@ -1,141 +1,186 @@
-"use client";
-
+import Link from "next/link";
 import {
   ShoppingBag,
-  DollarSign,
-  Heart,
-  TrendingUp,
+  ShieldCheck,
+  Inbox,
+  Truck,
   Sparkles,
-  Send,
+  ArrowUpRight,
 } from "lucide-react";
-import { useState } from "react";
+import {
+  getTodayBriefing,
+  isLiveData,
+  listApprovals,
+  listInbox,
+  listOrders,
+} from "@/lib/lace/queries";
+import { briefingProse } from "@/lib/agent/format";
 
-const STATS = [
-  {
-    label: "Total Orders",
-    value: "0",
-    change: "Pre-launch",
-    icon: ShoppingBag,
-  },
-  {
-    label: "Revenue",
-    value: "$0",
-    change: "Pre-launch",
-    icon: DollarSign,
-  },
-  {
-    label: "Veils Gifted",
-    value: "0",
-    change: "Mission starting",
-    icon: Heart,
-  },
-  {
-    label: "Conversion Rate",
-    value: "—",
-    change: "Awaiting data",
-    icon: TrendingUp,
-  },
-];
+export const dynamic = "force-dynamic";
 
-const RECENT_ORDERS: {
-  id: string;
-  customer: string;
-  items: string;
-  total: string;
-  status: string;
-}[] = [];
+function cents(c: number) {
+  return `$${(c / 100).toFixed(0)}`;
+}
 
-export default function AdminDashboard() {
-  const [aiPrompt, setAiPrompt] = useState("");
-  const [aiResponse, setAiResponse] = useState("");
-  const [aiLoading, setAiLoading] = useState(false);
+function timeAgo(iso: string) {
+  const h = (Date.now() - new Date(iso).getTime()) / 3600_000;
+  if (h < 1) return `${Math.max(1, Math.round(h * 60))}m ago`;
+  if (h < 24) return `${Math.round(h)}h ago`;
+  return `${Math.round(h / 24)}d ago`;
+}
 
-  const handleAi = async () => {
-    if (!aiPrompt.trim()) return;
-    setAiLoading(true);
-    setAiResponse("");
-    try {
-      const res = await fetch("/api/ai", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: aiPrompt }),
-      });
-      const data = await res.json();
-      setAiResponse(data.response || data.error || "No response received.");
-    } catch {
-      setAiResponse("Failed to connect to AI assistant. Please try again.");
-    }
-    setAiLoading(false);
-  };
+export default async function AdminOverview() {
+  const [briefing, approvals, inbox, recent] = await Promise.all([
+    getTodayBriefing(),
+    listApprovals("pending"),
+    listInbox("new"),
+    listOrders({ limit: 5 }),
+  ]);
+
+  const live = isLiveData();
+
+  const stats = [
+    {
+      label: "New orders today",
+      value: briefing.newOrders.toString(),
+      hint: cents(briefing.revenueCents) + " in revenue",
+      icon: ShoppingBag,
+      href: "/admin/orders",
+    },
+    {
+      label: "Pending approvals",
+      value: briefing.pendingApprovals.toString(),
+      hint:
+        briefing.pendingApprovals > 0
+          ? "waiting on you"
+          : "all clear",
+      icon: ShieldCheck,
+      href: "/admin/approvals",
+    },
+    {
+      label: "New messages",
+      value: briefing.newInboxMessages.toString(),
+      hint: "customers waiting",
+      icon: Inbox,
+      href: "/admin/inbox",
+    },
+    {
+      label: "To ship",
+      value: briefing.unshippedOrders.toString(),
+      hint: "still in the atelier",
+      icon: Truck,
+      href: "/admin/orders",
+    },
+  ];
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="font-heading text-3xl text-charcoal mb-1">Dashboard</h1>
-        <p className="text-sm text-warm-gray">
-          Welcome back. Here&apos;s your store at a glance.
-        </p>
+      <div className="mb-8 flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="font-heading text-3xl text-charcoal mb-1">Overview</h1>
+          <p className="text-sm text-warm-gray">
+            Welcome back. Here&apos;s your store at a glance.
+          </p>
+        </div>
+        {!live && (
+          <span className="text-[10px] uppercase tracking-[0.18em] text-warm-gray bg-cream border border-border rounded-full px-3 py-1.5">
+            Demo mode · no DB connected
+          </span>
+        )}
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {STATS.map((stat) => (
-          <div
-            key={stat.label}
-            className="bg-white rounded-2xl border border-border-light p-5"
+      {/* Morning briefing — the AI-written one-paragraph summary */}
+      <div className="bg-gradient-to-br from-burgundy to-charcoal text-pearl rounded-2xl p-6 mb-6">
+        <div className="flex items-center gap-2 mb-3 text-gold">
+          <Sparkles className="w-4 h-4" />
+          <span className="text-[10px] uppercase tracking-[0.25em]">
+            Morning briefing
+          </span>
+        </div>
+        <p className="text-lg leading-relaxed">{briefingProse(briefing)}</p>
+        <div className="mt-5 flex gap-3 flex-wrap">
+          <Link
+            href="/admin/chat"
+            className="inline-flex items-center gap-2 bg-white text-charcoal text-sm font-medium px-4 py-2 rounded-full hover:bg-gold hover:text-charcoal transition-colors"
+          >
+            Ask Luz a question
+            <ArrowUpRight className="w-3.5 h-3.5" />
+          </Link>
+          {briefing.pendingApprovals > 0 && (
+            <Link
+              href="/admin/approvals"
+              className="inline-flex items-center gap-2 bg-gold/20 border border-gold/40 text-pearl text-sm font-medium px-4 py-2 rounded-full hover:bg-gold/30 transition-colors"
+            >
+              Review {briefing.pendingApprovals} approval
+              {briefing.pendingApprovals === 1 ? "" : "s"}
+            </Link>
+          )}
+        </div>
+      </div>
+
+      {/* Stat tiles */}
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {stats.map((s) => (
+          <Link
+            key={s.label}
+            href={s.href}
+            className="group bg-white rounded-2xl border border-border-light p-5 hover:border-gold transition-colors"
           >
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs text-warm-gray uppercase tracking-wide">
-                {stat.label}
+                {s.label}
               </span>
-              <stat.icon className="w-4 h-4 text-gold" />
+              <s.icon className="w-4 h-4 text-gold" />
             </div>
-            <p className="text-2xl font-heading text-charcoal">{stat.value}</p>
-            <p className="text-xs text-soft-gray mt-1">{stat.change}</p>
-          </div>
+            <p className="text-3xl font-heading text-charcoal">{s.value}</p>
+            <p className="text-xs text-soft-gray mt-1 group-hover:text-charcoal transition-colors">
+              {s.hint}
+            </p>
+          </Link>
         ))}
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* Recent Orders */}
+        {/* Approvals preview */}
         <div className="bg-white rounded-2xl border border-border-light p-6">
-          <h2 className="font-heading text-xl text-charcoal mb-4">
-            Recent Orders
-          </h2>
-          {RECENT_ORDERS.length === 0 ? (
-            <div className="text-center py-12">
-              <ShoppingBag className="w-10 h-10 text-soft-gray mx-auto mb-3" />
-              <p className="text-sm text-warm-gray mb-4">
-                No orders yet. Share your store to start receiving orders!
-              </p>
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText("https://lacebylaluz.com");
-                  alert("Store URL copied to clipboard!");
-                }}
-                className="text-xs text-burgundy hover:underline"
-              >
-                Copy store link
-              </button>
-            </div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-heading text-xl text-charcoal">
+              Waiting on you
+            </h2>
+            <Link
+              href="/admin/approvals"
+              className="text-xs text-burgundy hover:underline"
+            >
+              See all →
+            </Link>
+          </div>
+          {approvals.length === 0 ? (
+            <p className="text-sm text-warm-gray py-8 text-center">
+              No approvals pending. Enjoy the quiet.
+            </p>
           ) : (
             <div className="space-y-3">
-              {RECENT_ORDERS.map((order) => (
+              {approvals.slice(0, 3).map((a) => (
                 <div
-                  key={order.id}
-                  className="flex items-center justify-between p-3 bg-cream rounded-xl"
+                  key={a.id}
+                  className="flex items-start gap-3 p-3 bg-cream rounded-xl"
                 >
-                  <div>
-                    <p className="text-sm font-medium text-charcoal">
-                      {order.customer}
+                  <div
+                    className={`mt-1 w-2 h-2 rounded-full ${
+                      a.risk === "money"
+                        ? "bg-burgundy"
+                        : a.risk === "destructive"
+                        ? "bg-red-600"
+                        : "bg-gold"
+                    }`}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-charcoal font-medium">
+                      {a.human_summary}
                     </p>
-                    <p className="text-xs text-warm-gray">{order.items}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-charcoal">
-                      {order.total}
+                    <p className="text-xs text-warm-gray mt-0.5">
+                      {a.requested_by_label} · {timeAgo(a.created_at)}
                     </p>
-                    <p className="text-xs text-warm-gray">{order.status}</p>
                   </div>
                 </div>
               ))}
@@ -143,68 +188,93 @@ export default function AdminDashboard() {
           )}
         </div>
 
-        {/* AI Assistant */}
+        {/* Recent orders */}
         <div className="bg-white rounded-2xl border border-border-light p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Sparkles className="w-5 h-5 text-gold" />
+          <div className="flex items-center justify-between mb-4">
             <h2 className="font-heading text-xl text-charcoal">
-              AI Assistant
+              Recent orders
             </h2>
+            <Link
+              href="/admin/orders"
+              className="text-xs text-burgundy hover:underline"
+            >
+              See all →
+            </Link>
           </div>
-
-          <p className="text-sm text-warm-gray mb-4">
-            Ask me to write product descriptions, Instagram captions, customer
-            emails, or analyze your sales data.
-          </p>
-
-          <div className="space-y-3">
-            {/* Quick prompts */}
-            <div className="flex flex-wrap gap-2">
-              {[
-                "Write an Instagram caption for Grace Veil",
-                "Draft a thank you email for new customers",
-                "Create a product description for Rosa Veil",
-              ].map((prompt) => (
-                <button
-                  key={prompt}
-                  onClick={() => setAiPrompt(prompt)}
-                  className="px-3 py-1.5 text-xs bg-cream border border-border rounded-full text-warm-gray hover:text-charcoal hover:border-charcoal transition-colors"
+          {recent.length === 0 ? (
+            <p className="text-sm text-warm-gray py-8 text-center">
+              No orders yet. Share your store to start receiving orders.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {recent.map((o) => (
+                <div
+                  key={o.id}
+                  className="flex items-center justify-between p-3 bg-cream rounded-xl"
                 >
-                  {prompt}
-                </button>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-charcoal truncate">
+                      {o.customer_name}
+                    </p>
+                    <p className="text-xs text-warm-gray">
+                      {o.order_number} · {o.item_count} item
+                      {o.item_count === 1 ? "" : "s"}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-charcoal">
+                      {cents(o.total_cents)}
+                    </p>
+                    <p className="text-xs text-warm-gray capitalize">
+                      {o.status}
+                    </p>
+                  </div>
+                </div>
               ))}
             </div>
-
-            <div className="flex gap-2">
-              <input
-                value={aiPrompt}
-                onChange={(e) => setAiPrompt(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleAi()}
-                placeholder="Ask the AI assistant..."
-                className="flex-1 px-4 py-2.5 border border-border rounded-xl text-sm text-charcoal focus:outline-none focus:border-gold bg-ivory"
-              />
-              <button
-                onClick={handleAi}
-                disabled={aiLoading}
-                className="px-4 py-2.5 bg-burgundy text-white rounded-xl hover:bg-burgundy/90 transition-colors disabled:opacity-50"
-              >
-                <Send className="w-4 h-4" />
-              </button>
-            </div>
-
-            {aiResponse && (
-              <div className="bg-ivory border border-border-light rounded-xl p-4">
-                <p className="text-xs text-gold font-medium mb-2">
-                  AI Response
-                </p>
-                <p className="text-sm text-warm-gray whitespace-pre-line">
-                  {aiResponse}
-                </p>
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </div>
+
+      {/* Inbox preview */}
+      {inbox.length > 0 && (
+        <div className="bg-white rounded-2xl border border-border-light p-6 mt-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-heading text-xl text-charcoal">
+              New messages
+            </h2>
+            <Link
+              href="/admin/inbox"
+              className="text-xs text-burgundy hover:underline"
+            >
+              Open inbox →
+            </Link>
+          </div>
+          <div className="space-y-3">
+            {inbox.slice(0, 3).map((m) => (
+              <div key={m.id} className="p-4 bg-cream rounded-xl">
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-sm font-medium text-charcoal">
+                    {m.name}{" "}
+                    <span className="text-warm-gray font-normal">
+                      · {m.email}
+                    </span>
+                  </p>
+                  <span className="text-xs text-warm-gray">
+                    {timeAgo(m.created_at)}
+                  </span>
+                </div>
+                {m.subject && (
+                  <p className="text-xs text-warm-gray mb-1">{m.subject}</p>
+                )}
+                <p className="text-sm text-charcoal line-clamp-2">
+                  {m.message}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

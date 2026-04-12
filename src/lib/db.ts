@@ -20,7 +20,7 @@
 // to change the env vars — nothing in the callers needs to change.
 // ─────────────────────────────────────────────────────────────
 
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 
 const LACE_SCHEMA = "lace" as const;
 
@@ -33,7 +33,7 @@ function url(): string | null {
  * Returns null if env is not configured so callers can fall back to
  * static data during local dev.
  */
-export function getLaceDb(): SupabaseClient | null {
+export function getLaceDb() {
   const u = url();
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!u || !serviceKey) return null;
@@ -47,7 +47,7 @@ export function getLaceDb(): SupabaseClient | null {
  * Browser-safe client. Uses the anon key and is subject to RLS.
  * Returns null if env is not configured.
  */
-export function getLacePublicDb(): SupabaseClient | null {
+export function getLacePublicDb() {
   const u = url();
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!u || !anonKey) return null;
