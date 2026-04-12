@@ -42,18 +42,50 @@ export default function AgentChat({
     setMessages((m) => [...m, userMsg]);
     setInput("");
 
-    // Local demo reply. Phase 3 will replace this with a /api/agent call
-    // that returns tool calls + approval ids.
-    const reply = await demoReply(text);
-    const assistantMsg: AgentMessage = {
-      id: `local-${Date.now() + 1}`,
-      session_id: activeId,
-      turn: turn + 1,
-      role: "assistant",
-      content: reply,
-      created_at: new Date().toISOString(),
-    };
-    setMessages((m) => [...m, assistantMsg]);
+    try {
+      const res = await fetch("/api/agent/turn", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          sessionId: activeId,
+          userText: text,
+          actor: "Luz Maria (owner)",
+        }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { messages: AgentMessage[] };
+        if (Array.isArray(data.messages) && data.messages.length > 0) {
+          setMessages((m) => [...m, ...data.messages]);
+        }
+      } else {
+        // Fall back to a canned reply so the UI doesn't dead-end.
+        const reply = await demoReply(text);
+        setMessages((m) => [
+          ...m,
+          {
+            id: `local-${Date.now() + 1}`,
+            session_id: activeId,
+            turn: turn + 1,
+            role: "assistant",
+            content: reply,
+            created_at: new Date().toISOString(),
+          },
+        ]);
+      }
+    } catch {
+      const reply = await demoReply(text);
+      setMessages((m) => [
+        ...m,
+        {
+          id: `local-${Date.now() + 1}`,
+          session_id: activeId,
+          turn: turn + 1,
+          role: "assistant",
+          content: reply,
+          created_at: new Date().toISOString(),
+        },
+      ]);
+    }
     setSending(false);
   }
 
@@ -146,8 +178,8 @@ export default function AgentChat({
             </button>
           </form>
           <p className="text-[10px] text-warm-gray mt-2 text-center">
-            Demo mode · Responses are canned. Phase 3 wires this to Claude with
-            tool-use.
+            Luz uses Claude + tool-use. Money and destructive steps route to
+            Approvals.
           </p>
         </div>
       </div>

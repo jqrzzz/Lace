@@ -6,6 +6,9 @@ import {
   Truck,
   Sparkles,
   ArrowUpRight,
+  Heart,
+  TrendingUp,
+  Zap,
 } from "lucide-react";
 import {
   getTodayBriefing,
@@ -15,6 +18,8 @@ import {
   listOrders,
 } from "@/lib/lace/queries";
 import { briefingProse } from "@/lib/agent/format";
+import { computeScorecard } from "@/lib/lace/scorecard";
+import { PLAYBOOKS } from "@/lib/agent/playbooks";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +41,8 @@ export default async function AdminOverview() {
     listInbox("new"),
     listOrders({ limit: 5 }),
   ]);
+  const scorecard = computeScorecard();
+  const quickPlaybooks = PLAYBOOKS.filter((p) => p.trigger.kind !== "event").slice(0, 4);
 
   const live = isLiveData();
 
@@ -115,6 +122,68 @@ export default async function AdminOverview() {
               {briefing.pendingApprovals === 1 ? "" : "s"}
             </Link>
           )}
+        </div>
+      </div>
+
+      {/* Autonomy scorecard — the "how much is Luz doing for us" card */}
+      <div className="grid md:grid-cols-[2fr_3fr] gap-4 mb-6">
+        <div className="bg-white rounded-2xl border border-border-light p-6">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-gold" />
+              <span className="text-[10px] uppercase tracking-[0.18em] text-warm-gray">
+                Autonomy · {scorecard.window_label}
+              </span>
+            </div>
+            <Link
+              href="/admin/settings"
+              className="text-[10px] text-warm-gray hover:text-charcoal"
+            >
+              tune →
+            </Link>
+          </div>
+          <div className="flex items-baseline gap-2 mb-2">
+            <p className="text-4xl font-heading text-charcoal">
+              {Math.round(scorecard.autonomous_share * 100)}%
+            </p>
+            <p className="text-xs text-warm-gray">of actions run by Luz</p>
+          </div>
+          <div className="mt-3 h-1.5 bg-cream rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-gold to-burgundy"
+              style={{ width: `${scorecard.autonomous_share * 100}%` }}
+            />
+          </div>
+          <p className="text-[11px] text-warm-gray mt-3 leading-relaxed">
+            {scorecard.total_actions} total actions · {scorecard.approvals_reviewed}{" "}
+            needed your tap
+          </p>
+        </div>
+
+        <div className="bg-gradient-to-br from-burgundy/5 to-gold/10 rounded-2xl border border-gold/20 p-6 flex flex-col sm:flex-row items-start gap-5">
+          <div className="w-10 h-10 rounded-xl bg-gold/20 flex items-center justify-center flex-shrink-0">
+            <Heart className="w-5 h-5 text-gold-dark" />
+          </div>
+          <div className="flex-1">
+            <p className="text-[10px] uppercase tracking-[0.18em] text-gold-dark mb-1">
+              Mission impact
+            </p>
+            <p className="text-lg text-charcoal leading-snug mb-2">
+              Luz saved about{" "}
+              <span className="font-heading text-2xl text-burgundy">
+                ${scorecard.dollars_saved}
+              </span>{" "}
+              in labor this week — enough to fund{" "}
+              <span className="font-heading text-2xl text-burgundy">
+                {scorecard.veils_funded_by_savings}
+              </span>{" "}
+              more gifted veil{scorecard.veils_funded_by_savings === 1 ? "" : "s"}.
+            </p>
+            <p className="text-xs text-warm-gray">
+              {scorecard.minutes_saved} minutes of human CS time absorbed by the
+              agent. Every minute saved is a sister reached.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -233,6 +302,53 @@ export default async function AdminOverview() {
               ))}
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Playbooks — quick launch */}
+      <div className="bg-white rounded-2xl border border-border-light p-6 mt-6">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <div>
+            <h2 className="font-heading text-xl text-charcoal flex items-center gap-2">
+              <Zap className="w-4 h-4 text-gold" />
+              Playbooks
+            </h2>
+            <p className="text-xs text-warm-gray mt-0.5">
+              Canned workflows Luz can run end-to-end. Money and destructive
+              steps still come back to you.
+            </p>
+          </div>
+          <Link
+            href="/admin/playbooks"
+            className="text-xs text-burgundy hover:underline"
+          >
+            See all →
+          </Link>
+        </div>
+        <div className="grid sm:grid-cols-2 gap-3">
+          {quickPlaybooks.map((p) => (
+            <Link
+              key={p.id}
+              href={`/admin/playbooks?run=${p.id}`}
+              className="group flex items-start gap-3 p-4 bg-cream rounded-xl hover:bg-white hover:border-gold border border-transparent transition-all"
+            >
+              <div className="w-8 h-8 rounded-lg bg-white border border-border-light flex items-center justify-center flex-shrink-0">
+                <Zap className="w-3.5 h-3.5 text-gold" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-charcoal">{p.name}</p>
+                <p className="text-xs text-warm-gray mt-0.5 line-clamp-2">
+                  {p.description}
+                </p>
+                <p className="text-[10px] uppercase tracking-wide text-gold-dark mt-1.5">
+                  {p.trigger.kind === "scheduled"
+                    ? p.trigger.description
+                    : "Run anytime"}
+                </p>
+              </div>
+              <ArrowUpRight className="w-3.5 h-3.5 text-warm-gray group-hover:text-charcoal transition-colors" />
+            </Link>
+          ))}
         </div>
       </div>
 

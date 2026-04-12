@@ -12,6 +12,8 @@ import {
   ShieldCheck,
   MessageSquare,
   Inbox,
+  Zap,
+  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,10 +21,12 @@ const NAV = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
   { href: "/admin/approvals", label: "Approvals", icon: ShieldCheck },
   { href: "/admin/chat", label: "Agent Chat", icon: MessageSquare },
+  { href: "/admin/playbooks", label: "Playbooks", icon: Zap },
   { href: "/admin/inbox", label: "Inbox", icon: Inbox },
   { href: "/admin/orders", label: "Orders", icon: ClipboardList },
   { href: "/admin/products", label: "Products", icon: ShoppingBag },
   { href: "/admin/mission", label: "Mission", icon: Heart },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
 export default function AdminLayout({
