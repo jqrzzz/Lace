@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Mail, Clock, Heart, Send, Check, Sparkles, Loader2 } from "lucide-react";
 import Reveal from "@/components/ui/Reveal";
 
@@ -8,9 +9,14 @@ export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [consent, setConsent] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!consent) {
+      setError("Please confirm consent to submit your message.");
+      return;
+    }
     setLoading(true);
     setError("");
 
@@ -20,6 +26,7 @@ export default function ContactPage() {
       email: (form.elements.namedItem("email") as HTMLInputElement).value,
       subject: (form.elements.namedItem("subject") as HTMLSelectElement).value,
       message: (form.elements.namedItem("message") as HTMLTextAreaElement).value,
+      consent: true,
     };
 
     try {
@@ -152,6 +159,26 @@ export default function ContactPage() {
                         placeholder="How can we help?"
                       />
                     </div>
+
+                    <label className="flex items-start gap-2.5 text-[12px] text-warm-gray leading-relaxed cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={consent}
+                        onChange={(e) => setConsent(e.target.checked)}
+                        className="mt-0.5 accent-burgundy"
+                      />
+                      <span>
+                        I understand my message will be read by the Lace by La
+                        Luz team. By submitting I accept the{" "}
+                        <Link
+                          href="/privacy"
+                          className="text-burgundy underline underline-offset-2 hover:text-burgundy/70"
+                        >
+                          Privacy Policy
+                        </Link>
+                        .
+                      </span>
+                    </label>
 
                     {error && (
                       <p className="text-sm text-red-600 bg-red-50 rounded-xl px-4 py-2.5">

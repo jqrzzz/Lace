@@ -177,6 +177,32 @@ export default function TermsOfServicePage() {
 
             <div>
               <h2 className="font-heading text-2xl text-charcoal mb-4">
+                Warranty Disclaimer
+              </h2>
+              <div
+                className="gold-line mb-4 opacity-30"
+                style={{ width: 40 }}
+              />
+              <p className="text-warm-gray leading-[1.8]">
+                Our site and products are provided &ldquo;as is&rdquo; and
+                &ldquo;as available,&rdquo; without warranties of any kind,
+                either express or implied, including but not limited to implied
+                warranties of merchantability, fitness for a particular
+                purpose, and non-infringement. We do not warrant that the site
+                will be uninterrupted, error-free, or free of harmful
+                components. Our{" "}
+                <a
+                  href="/returns"
+                  className="text-burgundy underline underline-offset-2 hover:text-burgundy/70 transition-colors"
+                >
+                  Returns &amp; Exchanges policy
+                </a>{" "}
+                sets out the remedies available for defective product.
+              </p>
+            </div>
+
+            <div>
+              <h2 className="font-heading text-2xl text-charcoal mb-4">
                 Limitation of Liability
               </h2>
               <div
@@ -184,12 +210,109 @@ export default function TermsOfServicePage() {
                 style={{ width: 40 }}
               />
               <p className="text-warm-gray leading-[1.8]">
-                Lace by La Luz provides this site and our products &ldquo;as
-                is.&rdquo; While we pour care into everything we do, we cannot
-                be held liable for indirect, incidental, or consequential
-                damages arising from your use of our site or products. Our total
-                liability for any claim related to a purchase will not exceed
-                the amount you paid for that order.
+                Lace by La Luz, its owners, and employees shall not be liable
+                for any indirect, incidental, special, consequential, or
+                punitive damages arising from your use of our site or
+                products, including without limitation lost profits, lost data,
+                or emotional distress. Our total aggregate liability for any
+                claim related to a purchase will not exceed the amount you
+                paid for that order. Some jurisdictions do not allow the
+                exclusion of certain damages, so parts of this section may not
+                apply to you.
+              </p>
+            </div>
+
+            <div>
+              <h2 className="font-heading text-2xl text-charcoal mb-4">
+                Indemnification
+              </h2>
+              <div
+                className="gold-line mb-4 opacity-30"
+                style={{ width: 40 }}
+              />
+              <p className="text-warm-gray leading-[1.8]">
+                You agree to indemnify and hold harmless Lace by La Luz and its
+                team from any claim, loss, or expense (including reasonable
+                legal fees) arising from your breach of these terms, your
+                misuse of the site, or your violation of any third-party
+                right.
+              </p>
+            </div>
+
+            <div>
+              <h2 className="font-heading text-2xl text-charcoal mb-4">
+                User-Generated Content
+              </h2>
+              <div
+                className="gold-line mb-4 opacity-30"
+                style={{ width: 40 }}
+              />
+              <p className="text-warm-gray leading-[1.8]">
+                If you share reviews, photos, or other content with us (for
+                example, tagging us on social media), you grant Lace by La Luz
+                a non-exclusive, royalty-free, worldwide license to use,
+                reproduce, and display that content in connection with our
+                brand and mission, with credit whenever reasonable. You are
+                responsible for ensuring you have the right to share any
+                content you submit, and that it does not infringe on anyone
+                else&apos;s rights.
+              </p>
+            </div>
+
+            <div>
+              <h2 className="font-heading text-2xl text-charcoal mb-4">
+                Governing Law &amp; Dispute Resolution
+              </h2>
+              <div
+                className="gold-line mb-4 opacity-30"
+                style={{ width: 40 }}
+              />
+              <p className="text-warm-gray leading-[1.8]">
+                These terms are governed by the laws of the State of
+                California, United States, without regard to conflict-of-law
+                rules. Before filing a formal claim, you agree to contact us
+                first at{" "}
+                <a
+                  href="mailto:hello@lacebylaluz.com"
+                  className="text-burgundy underline underline-offset-2 hover:text-burgundy/70 transition-colors"
+                >
+                  hello@lacebylaluz.com
+                </a>{" "}
+                so we can try to resolve it informally. If we cannot reach a
+                resolution, any dispute will be resolved in the state or
+                federal courts located in California, and you and Lace by La
+                Luz consent to the exclusive jurisdiction of those courts.
+                Nothing in this section limits your rights under applicable
+                consumer protection laws that apply where you live.
+              </p>
+            </div>
+
+            <div>
+              <h2 className="font-heading text-2xl text-charcoal mb-4">
+                Severability &amp; Entire Agreement
+              </h2>
+              <div
+                className="gold-line mb-4 opacity-30"
+                style={{ width: 40 }}
+              />
+              <p className="text-warm-gray leading-[1.8]">
+                If any part of these terms is found unenforceable, the rest
+                remains in effect. These terms, together with our{" "}
+                <a
+                  href="/privacy"
+                  className="text-burgundy underline underline-offset-2 hover:text-burgundy/70 transition-colors"
+                >
+                  Privacy Policy
+                </a>{" "}
+                and{" "}
+                <a
+                  href="/returns"
+                  className="text-burgundy underline underline-offset-2 hover:text-burgundy/70 transition-colors"
+                >
+                  Returns Policy
+                </a>
+                , form the entire agreement between you and Lace by La Luz
+                about your use of our site and products.
               </p>
             </div>
 

@@ -3,7 +3,7 @@ import { getServiceClient } from "@/lib/supabase";
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, email, subject, message } = await req.json();
+    const { name, email, subject, message, consent } = await req.json();
 
     if (!name || !email || !message) {
       return NextResponse.json(
@@ -11,8 +11,15 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+    if (!consent) {
+      return NextResponse.json(
+        { error: "Consent is required before we can process your message." },
+        { status: 400 }
+      );
+    }
 
-    // Try to save to Supabase if configured
+    // Try to save to Supabase if configured. Log consent + timestamp for
+    // audit — proof that the user agreed before we stored their message.
     const supabase = getServiceClient();
     if (supabase) {
       await supabase.from("contact_messages").insert({
@@ -20,6 +27,8 @@ export async function POST(req: NextRequest) {
         email,
         subject: subject || "General",
         message,
+        consent_given: true,
+        consent_at: new Date().toISOString(),
       });
     }
 

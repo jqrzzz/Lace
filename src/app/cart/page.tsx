@@ -21,8 +21,15 @@ export default function CartPage() {
   const itemCount = cart.totalItems();
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   const handleCheckout = async () => {
+    if (!termsAccepted) {
+      setCheckoutError(
+        "Please accept the Terms of Service and Privacy Policy to continue."
+      );
+      return;
+    }
     setCheckoutLoading(true);
     setCheckoutError("");
     try {
@@ -190,9 +197,43 @@ export default function CartPage() {
                 </p>
               </div>
 
+              {/* Terms acceptance — required before checkout. */}
+              <label className="flex items-start gap-2 text-[11px] text-warm-gray leading-relaxed mb-4 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={termsAccepted}
+                  onChange={(e) => setTermsAccepted(e.target.checked)}
+                  className="mt-0.5 accent-burgundy"
+                />
+                <span>
+                  I agree to the{" "}
+                  <Link
+                    href="/terms"
+                    className="text-burgundy underline underline-offset-2 hover:text-burgundy/70"
+                  >
+                    Terms of Service
+                  </Link>
+                  ,{" "}
+                  <Link
+                    href="/returns"
+                    className="text-burgundy underline underline-offset-2 hover:text-burgundy/70"
+                  >
+                    Returns Policy
+                  </Link>
+                  , and{" "}
+                  <Link
+                    href="/privacy"
+                    className="text-burgundy underline underline-offset-2 hover:text-burgundy/70"
+                  >
+                    Privacy Policy
+                  </Link>
+                  .
+                </span>
+              </label>
+
               <button
                 onClick={handleCheckout}
-                disabled={checkoutLoading}
+                disabled={checkoutLoading || !termsAccepted}
                 className="btn-luxe w-full py-4 bg-burgundy text-white text-sm tracking-[0.06em] rounded-full flex items-center justify-center gap-2 mb-3 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {checkoutLoading ? (

@@ -5,23 +5,74 @@ import Link from "next/link";
 import { Heart, Check } from "lucide-react";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 
+// ─────────────────────────────────────────────────────────────
+// Footer
+//
+// Four balanced link columns on a 12-col grid, with a separate
+// brand + newsletter panel at the top. Previously the Legal links
+// were hiding inside the About column (breaking symmetry) and the
+// newsletter form had no consent checkbox (GDPR/CAN-SPAM risk).
+// Reorganized so each section reads on its own, consent is
+// explicit, and the five groups (Brand, Shop, Company, Support,
+// Legal) read left-to-right without a ragged edge.
+// ─────────────────────────────────────────────────────────────
+
+const SHOP_LINKS = [
+  { href: "/shop", label: "All Veils" },
+  { href: "/shop?collection=Signature", label: "Signature Collection" },
+  { href: "/shop?collection=Essentials", label: "Essentials" },
+  { href: "/shop?collection=Limited", label: "Limited Edition" },
+  { href: "/centennial", label: "Centennial Edition" },
+];
+
+const COMPANY_LINKS = [
+  { href: "/story", label: "Our Story" },
+  { href: "/mission", label: "Buy One, Give One" },
+  { href: "/journey", label: "Our Journey" },
+  { href: "/journal", label: "Journal" },
+  { href: "/founder", label: "Founder's Letter" },
+];
+
+const SUPPORT_LINKS = [
+  { href: "/contact", label: "Contact Us" },
+  { href: "/faq", label: "FAQ" },
+  { href: "/shipping", label: "Shipping" },
+  { href: "/returns", label: "Returns & Exchanges" },
+  { href: "/accessibility", label: "Accessibility" },
+];
+
+const LEGAL_LINKS = [
+  { href: "/privacy", label: "Privacy Policy" },
+  { href: "/terms", label: "Terms of Service" },
+  { href: "/cookies", label: "Cookie Policy" },
+  { href: "/wholesale", label: "Wholesale" },
+  { href: "/press", label: "Press" },
+];
+
 export default function Footer() {
   const [subscribed, setSubscribed] = useState(false);
   const [subLoading, setSubLoading] = useState(false);
+  const [consent, setConsent] = useState(false);
+  const [subError, setSubError] = useState("");
 
   const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubError("");
     const form = e.target as HTMLFormElement;
     const email = (form.elements.namedItem("footer-email") as HTMLInputElement)
       ?.value;
     if (!email) return;
+    if (!consent) {
+      setSubError("Please confirm consent to subscribe.");
+      return;
+    }
 
     setSubLoading(true);
     try {
       await fetch("/api/newsletter", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, consent: true }),
       });
     } catch {
       // Still show success — the UI feedback matters more than backend confirmation
@@ -39,10 +90,9 @@ export default function Footer() {
       <div className="absolute inset-0 lace-overlay opacity-20" />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Main Footer */}
-        <div className="py-20 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
-          {/* Brand */}
-          <div className="lg:col-span-1">
+        {/* Brand + Newsletter — full-width promo row above the link grid */}
+        <div className="pt-16 pb-12 grid lg:grid-cols-12 gap-10 items-start">
+          <div className="lg:col-span-5">
             <div className="flex flex-col mb-5">
               <span className="font-heading text-2xl tracking-[0.18em] uppercase text-white">
                 Lace
@@ -52,7 +102,7 @@ export default function Footer() {
               </span>
             </div>
             <div className="gold-line mb-5 opacity-30" />
-            <p className="text-sm text-soft-gray leading-[1.8] mb-6">
+            <p className="text-sm text-soft-gray leading-[1.8] mb-6 max-w-md">
               Elegant veils crafted with reverence, shared with purpose. Every
               purchase gifts beauty to a sister in need.
             </p>
@@ -94,112 +144,77 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Shop */}
-          <div>
-            <h4 className="text-[10px] tracking-[0.25em] uppercase text-gold mb-5 font-medium">
-              Shop
-            </h4>
-            <ul className="space-y-3">
-              {[
-                { href: "/shop", label: "All Veils" },
-                { href: "/shop?collection=Signature", label: "Signature Collection" },
-                { href: "/shop?collection=Essentials", label: "Essentials" },
-                { href: "/shop?collection=Limited", label: "Limited Edition" },
-              ].map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-soft-gray hover:text-white hover:pl-1 transition-all duration-300"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* About */}
-          <div>
-            <h4 className="text-[10px] tracking-[0.25em] uppercase text-gold mb-5 font-medium">
-              About
-            </h4>
-            <ul className="space-y-3">
-              {[
-                { href: "/story", label: "Our Story" },
-                { href: "/mission", label: "Buy One, Give One" },
-                { href: "/journey", label: "Our Journey" },
-                { href: "/journal", label: "Journal" },
-                { href: "/centennial", label: "100 Years · Centennial" },
-                { href: "/founder", label: "Founder's Letter" },
-                { href: "/faq", label: "FAQ" },
-                { href: "/contact", label: "Contact Us" },
-              ].map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-soft-gray hover:text-white hover:pl-1 transition-all duration-300"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-
-            <h4 className="text-[10px] tracking-[0.25em] uppercase text-gold mt-8 mb-5 font-medium">
-              Legal
-            </h4>
-            <ul className="space-y-3">
-              {[
-                { href: "/wholesale", label: "Wholesale" },
-                { href: "/press", label: "Press" },
-                { href: "/privacy", label: "Privacy Policy" },
-                { href: "/terms", label: "Terms of Service" },
-                { href: "/returns", label: "Returns & Exchanges" },
-              ].map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-soft-gray hover:text-white hover:pl-1 transition-all duration-300"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Newsletter */}
-          <div>
-            <h4 className="text-[10px] tracking-[0.25em] uppercase text-gold mb-5 font-medium">
+          {/* Newsletter panel */}
+          <div className="lg:col-span-7 lg:justify-self-end w-full lg:max-w-md">
+            <h4 className="text-[10px] tracking-[0.25em] uppercase text-gold mb-3 font-medium">
               Stay Connected
             </h4>
             <p className="text-sm text-soft-gray mb-5 leading-[1.8]">
               Be the first to know about new veils and mission updates.
             </p>
             {subscribed ? (
-              <div className="flex items-center gap-2 px-4 py-3 bg-white/[0.06] border border-gold/20 rounded-full">
+              <div className="inline-flex items-center gap-2 px-4 py-3 bg-white/[0.06] border border-gold/20 rounded-full">
                 <Check className="w-4 h-4 text-gold" strokeWidth={2} />
-                <span className="text-sm text-gold">You&apos;re on the list!</span>
+                <span className="text-sm text-gold">
+                  You&apos;re on the list!
+                </span>
               </div>
             ) : (
-              <form className="flex flex-col sm:flex-row gap-2" onSubmit={handleNewsletterSubmit}>
-                <input
-                  name="footer-email"
-                  type="email"
-                  required
-                  placeholder="Your email"
-                  className="flex-1 px-4 py-2.5 bg-white/[0.06] border border-white/[0.12] rounded-full text-sm text-white placeholder:text-soft-gray/60 focus:outline-none focus:border-gold/50 focus:bg-white/[0.08] transition-all duration-300"
-                />
-                <button
-                  type="submit"
-                  disabled={subLoading}
-                  className="px-5 py-2.5 bg-gradient-to-r from-gold to-gold-light text-charcoal text-sm font-medium rounded-full hover:shadow-[0_4px_20px_rgba(201,169,110,0.3)] transition-all duration-300 disabled:opacity-60"
-                >
-                  {subLoading ? "…" : "Join"}
-                </button>
+              <form
+                className="space-y-3"
+                onSubmit={handleNewsletterSubmit}
+                noValidate
+              >
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    name="footer-email"
+                    type="email"
+                    required
+                    placeholder="Your email"
+                    className="flex-1 px-4 py-2.5 bg-white/[0.06] border border-white/[0.12] rounded-full text-sm text-white placeholder:text-soft-gray/60 focus:outline-none focus:border-gold/50 focus:bg-white/[0.08] transition-all duration-300"
+                  />
+                  <button
+                    type="submit"
+                    disabled={subLoading}
+                    className="px-5 py-2.5 bg-gradient-to-r from-gold to-gold-light text-charcoal text-sm font-medium rounded-full hover:shadow-[0_4px_20px_rgba(201,169,110,0.3)] transition-all duration-300 disabled:opacity-60"
+                  >
+                    {subLoading ? "…" : "Join"}
+                  </button>
+                </div>
+                <label className="flex items-start gap-2 text-[11px] text-soft-gray/80 leading-relaxed cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={consent}
+                    onChange={(e) => setConsent(e.target.checked)}
+                    className="mt-0.5 accent-gold"
+                  />
+                  <span>
+                    I agree to receive marketing emails and accept the{" "}
+                    <Link
+                      href="/privacy"
+                      className="underline underline-offset-2 hover:text-pearl"
+                    >
+                      Privacy Policy
+                    </Link>
+                    . I can unsubscribe at any time.
+                  </span>
+                </label>
+                {subError && (
+                  <p className="text-[11px] text-rose-gold">{subError}</p>
+                )}
               </form>
             )}
           </div>
+        </div>
+
+        <div className="border-t border-white/[0.08]" />
+
+        {/* Four balanced link columns */}
+        <div className="py-12 grid grid-cols-2 md:grid-cols-4 gap-10">
+          <FooterColumn title="Shop" links={SHOP_LINKS} />
+          <FooterColumn title="Company" links={COMPANY_LINKS} />
+          <FooterColumn title="Support" links={SUPPORT_LINKS} />
+          <FooterColumn title="Legal" links={LEGAL_LINKS} />
         </div>
 
         {/* Heritage line — La Luz Del Mundo Centennial */}
@@ -216,8 +231,8 @@ export default function Footer() {
             </Link>
             <p className="text-[13px] text-pearl/90 leading-relaxed max-w-xl">
               Proudly rooted in{" "}
-              <span className="italic text-gold-light">La Luz del Mundo</span>
-              , celebrating{" "}
+              <span className="italic text-gold-light">La Luz del Mundo</span>,
+              celebrating{" "}
               <span className="text-gold-light font-medium">
                 100 years of faith
               </span>{" "}
@@ -245,5 +260,33 @@ export default function Footer() {
         </div>
       </div>
     </footer>
+  );
+}
+
+function FooterColumn({
+  title,
+  links,
+}: {
+  title: string;
+  links: { href: string; label: string }[];
+}) {
+  return (
+    <div>
+      <h4 className="text-[10px] tracking-[0.25em] uppercase text-gold mb-5 font-medium">
+        {title}
+      </h4>
+      <ul className="space-y-3">
+        {links.map((link) => (
+          <li key={link.href}>
+            <Link
+              href={link.href}
+              className="text-sm text-soft-gray hover:text-white hover:pl-1 transition-all duration-300"
+            >
+              {link.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
