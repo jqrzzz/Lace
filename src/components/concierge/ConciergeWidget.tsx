@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { MessageCircle, X, Send, Sparkles } from "lucide-react";
+import { fetchJSON } from "@/lib/client";
 
 /**
  * Public-facing chat concierge — the shopper's Luz. Grounded in the
@@ -50,22 +51,26 @@ export default function ConciergeWidget() {
     setInput("");
     setSending(true);
     try {
-      const res = await fetch("/api/concierge/turn", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          history: nextHistory.slice(0, -1),
-          userText: trimmed,
-        }),
-      });
-      const body = (await res.json()) as
-        | { ok: true; data: { reply: string }; mode?: "live" | "demo" }
-        | { ok: false; error: string };
-      const reply =
-        body.ok && body.data?.reply
-          ? body.data.reply
-          : "I'm taking a quiet moment — could you try that again in a bit?";
-      setMessages((m) => [...m, { role: "assistant", content: reply }]);
+      const { data } = await fetchJSON<{ reply: string }>(
+        "/api/concierge/turn",
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            history: nextHistory.slice(0, -1),
+            userText: trimmed,
+          }),
+        }
+      );
+      setMessages((m) => [
+        ...m,
+        {
+          role: "assistant",
+          content:
+            data.reply ??
+            "I'm taking a quiet moment — could you try that again in a bit?",
+        },
+      ]);
     } catch {
       setMessages((m) => [
         ...m,

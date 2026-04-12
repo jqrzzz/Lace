@@ -39,26 +39,30 @@ type AuditEntry = {
   created_at: string;
 };
 
-// `globalThis` so Next.js dev hot-reload does not wipe the store.
-const g = globalThis as unknown as {
-  __lace_store?: {
-    approvals: ApprovalRow[];
-    messages: AgentMessage[];
-    sessions: AgentSession[];
-    audit: AuditEntry[];
-  };
-};
+// Module-level singleton state, pinned to `globalThis` so Next.js dev
+// hot-reload doesn't clear the store on every file edit. The cast is
+// contained in this one accessor; everything else uses `ensure()`.
+interface LaceStore {
+  approvals: ApprovalRow[];
+  messages: AgentMessage[];
+  sessions: AgentSession[];
+  audit: AuditEntry[];
+}
 
-function ensure() {
-  if (!g.__lace_store) {
-    g.__lace_store = {
+const STORE_KEY = "__lace_store" as const;
+type GlobalWithStore = typeof globalThis & { [STORE_KEY]?: LaceStore };
+
+function ensure(): LaceStore {
+  const g = globalThis as GlobalWithStore;
+  if (!g[STORE_KEY]) {
+    g[STORE_KEY] = {
       approvals: [...MOCK_APPROVALS],
       messages: [...MOCK_MESSAGES],
       sessions: [...MOCK_SESSIONS],
       audit: [],
     };
   }
-  return g.__lace_store;
+  return g[STORE_KEY]!;
 }
 
 // ── Approvals ──────────────────────────────────────────────────

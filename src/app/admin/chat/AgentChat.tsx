@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Send, Sparkles, Wrench, ShieldCheck, User, Bot } from "lucide-react";
 import type { AgentMessage, AgentSession } from "@/lib/lace/types";
 import { cn } from "@/lib/utils";
+import { fetchJSON } from "@/lib/client";
 
 const SUGGESTED_PROMPTS = [
   "How are we doing today?",
@@ -44,41 +45,21 @@ export default function AgentChat({
     setInput("");
 
     try {
-      const res = await fetch("/api/agent/turn", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          sessionId: activeId,
-          userText: text,
-          actor: "Luz Maria (owner)",
-        }),
-      });
-      const body = (await res.json().catch(() => null)) as
-        | {
-            ok: true;
-            data: { messages: AgentMessage[] };
-            mode?: "live" | "demo";
-          }
-        | { ok: false; error: string }
-        | null;
-      if (body && body.ok && Array.isArray(body.data?.messages)) {
-        setDemoMode(body.mode === "demo");
-        if (body.data.messages.length > 0) {
-          setMessages((m) => [...m, ...body.data.messages]);
+      const { data, mode } = await fetchJSON<{ messages: AgentMessage[] }>(
+        "/api/agent/turn",
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            sessionId: activeId,
+            userText: text,
+            actor: "Luz Maria (owner)",
+          }),
         }
-      } else {
-        setMessages((m) => [
-          ...m,
-          {
-            id: `local-${Date.now() + 1}`,
-            session_id: activeId,
-            turn: turn + 1,
-            role: "assistant",
-            content:
-              "My connection blinked — try again in a moment.",
-            created_at: new Date().toISOString(),
-          },
-        ]);
+      );
+      setDemoMode(mode === "demo");
+      if (Array.isArray(data.messages) && data.messages.length > 0) {
+        setMessages((m) => [...m, ...data.messages]);
       }
     } catch {
       setMessages((m) => [

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Play, Check, Loader2 } from "lucide-react";
+import { fetchJSON } from "@/lib/client";
 
 /**
  * A manual-trigger button for a playbook. In demo mode it simulates
@@ -21,15 +22,13 @@ export default function PlaybookRunButton({
     if (state !== "idle") return;
     setState("running");
     try {
-      const res = await fetch("/api/agent/playbooks/run", {
+      // We don't block on the result — the agent runs async and the
+      // new messages / approvals show up in their respective tabs.
+      await fetchJSON<{ session_id: string }>("/api/agent/playbooks/run", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ id }),
       });
-      // We don't block on the result — the agent runs async and the
-      // new messages / approvals show up in their respective tabs.
-      const body = await res.json().catch(() => null);
-      if (!res.ok || !body?.ok) throw new Error("run failed");
     } catch {
       // swallow in demo mode
     }
