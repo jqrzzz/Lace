@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { PRODUCTS } from "@/lib/products";
+import { JOURNAL_POSTS } from "@/lib/journal";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base =
@@ -13,6 +14,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "/story", priority: 0.85, change: "monthly" as const },
     { path: "/mission", priority: 0.9, change: "monthly" as const },
     { path: "/journey", priority: 0.9, change: "monthly" as const },
+    { path: "/journal", priority: 0.85, change: "weekly" as const },
     { path: "/centennial", priority: 0.95, change: "monthly" as const },
     { path: "/founder", priority: 0.7, change: "monthly" as const },
     { path: "/wholesale", priority: 0.7, change: "monthly" as const },
@@ -36,6 +38,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: now,
       changeFrequency: "weekly" as const,
       priority: 0.8,
+    })),
+    ...JOURNAL_POSTS.map((p) => ({
+      url: `${base}/journal/${p.slug}`,
+      lastModified: new Date(p.date + "T00:00:00"),
+      changeFrequency: "monthly" as const,
+      priority: 0.75,
     })),
   ];
 }

@@ -14,6 +14,7 @@ const NAV_LINKS = [
   { href: "/story", label: "Our Story" },
   { href: "/mission", label: "Mission" },
   { href: "/journey", label: "Journey" },
+  { href: "/journal", label: "Journal" },
   { href: "/centennial", label: "100 Years" },
   { href: "/faq", label: "FAQ" },
   { href: "/contact", label: "Contact" },

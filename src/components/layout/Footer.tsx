@@ -128,6 +128,7 @@ export default function Footer() {
                 { href: "/story", label: "Our Story" },
                 { href: "/mission", label: "Buy One, Give One" },
                 { href: "/journey", label: "Our Journey" },
+                { href: "/journal", label: "Journal" },
                 { href: "/centennial", label: "100 Years · Centennial" },
                 { href: "/founder", label: "Founder's Letter" },
                 { href: "/faq", label: "FAQ" },

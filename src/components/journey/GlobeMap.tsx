@@ -184,7 +184,7 @@ export default function GlobeMap({ onSelect }: Props) {
               y={28}
               textAnchor="middle"
               fontSize="10"
-              fill="var(--color-charcoal)"
+              fill="var(--color-ink)"
               fontWeight="600"
               style={{ letterSpacing: "0.08em", textTransform: "uppercase" }}
             >
@@ -210,7 +210,7 @@ export default function GlobeMap({ onSelect }: Props) {
               y={-16}
               textAnchor="middle"
               fontSize="10"
-              fill="var(--color-charcoal)"
+              fill="var(--color-ink)"
               fontWeight="600"
               style={{ letterSpacing: "0.08em", textTransform: "uppercase" }}
             >
@@ -232,6 +232,12 @@ export default function GlobeMap({ onSelect }: Props) {
                 onMouseEnter={() => setHover(c.id)}
                 onMouseLeave={() => setHover(null)}
                 onClick={() => select(c)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    select(c);
+                  }
+                }}
                 role="button"
                 tabIndex={0}
                 aria-label={`${c.community} in ${c.city}, ${c.country} — ${c.veilsGifted} veils gifted`}

@@ -39,7 +39,7 @@ export default function MissionPage() {
 
         <div className="relative w-full max-w-3xl mx-auto px-4 py-28 text-center animate-fade-up">
           {/* Eyebrow badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/60 backdrop-blur-sm rounded-full border border-border-light mb-7">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-pearl/60 backdrop-blur-sm rounded-full border border-border-light mb-7">
             <span className="w-1.5 h-1.5 rounded-full bg-gold" />
             <span className="text-[10px] tracking-[0.35em] uppercase text-gold-dark font-medium">
               Our Mission

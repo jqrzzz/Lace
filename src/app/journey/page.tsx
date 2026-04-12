@@ -30,7 +30,7 @@ export default function JourneyPage() {
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent" />
 
         <div className="relative max-w-3xl mx-auto px-4 text-center animate-fade-up">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/60 backdrop-blur-sm rounded-full border border-gold/25 mb-7">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-pearl/60 backdrop-blur-sm rounded-full border border-gold/25 mb-7">
             <Globe2 className="w-3.5 h-3.5 text-gold" strokeWidth={1.5} />
             <span className="text-[10px] tracking-[0.35em] uppercase text-gold-dark font-medium">
               Global Sisterhood

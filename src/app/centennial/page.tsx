@@ -73,7 +73,7 @@ export default function CentennialPage() {
               <Crown className="w-9 h-9 text-gold-light" strokeWidth={1.3} />
             </div>
             <span className="text-[10px] tracking-[0.4em] uppercase text-gold font-semibold">
-              1926 · 2026
+              1926 – 2026
             </span>
           </div>
 
@@ -162,15 +162,17 @@ export default function CentennialPage() {
                 const left = i % 2 === 0;
                 return (
                   <Reveal key={e.year} delay={i * 0.06} direction={left ? "left" : "right"}>
-                    <div
-                      className={`relative pl-16 sm:pl-0 sm:grid sm:grid-cols-2 sm:gap-10 sm:items-center ${
-                        left ? "" : "sm:[&>*:first-child]:order-2"
-                      }`}
-                    >
+                    <div className="relative pl-16 sm:pl-0 sm:grid sm:grid-cols-2 sm:gap-10 sm:items-center">
                       {/* Dot */}
-                      <div className="absolute left-6 sm:left-1/2 w-3 h-3 rounded-full bg-gold shadow-[0_0_0_4px_rgba(224,180,112,0.2)] sm:-translate-x-1/2 top-3" />
+                      <div className="absolute left-6 sm:left-1/2 w-3 h-3 rounded-full bg-gold shadow-[0_0_0_4px_rgba(224,180,112,0.2)] sm:-translate-x-1/2 top-3 z-10" />
 
-                      <div className={left ? "sm:text-right sm:pr-10" : "sm:pl-10"}>
+                      <div
+                        className={
+                          left
+                            ? "sm:order-1 sm:text-right sm:pr-10"
+                            : "sm:order-2 sm:pl-10"
+                        }
+                      >
                         <p className="font-heading text-3xl text-burgundy mb-1">
                           {e.year}
                         </p>
@@ -178,7 +180,13 @@ export default function CentennialPage() {
                           {e.title}
                         </p>
                       </div>
-                      <div className={left ? "sm:pl-10" : "sm:pr-10 sm:text-right"}>
+                      <div
+                        className={
+                          left
+                            ? "sm:order-2 sm:pl-10"
+                            : "sm:order-1 sm:pr-10 sm:text-right"
+                        }
+                      >
                         <div className="luxury-card rounded-2xl p-5 inline-block text-left max-w-md">
                           <p className="text-sm text-warm-gray leading-relaxed">
                             {e.body}
@@ -241,7 +249,7 @@ export default function CentennialPage() {
                     To honor a century of faith, we&apos;ve created a single
                     limited veil — crafted from the finest Bali lace and
                     hand-embroidered with a subtle gold thread inscribed{" "}
-                    <span className="italic text-charcoal">1926 · 2026</span>.
+                    <span className="italic text-charcoal">1926 – 2026</span>.
                   </p>
                   <p>
                     Only one hundred pieces will be made. Each is numbered,
@@ -255,7 +263,7 @@ export default function CentennialPage() {
                 <div className="mt-8 space-y-3">
                   {[
                     "Numbered 1/100 through 100/100",
-                    "Hand-inscribed gold thread — 1926 · 2026",
+                    "Hand-inscribed gold thread — 1926 – 2026",
                     "Commemorative silk pouch + family letter",
                     "Doubles the gift: 2 veils gifted per purchase",
                   ].map((f) => (

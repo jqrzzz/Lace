@@ -14,6 +14,7 @@
   --color-gold-light: #DAB46B;
   --color-gold-dark: #936E20;
   --color-charcoal: #2C2527;
+  --color-ink: #2C2527;
   --color-warm-gray: #5A4A4D;
   --color-soft-gray: #A89A9D;
   --color-border: #E8DED8;
@@ -55,6 +56,7 @@
   --color-border: #3A3235;
   --color-border-light: #2E2729;
   --color-paper: #1C1718;
+  --color-ink: #F0E8E2;
 }
 
 .dark body {
