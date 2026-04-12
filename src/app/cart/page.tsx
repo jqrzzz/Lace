@@ -233,7 +233,7 @@ export default function CartPage() {
 
               <button
                 onClick={handleCheckout}
-                disabled={checkoutLoading || !termsAccepted}
+                disabled={checkoutLoading}
                 className="btn-luxe w-full py-4 bg-burgundy text-white text-sm tracking-[0.06em] rounded-full flex items-center justify-center gap-2 mb-3 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {checkoutLoading ? (

@@ -145,7 +145,10 @@ export default function Footer() {
           </div>
 
           {/* Newsletter panel */}
-          <div className="lg:col-span-7 lg:justify-self-end w-full lg:max-w-md">
+          <div
+            id="newsletter"
+            className="lg:col-span-7 lg:justify-self-end w-full lg:max-w-md scroll-mt-24"
+          >
             <h4 className="text-[10px] tracking-[0.25em] uppercase text-gold mb-3 font-medium">
               Stay Connected
             </h4>
