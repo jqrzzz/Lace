@@ -127,6 +127,9 @@ export default function Footer() {
               {[
                 { href: "/story", label: "Our Story" },
                 { href: "/mission", label: "Buy One, Give One" },
+                { href: "/journey", label: "Our Journey" },
+                { href: "/centennial", label: "100 Years · Centennial" },
+                { href: "/founder", label: "Founder's Letter" },
                 { href: "/faq", label: "FAQ" },
                 { href: "/contact", label: "Contact Us" },
               ].map((link) => (
@@ -146,6 +149,8 @@ export default function Footer() {
             </h4>
             <ul className="space-y-3">
               {[
+                { href: "/wholesale", label: "Wholesale" },
+                { href: "/press", label: "Press" },
                 { href: "/privacy", label: "Privacy Policy" },
                 { href: "/terms", label: "Terms of Service" },
                 { href: "/returns", label: "Returns & Exchanges" },
@@ -199,12 +204,15 @@ export default function Footer() {
         {/* Heritage line — La Luz Del Mundo Centennial */}
         <div className="border-t border-white/[0.08] pt-8 pb-6">
           <div className="flex flex-col items-center text-center gap-3">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-gold/15 via-gold/10 to-gold/15 border border-gold/30 shadow-[0_0_20px_rgba(224,180,112,0.15)]">
+            <Link
+              href="/centennial"
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-gold/15 via-gold/10 to-gold/15 border border-gold/30 shadow-[0_0_20px_rgba(224,180,112,0.15)] hover:border-gold/60 hover:shadow-[0_0_30px_rgba(224,180,112,0.25)] transition-all duration-300"
+            >
               <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />
               <span className="text-[10px] tracking-[0.3em] uppercase text-gold font-medium">
                 Centennial · 1926 – 2026
               </span>
-            </div>
+            </Link>
             <p className="text-[13px] text-pearl/90 leading-relaxed max-w-xl">
               Proudly rooted in{" "}
               <span className="italic text-gold-light">La Luz del Mundo</span>

@@ -18,12 +18,15 @@ import { useCart } from "@/lib/cart";
 import { formatPrice, cn } from "@/lib/utils";
 import ProductCard from "@/components/shop/ProductCard";
 import Reveal from "@/components/ui/Reveal";
+import { useToast } from "@/components/ui/Toast";
+import Reviews from "@/components/shop/Reviews";
 
 export default function ProductPage() {
   const params = useParams();
   const slug = params.slug as string;
   const product = getProduct(slug);
   const cart = useCart();
+  const { toast } = useToast();
 
   const [selectedColor, setSelectedColor] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -68,8 +71,39 @@ export default function ProductPage() {
     setTimeout(() => setAdded(false), 2000);
   };
 
+  // Product JSON-LD for rich results. Price is in cents internally,
+  // schema.org wants a decimal string in the product's currency.
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description: product.description,
+    brand: { "@type": "Brand", name: "Lace by La Luz" },
+    sku: product.id,
+    category: `Veils > ${product.collection}`,
+    material: "Bali lace",
+    offers: {
+      "@type": "Offer",
+      price: (product.price / 100).toFixed(2),
+      priceCurrency: "USD",
+      availability: product.preOrder
+        ? "https://schema.org/PreOrder"
+        : "https://schema.org/InStock",
+      url: `/product/${product.slug}`,
+    },
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: "4.8",
+      reviewCount: "4",
+    },
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+      />
       <section className="py-8 lg:py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Breadcrumbs */}
@@ -236,10 +270,17 @@ export default function ProductPage() {
                   <button
                     onClick={() => {
                       if (navigator.share) {
-                        navigator.share({ title: `${product.name} — Lace by La Luz`, url: window.location.href });
+                        navigator
+                          .share({
+                            title: `${product.name} — Lace by La Luz`,
+                            url: window.location.href,
+                          })
+                          .catch(() => {
+                            /* user cancelled share — no action */
+                          });
                       } else {
                         navigator.clipboard.writeText(window.location.href);
-                        alert("Link copied to clipboard!");
+                        toast("Link copied to clipboard", "success");
                       }
                     }}
                     className="w-12 h-12 border border-border rounded-full flex items-center justify-center text-warm-gray hover:text-burgundy hover:border-burgundy hover:bg-blush/20 transition-all duration-300"
@@ -302,6 +343,9 @@ export default function ProductPage() {
           </div>
         </div>
       </section>
+
+      {/* Reviews */}
+      <Reviews productName={product.name} />
 
       {/* Related Products */}
       <section className="relative py-24 bg-cream overflow-hidden">

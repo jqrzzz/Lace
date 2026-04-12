@@ -13,6 +13,7 @@ export default function ThemeToggle({ className }: { className?: string }) {
       type="button"
       onClick={toggleTheme}
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      aria-pressed={isDark}
       title={isDark ? "Switch to light mode" : "Switch to dark mode"}
       className={cn(
         "relative inline-flex items-center gap-2 h-9 pl-2 pr-4 rounded-full",

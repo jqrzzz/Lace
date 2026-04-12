@@ -4,6 +4,7 @@ import ShellWrapper from "@/components/layout/ShellWrapper";
 import CursorGlow from "@/components/ui/CursorGlow";
 import { AuthProvider } from "@/lib/auth";
 import { ThemeProvider } from "@/lib/theme";
+import { ToastProvider } from "@/components/ui/Toast";
 
 // Runs synchronously in <head> before paint — prevents a flash of the wrong
 // theme. Reads the saved preference from localStorage, falling back to the
@@ -76,11 +77,20 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen flex flex-col bg-ivory text-charcoal antialiased">
+        {/* Skip-to-content link for keyboard / screen-reader users */}
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[200] focus:px-4 focus:py-2 focus:rounded-full focus:bg-burgundy focus:text-white focus:text-sm focus:shadow-lg"
+        >
+          Skip to content
+        </a>
         <ThemeProvider>
-          <CursorGlow />
-          <AuthProvider>
-            <ShellWrapper>{children}</ShellWrapper>
-          </AuthProvider>
+          <ToastProvider>
+            <CursorGlow />
+            <AuthProvider>
+              <ShellWrapper>{children}</ShellWrapper>
+            </AuthProvider>
+          </ToastProvider>
         </ThemeProvider>
 
         {/* Analytics — replace with your tracking script */}
