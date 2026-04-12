@@ -90,26 +90,60 @@ export default function GlobeMap({ onSelect }: Props) {
           aria-label="World map showing where Lace by La Luz veils are sourced and gifted"
         >
           <defs>
+            {/* Ocean — soft pearl radial with a warm rose tint at the edges */}
+            <radialGradient id="ocean" cx="50%" cy="50%" r="70%">
+              <stop offset="0%" stopColor="var(--color-pearl)" />
+              <stop offset="55%" stopColor="var(--color-cream)" />
+              <stop offset="100%" stopColor="var(--color-blush)" stopOpacity="0.4" />
+            </radialGradient>
+            {/* Continents — subtle warm fill with a soft inner glow */}
             <linearGradient id="continent" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="var(--color-champagne)" />
-              <stop offset="100%" stopColor="var(--color-blush)" />
+              <stop offset="60%" stopColor="var(--color-blush)" stopOpacity="0.9" />
+              <stop offset="100%" stopColor="var(--color-rose)" stopOpacity="0.85" />
             </linearGradient>
+            {/* Arc — rose-gold ribbon, more romantic than tri-color */}
             <linearGradient id="arc" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="var(--color-burgundy)" stopOpacity="0.9" />
-              <stop offset="50%" stopColor="var(--color-gold)" stopOpacity="0.7" />
-              <stop offset="100%" stopColor="var(--color-rose-gold)" stopOpacity="0.9" />
+              <stop offset="0%" stopColor="var(--color-burgundy)" stopOpacity="0.85" />
+              <stop offset="45%" stopColor="var(--color-rose-gold)" stopOpacity="0.95" />
+              <stop offset="100%" stopColor="var(--color-gold)" stopOpacity="0.9" />
             </linearGradient>
             <radialGradient id="pin-pulse">
-              <stop offset="0%" stopColor="var(--color-burgundy)" stopOpacity="0.35" />
+              <stop offset="0%" stopColor="var(--color-burgundy)" stopOpacity="0.38" />
               <stop offset="100%" stopColor="var(--color-burgundy)" stopOpacity="0" />
             </radialGradient>
             <radialGradient id="origin-pulse">
-              <stop offset="0%" stopColor="var(--color-gold)" stopOpacity="0.45" />
+              <stop offset="0%" stopColor="var(--color-gold)" stopOpacity="0.5" />
               <stop offset="100%" stopColor="var(--color-gold)" stopOpacity="0" />
+            </radialGradient>
+            {/* Soft drop-shadow so continents float on the ocean */}
+            <filter id="continent-soft" x="-10%" y="-10%" width="120%" height="120%">
+              <feGaussianBlur in="SourceAlpha" stdDeviation="2" />
+              <feOffset dx="0" dy="2" result="offsetblur" />
+              <feComponentTransfer>
+                <feFuncA type="linear" slope="0.25" />
+              </feComponentTransfer>
+              <feMerge>
+                <feMergeNode />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+            {/* Glow for arcs */}
+            <filter id="arc-glow" x="-10%" y="-10%" width="120%" height="120%">
+              <feGaussianBlur stdDeviation="1.4" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+            {/* Vignette mask — softens the edges of the ocean */}
+            <radialGradient id="vignette" cx="50%" cy="50%" r="75%">
+              <stop offset="70%" stopColor="white" stopOpacity="0" />
+              <stop offset="100%" stopColor="black" stopOpacity="0.18" />
             </radialGradient>
             {/* Dash animation */}
             <style>{`
-              .arc-stroke { stroke-dasharray: 6 7; animation: dash 4s linear infinite; }
+              .arc-stroke { stroke-dasharray: 5 8; animation: dash 5s linear infinite; }
               @keyframes dash { to { stroke-dashoffset: -26; } }
               .pin-ring { animation: pinPulse 2.4s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
               @keyframes pinPulse { 0%,100% { transform: scale(0.9); opacity: 0.6; } 50% { transform: scale(1.6); opacity: 0; } }
@@ -120,51 +154,76 @@ export default function GlobeMap({ onSelect }: Props) {
             `}</style>
           </defs>
 
-          {/* Grid meridians */}
-          <g stroke="var(--color-border)" strokeWidth="0.4" opacity="0.5">
+          {/* Ocean backdrop — rounded rect so the whole canvas reads as a printed map */}
+          <rect x="0" y="0" width="1000" height="500" rx="24" fill="url(#ocean)" />
+
+          {/* Soft dot "sea" pattern — gives water some texture without reading as grid */}
+          <g fill="var(--color-rose-gold)" opacity="0.18">
+            {Array.from({ length: 40 }).map((_, i) => {
+              const x = ((i * 137) % 980) + 12;
+              const y = ((i * 83) % 480) + 12;
+              return <circle key={i} cx={x} cy={y} r="1.2" />;
+            })}
+          </g>
+
+          {/* Ghosted meridians — much softer than before */}
+          <g stroke="var(--color-rose-gold)" strokeWidth="0.3" opacity="0.22">
             {[125, 250, 375].map((y) => (
-              <line key={y} x1="20" x2="980" y1={y} y2={y} />
+              <line key={y} x1="40" x2="960" y1={y} y2={y} />
             ))}
-            {[200, 400, 600, 800].map((x) => (
-              <line key={x} y1="40" y2="460" x1={x} x2={x} />
+            {[250, 500, 750].map((x) => (
+              <line key={x} y1="60" y2="440" x1={x} x2={x} />
             ))}
           </g>
 
-          {/* Continents */}
-          <g>
+          {/* Continents with soft shadow */}
+          <g filter="url(#continent-soft)">
             {CONTINENT_PATHS.map((d, i) => (
               <path
                 key={i}
                 d={d}
                 fill="url(#continent)"
                 stroke="var(--color-rose-gold)"
-                strokeWidth="0.6"
-                opacity="0.85"
+                strokeWidth="0.8"
+                strokeLinejoin="round"
+                opacity="0.92"
               />
             ))}
           </g>
 
-          {/* Arcs from workshop to recipients */}
-          <g fill="none" stroke="url(#arc)" strokeWidth="1.4" strokeLinecap="round">
-            {arcs.map((arc) => (
-              <path
-                key={arc.id}
-                d={arc.d}
-                className="arc-stroke"
-                opacity={
-                  active
-                    ? active.id === arc.id
-                      ? 1
-                      : 0.18
-                    : hover
-                      ? hover === arc.id
-                        ? 1
-                        : 0.25
-                      : 0.55
-                }
-                style={{ animationDelay: `${arc.delay}s` }}
-              />
-            ))}
+          {/* Arcs from workshop to recipients — with a glow layer underneath */}
+          <g fill="none" strokeLinecap="round">
+            {arcs.map((arc) => {
+              const op = active
+                ? active.id === arc.id
+                  ? 1
+                  : 0.15
+                : hover
+                  ? hover === arc.id
+                    ? 1
+                    : 0.22
+                  : 0.6;
+              return (
+                <g key={arc.id} opacity={op}>
+                  {/* Glow underlay */}
+                  <path
+                    d={arc.d}
+                    stroke="url(#arc)"
+                    strokeWidth="4"
+                    opacity="0.35"
+                    filter="url(#arc-glow)"
+                  />
+                  {/* Sharp ribbon */}
+                  <path
+                    d={arc.d}
+                    stroke="url(#arc)"
+                    strokeWidth="1.6"
+                    className="arc-stroke"
+                    style={{ animationDelay: `${arc.delay}s` }}
+                  />
+                </g>
+              );
+            })}
           </g>
 
           {/* Origin pin — Bali */}
@@ -257,20 +316,22 @@ export default function GlobeMap({ onSelect }: Props) {
                 {(isActive || isHover) && (
                   <g transform="translate(0 -14)">
                     <rect
-                      x={-38}
-                      y={-16}
-                      width={76}
-                      height={16}
-                      rx={8}
-                      fill="var(--color-charcoal)"
+                      x={-42}
+                      y={-17}
+                      width={84}
+                      height={18}
+                      rx={9}
+                      fill="var(--color-paper)"
+                      stroke="var(--color-rose-gold)"
+                      strokeWidth="0.6"
                     />
                     <text
                       x={0}
                       y={-5}
                       textAnchor="middle"
-                      fontSize="9"
-                      fill="white"
-                      fontWeight="500"
+                      fontSize="9.5"
+                      fill="var(--color-ink)"
+                      fontWeight="600"
                     >
                       {c.flag} {c.city}
                     </text>
@@ -279,6 +340,17 @@ export default function GlobeMap({ onSelect }: Props) {
               </g>
             );
           })}
+
+          {/* Vignette — softens the corners so the map feels printed */}
+          <rect
+            x="0"
+            y="0"
+            width="1000"
+            height="500"
+            rx="24"
+            fill="url(#vignette)"
+            pointerEvents="none"
+          />
         </svg>
 
         {/* Map legend */}

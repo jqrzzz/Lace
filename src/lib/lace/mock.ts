@@ -5,9 +5,9 @@
 // locally). Also seeds the in-browser console so mom can click
 // through a live-looking store before a single real order lands.
 //
-// When Phase 2 ships the real queries, nothing here gets deleted —
-// the query layer picks DB vs mock based on config, and the mock
-// stays useful for Storybook / tests / demos.
+// Nothing here gets deleted when the real DB comes online — the
+// query layer picks DB vs mock based on config, and this mock stays
+// useful for Storybook / tests / demos.
 // ─────────────────────────────────────────────────────────────
 
 import type {
@@ -313,4 +313,14 @@ export const MOCK_BRIEFING = {
   pendingApprovals: 3,
   newInboxMessages: 2,
   newSubscribers: 7,
+  /**
+   * Last 7 days, oldest → today, for the dashboard sparklines.
+   * Deliberately slightly textured so the lines tell a small story.
+   */
+  trends: {
+    newOrders: [1, 3, 2, 4, 3, 5, 2],
+    pendingApprovals: [2, 2, 4, 3, 5, 4, 3],
+    newInboxMessages: [1, 0, 2, 3, 1, 2, 2],
+    unshippedOrders: [3, 2, 3, 2, 2, 1, 1],
+  },
 };

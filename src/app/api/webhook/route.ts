@@ -23,8 +23,15 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const email =
     session.customer_email || session.customer_details?.email || "";
   const totalVeils = parseInt(session.metadata?.total_veils || "0", 10);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const shippingAddress = (session as any).shipping_details?.address;
+  // `shipping_details` lives on the Checkout Session but isn't in the
+  // older `Stripe.Checkout.Session` type we're still pinned to; narrow
+  // locally so the rest of the handler stays typed.
+  const sessionWithShipping = session as Stripe.Checkout.Session & {
+    shipping_details?: {
+      address?: Stripe.Address | null;
+    } | null;
+  };
+  const shippingAddress = sessionWithShipping.shipping_details?.address;
 
   // Create order record
   const { data: order, error: orderError } = await supabase

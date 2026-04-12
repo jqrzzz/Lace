@@ -53,9 +53,9 @@ export interface AutonomyScorecard {
 }
 
 /**
- * Compute the scorecard from whatever data is available. Right now
- * we synthesize from mock messages + mock approvals; when Phase 2
- * lands we point this at audit_log + agent_messages.
+ * Compute the scorecard from whatever data is available. Today we
+ * synthesize from the in-memory agent messages + approvals; point
+ * this at audit_log + agent_messages when the DB is backing them.
  */
 export function computeScorecard(): AutonomyScorecard {
   // Count tool calls per category from the stored agent messages.

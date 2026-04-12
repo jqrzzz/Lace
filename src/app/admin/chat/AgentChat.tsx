@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Send, Sparkles, Wrench, ShieldCheck, User, Bot } from "lucide-react";
 import type { AgentMessage, AgentSession } from "@/lib/lace/types";
 import { cn } from "@/lib/utils";
+import { fetchJSON } from "@/lib/client";
 
 const SUGGESTED_PROMPTS = [
   "How are we doing today?",
@@ -25,6 +26,7 @@ export default function AgentChat({
   const [messages, setMessages] = useState<AgentMessage[]>(initialMessages);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [demoMode, setDemoMode] = useState(false);
 
   async function send() {
     const text = input.trim();
@@ -43,37 +45,23 @@ export default function AgentChat({
     setInput("");
 
     try {
-      const res = await fetch("/api/agent/turn", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          sessionId: activeId,
-          userText: text,
-          actor: "Luz Maria (owner)",
-        }),
-      });
-      if (res.ok) {
-        const data = (await res.json()) as { messages: AgentMessage[] };
-        if (Array.isArray(data.messages) && data.messages.length > 0) {
-          setMessages((m) => [...m, ...data.messages]);
+      const { data, mode } = await fetchJSON<{ messages: AgentMessage[] }>(
+        "/api/agent/turn",
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            sessionId: activeId,
+            userText: text,
+            actor: "Luz Maria (owner)",
+          }),
         }
-      } else {
-        // Fall back to a canned reply so the UI doesn't dead-end.
-        const reply = await demoReply(text);
-        setMessages((m) => [
-          ...m,
-          {
-            id: `local-${Date.now() + 1}`,
-            session_id: activeId,
-            turn: turn + 1,
-            role: "assistant",
-            content: reply,
-            created_at: new Date().toISOString(),
-          },
-        ]);
+      );
+      setDemoMode(mode === "demo");
+      if (Array.isArray(data.messages) && data.messages.length > 0) {
+        setMessages((m) => [...m, ...data.messages]);
       }
     } catch {
-      const reply = await demoReply(text);
       setMessages((m) => [
         ...m,
         {
@@ -81,7 +69,7 @@ export default function AgentChat({
           session_id: activeId,
           turn: turn + 1,
           role: "assistant",
-          content: reply,
+          content: "My connection blinked — try again in a moment.",
           created_at: new Date().toISOString(),
         },
       ]);
@@ -177,7 +165,12 @@ export default function AgentChat({
               Send
             </button>
           </form>
-          <p className="text-[10px] text-warm-gray mt-2 text-center">
+          <p className="text-[10px] text-warm-gray mt-2 text-center flex items-center justify-center gap-2">
+            {demoMode && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gold/15 text-gold border border-gold/30 text-[9px] uppercase tracking-[0.15em]">
+                Demo mode
+              </span>
+            )}
             Luz uses Claude + tool-use. Money and destructive steps route to
             Approvals.
           </p>
@@ -271,25 +264,3 @@ function MessageBubble({ message }: { message: AgentMessage }) {
   );
 }
 
-// Canned demo responses. Keeps the UI feeling alive without needing
-// a real Claude call. Replaced in Phase 3 by /api/agent tool-use.
-async function demoReply(userText: string): Promise<string> {
-  await new Promise((r) => setTimeout(r, 600 + Math.random() * 400));
-  const t = userText.toLowerCase();
-  if (t.includes("how") && (t.includes("today") || t.includes("doing"))) {
-    return "Today: 2 new orders ($166), 1 still to ship, 3 approvals waiting, 2 new customer messages. The centennial edition is outpacing last week by 40%.";
-  }
-  if (t.includes("esperanza")) {
-    return "The Esperanza Veil had 1 new order this week from Maria López in Texas. She's a 3-time customer — tagged VIP. Want me to send her a handwritten thank-you note?";
-  }
-  if (t.includes("draft") || t.includes("reply")) {
-    return "Drafted a warm, bilingual-friendly reply. It's in the approvals queue under 'Draft reply to Patricia Gómez'. Tap to review before I save it as her reply draft.";
-  }
-  if (t.includes("instagram") || t.includes("caption")) {
-    return 'Suggestion:\n\n"One hundred years of Sunday mornings. One hundred years of grandmothers folding tissue paper. The Centennial Edition — 100 numbered veils, each a small vessel of that inheritance. 🤍"\n\nWant me to queue it for the social calendar?';
-  }
-  if (t.includes("nairobi")) {
-    return "Sisters of Nairobi: 30 veils gifted across 2 shipments. Sister Grace replied to your thank-you note yesterday — it's in your inbox.";
-  }
-  return "I can help with that. (Demo mode — Phase 3 will wire me to real Claude tool-use so I can actually pull the data and act on it.)";
-}

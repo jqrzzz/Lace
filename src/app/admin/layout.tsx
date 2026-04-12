@@ -14,8 +14,10 @@ import {
   Inbox,
   Zap,
   Settings,
+  ScrollText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import CommandPalette from "@/components/ui/CommandPalette";
 
 const NAV = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
@@ -26,6 +28,7 @@ const NAV = [
   { href: "/admin/orders", label: "Orders", icon: ClipboardList },
   { href: "/admin/products", label: "Products", icon: ShoppingBag },
   { href: "/admin/mission", label: "Mission", icon: Heart },
+  { href: "/admin/audit", label: "Audit", icon: ScrollText },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
@@ -51,7 +54,18 @@ export default function AdminLayout({
           </div>
         </div>
 
-        <nav className="flex-1 px-3 py-4 space-y-1">
+        <div className="px-3 pt-3 pb-1">
+          <div className="flex items-center justify-between gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10">
+            <span className="text-[10px] uppercase tracking-[0.2em] text-soft-gray">
+              Quick switch
+            </span>
+            <kbd className="text-[10px] bg-white/10 text-pearl border border-white/15 rounded px-1.5 py-0.5">
+              ⌘K
+            </kbd>
+          </div>
+        </div>
+
+        <nav className="flex-1 px-3 py-3 space-y-1">
           {NAV.map((item) => (
             <Link
               key={item.href}
@@ -131,6 +145,8 @@ export default function AdminLayout({
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
+
+      <CommandPalette />
     </div>
   );
 }

@@ -101,6 +101,12 @@ export interface AgentSession {
   approvals_pending: number;
 }
 
+/** One exchange in the public storefront concierge chat. */
+export interface ConciergeMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
 export interface MissionRecipientSummary {
   id: string;
   community: string;
