@@ -21,6 +21,7 @@ import { briefingProse } from "@/lib/agent/format";
 import { computeScorecard } from "@/lib/lace/scorecard";
 import { PLAYBOOKS } from "@/lib/agent/playbooks";
 import { formatCents, timeAgo } from "@/lib/format";
+import Sparkline from "@/components/ui/Sparkline";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +37,7 @@ export default async function AdminOverview() {
 
   const live = isLiveData();
 
+  const trends = briefing.trends;
   const stats = [
     {
       label: "New orders today",
@@ -43,6 +45,8 @@ export default async function AdminOverview() {
       hint: formatCents(briefing.revenueCents) + " in revenue",
       icon: ShoppingBag,
       href: "/admin/orders",
+      series: trends.newOrders,
+      tone: "text-burgundy",
     },
     {
       label: "Pending approvals",
@@ -53,6 +57,8 @@ export default async function AdminOverview() {
           : "all clear",
       icon: ShieldCheck,
       href: "/admin/approvals",
+      series: trends.pendingApprovals,
+      tone: "text-gold",
     },
     {
       label: "New messages",
@@ -60,6 +66,8 @@ export default async function AdminOverview() {
       hint: "customers waiting",
       icon: Inbox,
       href: "/admin/inbox",
+      series: trends.newInboxMessages,
+      tone: "text-gold-dark",
     },
     {
       label: "To ship",
@@ -67,6 +75,8 @@ export default async function AdminOverview() {
       hint: "still in the atelier",
       icon: Truck,
       href: "/admin/orders",
+      series: trends.unshippedOrders,
+      tone: "text-burgundy",
     },
   ];
 
@@ -191,9 +201,17 @@ export default async function AdminOverview() {
               </span>
               <s.icon className="w-4 h-4 text-gold" />
             </div>
-            <p className="text-3xl font-heading text-charcoal">{s.value}</p>
-            <p className="text-xs text-soft-gray mt-1 group-hover:text-charcoal transition-colors">
-              {s.hint}
+            <div className="flex items-end justify-between gap-3">
+              <div>
+                <p className="text-3xl font-heading text-charcoal">{s.value}</p>
+                <p className="text-xs text-soft-gray mt-1 group-hover:text-charcoal transition-colors">
+                  {s.hint}
+                </p>
+              </div>
+              <Sparkline values={s.series} className={s.tone} />
+            </div>
+            <p className="text-[10px] uppercase tracking-[0.18em] text-warm-gray mt-3">
+              Last 7 days
             </p>
           </Link>
         ))}

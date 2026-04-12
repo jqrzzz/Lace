@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { MessageCircle, X, Send, Sparkles } from "lucide-react";
 import { fetchJSON } from "@/lib/client";
+import { pickFollowups } from "@/lib/concierge-followups";
 
 /**
  * Public-facing chat concierge — the shopper's Luz. Grounded in the
@@ -164,6 +165,31 @@ export default function ConciergeWidget() {
                 Luz is typing…
               </div>
             )}
+
+            {/* Contextual follow-ups after the assistant speaks. */}
+            {!sending &&
+              messages.length > 0 &&
+              messages[messages.length - 1].role === "assistant" &&
+              (() => {
+                const lastUser =
+                  [...messages].reverse().find((m) => m.role === "user")
+                    ?.content ?? "";
+                const lastAssistant = messages[messages.length - 1].content;
+                const chips = pickFollowups(lastUser, lastAssistant);
+                return (
+                  <div className="pt-1 flex flex-wrap gap-1.5">
+                    {chips.map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => send(c)}
+                        className="text-[11px] text-charcoal bg-white border border-border-light rounded-full px-2.5 py-1 hover:border-gold transition-colors"
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                );
+              })()}
           </div>
 
           {/* Composer */}

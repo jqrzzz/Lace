@@ -313,4 +313,14 @@ export const MOCK_BRIEFING = {
   pendingApprovals: 3,
   newInboxMessages: 2,
   newSubscribers: 7,
+  /**
+   * Last 7 days, oldest → today, for the dashboard sparklines.
+   * Deliberately slightly textured so the lines tell a small story.
+   */
+  trends: {
+    newOrders: [1, 3, 2, 4, 3, 5, 2],
+    pendingApprovals: [2, 2, 4, 3, 5, 4, 3],
+    newInboxMessages: [1, 0, 2, 3, 1, 2, 2],
+    unshippedOrders: [3, 2, 3, 2, 2, 1, 1],
+  },
 };
