@@ -18,11 +18,13 @@
 // reply so the UI stays functional in zero-config dev.
 // ─────────────────────────────────────────────────────────────
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { ALL_TOOLS, getTool, toolsForClaude } from "@/lib/agent/tools";
 import { routeToolCall, MOM_DEFAULT_POLICY } from "@/lib/agent/router";
 import { buildSystemPrompt } from "@/lib/agent/knowledge";
+import { getDemoReply } from "@/lib/agent/demo-replies";
 import { humanSummary } from "@/lib/agent/format";
+import { fail, ok } from "@/lib/api";
 import {
   appendMessage,
   createApproval,
@@ -61,10 +63,7 @@ export async function POST(req: NextRequest) {
     const userText: string = body.userText;
     const actorLabel: string = body.actor ?? "Luz Maria (owner)";
     if (!sessionId || !userText) {
-      return NextResponse.json(
-        { error: "sessionId and userText are required." },
-        { status: 400 }
-      );
+      return fail("sessionId and userText are required.", { status: 400 });
     }
 
     const turn = (listMessagesStore(sessionId).at(-1)?.turn ?? 0) + 1;
@@ -81,21 +80,17 @@ export async function POST(req: NextRequest) {
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
-      const canned = cannedReply(userText);
       const msg = appendMessage({
         session_id: sessionId,
         turn: turn + 1,
         role: "assistant",
-        content: canned,
+        content: getDemoReply("agent", userText),
         tool_name: null,
         tool_input: null,
         tool_output: null,
         approval_id: null,
       });
-      return NextResponse.json({
-        mode: "demo",
-        messages: [msg],
-      });
+      return ok({ messages: [msg] }, { mode: "demo" });
     }
 
     // Real Claude call with tool use.
@@ -243,13 +238,10 @@ export async function POST(req: NextRequest) {
       history.push({ role: "user", content: toolResults });
     }
 
-    return NextResponse.json({ mode: "live", messages: newMessages });
+    return ok({ messages: newMessages }, { mode: "live" });
   } catch (error) {
     console.error("Agent turn error:", error);
-    return NextResponse.json(
-      { error: "Agent turn failed." },
-      { status: 500 }
-    );
+    return fail("Agent turn failed.");
   }
 }
 
@@ -356,14 +348,3 @@ async function executeReadonly(
 
 // ALL_TOOLS is referenced to keep bundler from tree-shaking the catalog.
 void ALL_TOOLS;
-
-function cannedReply(userText: string): string {
-  const t = userText.toLowerCase();
-  if (t.includes("today") || t.includes("doing") || t.includes("morning")) {
-    return "Today: 2 new orders ($166), 1 still to ship, 3 approvals waiting, 2 new messages. The centennial edition is pacing 40% above last week. (Demo mode — set ANTHROPIC_API_KEY for real answers.)";
-  }
-  if (t.includes("refund")) {
-    return "I'll draft a refund and put it in your approvals queue. (Demo mode — set ANTHROPIC_API_KEY for a real Claude-powered turn.)";
-  }
-  return "I can help with that — but I'm in demo mode right now. Set ANTHROPIC_API_KEY in your environment and I'll start reasoning for real.";
-}

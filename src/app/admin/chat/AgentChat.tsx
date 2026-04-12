@@ -25,6 +25,7 @@ export default function AgentChat({
   const [messages, setMessages] = useState<AgentMessage[]>(initialMessages);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [demoMode, setDemoMode] = useState(false);
 
   async function send() {
     const text = input.trim();
@@ -52,14 +53,20 @@ export default function AgentChat({
           actor: "Luz Maria (owner)",
         }),
       });
-      if (res.ok) {
-        const data = (await res.json()) as { messages: AgentMessage[] };
-        if (Array.isArray(data.messages) && data.messages.length > 0) {
-          setMessages((m) => [...m, ...data.messages]);
+      const body = (await res.json().catch(() => null)) as
+        | {
+            ok: true;
+            data: { messages: AgentMessage[] };
+            mode?: "live" | "demo";
+          }
+        | { ok: false; error: string }
+        | null;
+      if (body && body.ok && Array.isArray(body.data?.messages)) {
+        setDemoMode(body.mode === "demo");
+        if (body.data.messages.length > 0) {
+          setMessages((m) => [...m, ...body.data.messages]);
         }
       } else {
-        // Fall back to a canned reply so the UI doesn't dead-end.
-        const reply = await demoReply(text);
         setMessages((m) => [
           ...m,
           {
@@ -67,13 +74,13 @@ export default function AgentChat({
             session_id: activeId,
             turn: turn + 1,
             role: "assistant",
-            content: reply,
+            content:
+              "My connection blinked — try again in a moment.",
             created_at: new Date().toISOString(),
           },
         ]);
       }
     } catch {
-      const reply = await demoReply(text);
       setMessages((m) => [
         ...m,
         {
@@ -81,7 +88,7 @@ export default function AgentChat({
           session_id: activeId,
           turn: turn + 1,
           role: "assistant",
-          content: reply,
+          content: "My connection blinked — try again in a moment.",
           created_at: new Date().toISOString(),
         },
       ]);
@@ -177,7 +184,12 @@ export default function AgentChat({
               Send
             </button>
           </form>
-          <p className="text-[10px] text-warm-gray mt-2 text-center">
+          <p className="text-[10px] text-warm-gray mt-2 text-center flex items-center justify-center gap-2">
+            {demoMode && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gold/15 text-gold border border-gold/30 text-[9px] uppercase tracking-[0.15em]">
+                Demo mode
+              </span>
+            )}
             Luz uses Claude + tool-use. Money and destructive steps route to
             Approvals.
           </p>
@@ -271,25 +283,3 @@ function MessageBubble({ message }: { message: AgentMessage }) {
   );
 }
 
-// Offline fallback used only when /api/agent/turn throws. Keeps the
-// UI alive in disconnected demos — real replies come from the API.
-async function demoReply(userText: string): Promise<string> {
-  await new Promise((r) => setTimeout(r, 600 + Math.random() * 400));
-  const t = userText.toLowerCase();
-  if (t.includes("how") && (t.includes("today") || t.includes("doing"))) {
-    return "Today: 2 new orders ($166), 1 still to ship, 3 approvals waiting, 2 new customer messages. The centennial edition is outpacing last week by 40%.";
-  }
-  if (t.includes("esperanza")) {
-    return "The Esperanza Veil had 1 new order this week from Maria López in Texas. She's a 3-time customer — tagged VIP. Want me to send her a handwritten thank-you note?";
-  }
-  if (t.includes("draft") || t.includes("reply")) {
-    return "Drafted a warm, bilingual-friendly reply. It's in the approvals queue under 'Draft reply to Patricia Gómez'. Tap to review before I save it as her reply draft.";
-  }
-  if (t.includes("instagram") || t.includes("caption")) {
-    return 'Suggestion:\n\n"One hundred years of Sunday mornings. One hundred years of grandmothers folding tissue paper. The Centennial Edition — 100 numbered veils, each a small vessel of that inheritance. 🤍"\n\nWant me to queue it for the social calendar?';
-  }
-  if (t.includes("nairobi")) {
-    return "Sisters of Nairobi: 30 veils gifted across 2 shipments. Sister Grace replied to your thank-you note yesterday — it's in your inbox.";
-  }
-  return "I can help with that. (Offline fallback — try again in a moment.)";
-}

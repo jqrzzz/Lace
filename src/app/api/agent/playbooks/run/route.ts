@@ -5,19 +5,17 @@
 // happen once we have a persistent worker; for now, the user can
 // open the session in chat and drive it interactively.
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { getPlaybook } from "@/lib/agent/playbooks";
 import { appendMessage, createSession, writeAudit } from "@/lib/agent/store";
+import { fail, ok } from "@/lib/api";
 
 export async function POST(req: NextRequest) {
   try {
     const { id } = await req.json();
     const pb = getPlaybook(id);
     if (!pb) {
-      return NextResponse.json(
-        { error: `Unknown playbook: ${id}` },
-        { status: 404 }
-      );
+      return fail(`Unknown playbook: ${id}`, { status: 404 });
     }
 
     const session = createSession({
@@ -56,12 +54,9 @@ export async function POST(req: NextRequest) {
       metadata: { session_id: session.id, name: pb.name },
     });
 
-    return NextResponse.json({ ok: true, session_id: session.id });
+    return ok({ session_id: session.id });
   } catch (error) {
     console.error("playbook run error:", error);
-    return NextResponse.json(
-      { error: "Could not start the playbook." },
-      { status: 500 }
-    );
+    return fail("Could not start the playbook.");
   }
 }

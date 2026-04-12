@@ -28,7 +28,8 @@ export default function PlaybookRunButton({
       });
       // We don't block on the result — the agent runs async and the
       // new messages / approvals show up in their respective tabs.
-      if (!res.ok) throw new Error("run failed");
+      const body = await res.json().catch(() => null);
+      if (!res.ok || !body?.ok) throw new Error("run failed");
     } catch {
       // swallow in demo mode
     }

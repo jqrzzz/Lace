@@ -58,16 +58,14 @@ export default function ConciergeWidget() {
           userText: trimmed,
         }),
       });
-      const data = (await res.json()) as { reply?: string };
-      setMessages((m) => [
-        ...m,
-        {
-          role: "assistant",
-          content:
-            data.reply ??
-            "I'm taking a quiet moment — could you try that again in a bit?",
-        },
-      ]);
+      const body = (await res.json()) as
+        | { ok: true; data: { reply: string }; mode?: "live" | "demo" }
+        | { ok: false; error: string };
+      const reply =
+        body.ok && body.data?.reply
+          ? body.data.reply
+          : "I'm taking a quiet moment — could you try that again in a bit?";
+      setMessages((m) => [...m, { role: "assistant", content: reply }]);
     } catch {
       setMessages((m) => [
         ...m,
