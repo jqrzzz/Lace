@@ -196,21 +196,25 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Heritage line — La Luz Del Mundo */}
+        {/* Heritage line — La Luz Del Mundo Centennial */}
         <div className="border-t border-white/[0.08] pt-8 pb-6">
-          <div className="flex flex-col items-center text-center gap-2">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.05] border border-gold/20">
-              <span className="w-1.5 h-1.5 rounded-full bg-gold" />
+          <div className="flex flex-col items-center text-center gap-3">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-gold/15 via-gold/10 to-gold/15 border border-gold/30 shadow-[0_0_20px_rgba(224,180,112,0.15)]">
+              <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />
               <span className="text-[10px] tracking-[0.3em] uppercase text-gold font-medium">
-                Our Heritage
+                Centennial · 1926 – 2026
               </span>
             </div>
             <p className="text-[13px] text-pearl/90 leading-relaxed max-w-xl">
               Proudly rooted in{" "}
-              <span className="italic text-gold-light">La Luz del Mundo</span>{" "}
-              — our family has worshipped in this community for over fifty
-              years. Every veil we make carries that legacy of faith and
-              sisterhood.
+              <span className="italic text-gold-light">La Luz del Mundo</span>
+              , celebrating{" "}
+              <span className="text-gold-light font-medium">
+                100 years of faith
+              </span>{" "}
+              this year. Three generations of our family have worshipped in
+              this community — every veil we craft is a tribute to that
+              century of sisterhood.
             </p>
           </div>
         </div>

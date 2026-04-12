@@ -212,62 +212,96 @@ export default function StoryPage() {
         </div>
       </section>
 
-      {/* ── La Luz Del Mundo Heritage ── */}
+      {/* ── La Luz Del Mundo Heritage · Centennial ── */}
       <section className="relative py-28 bg-gradient-to-b from-ivory via-blush/15 to-ivory overflow-hidden">
         <div className="lace-pattern absolute inset-0 opacity-[0.12] pointer-events-none" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_50%,theme(colors.gold/10)_0%,transparent_60%)] pointer-events-none" />
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent" />
 
+        {/* Warm gold orbs */}
+        <div className="hidden sm:block absolute top-10 right-[15%] w-[300px] h-[300px] rounded-full bg-gold/8 blur-[100px] pointer-events-none" />
+        <div className="hidden sm:block absolute bottom-10 left-[10%] w-[260px] h-[260px] rounded-full bg-rose/15 blur-[90px] pointer-events-none" />
+
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <Reveal>
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/60 backdrop-blur-sm rounded-full border border-gold/25 mb-7">
-              <span className="w-1.5 h-1.5 rounded-full bg-gold" />
-              <span className="text-[10px] tracking-[0.35em] uppercase text-gold-dark font-medium">
-                Our Heritage
+            {/* Centennial badge */}
+            <div className="inline-flex items-center gap-2.5 px-5 py-2 bg-gradient-to-r from-gold/15 via-gold/10 to-gold/15 backdrop-blur-sm rounded-full border border-gold/35 mb-8 shadow-[0_0_30px_rgba(193,150,64,0.15)]">
+              <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />
+              <span className="text-[10px] tracking-[0.35em] uppercase text-gold-dark font-semibold">
+                Centennial · 1926 – 2026
               </span>
+              <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />
             </div>
 
             <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-charcoal mb-4 leading-[1.1]">
-              Rooted in{" "}
+              Celebrating 100 Years of
+              <br />
               <span className="italic text-burgundy">La Luz del Mundo</span>
             </h2>
             <div className="gold-line mx-auto mb-8" />
 
             <p className="text-[11px] tracking-[0.3em] uppercase text-gold mb-6 font-medium">
-              Three Generations · Over Fifty Years
+              One Century · Three Generations · One Family
             </p>
 
             <div className="space-y-5 text-warm-gray leading-[1.9] max-w-2xl mx-auto">
               <p>
-                Our family has called{" "}
+                This year marks{" "}
                 <span className="text-charcoal font-medium">
+                  one hundred years
+                </span>{" "}
+                since the founding of{" "}
+                <span className="text-charcoal font-medium italic">
                   La Luz del Mundo
                 </span>{" "}
-                home for more than fifty years. Three generations of women in
-                our family have walked into worship wearing a veil — our
-                grandmothers, our mothers, and now us.
+                in Guadalajara, Mexico — a century of faith, prayer, and
+                quiet, extraordinary sisterhood. Our family has been part of
+                this community for more than fifty of those years, across
+                three generations of mothers, daughters, and grandmothers.
               </p>
               <p>
-                In our community, the veil is more than a garment. It is a
-                prayer expressed in thread, a mark of reverence, and a
-                centuries-old symbol of sisterhood. Every piece we craft is
-                shaped by that memory — the softness of our grandmother&apos;s
-                lace, the quiet dignity of women preparing for prayer, the
-                tenderness passed from one sister to the next.
+                In our church, the veil is not merely fabric. It is a prayer
+                expressed in thread, a posture of reverence, and a visible
+                sign of the sisterhood that has bound women together for
+                generations. Every piece we craft is shaped by those
+                memories — the softness of our grandmother&apos;s lace, the
+                quiet dignity of women preparing for worship, the tenderness
+                passed from one sister to the next.
               </p>
               <p>
-                Lace by La Luz is our way of honoring that heritage — and of
-                sharing it. For every veil purchased, one is gifted to a
-                sister in a growing church community, so that no woman feels
-                she cannot participate in something sacred for lack of a
-                veil.
+                Lace by La Luz is our centennial offering — our way of
+                honoring a century of faith and carrying it forward. For
+                every veil purchased, one is gifted to a sister in a growing
+                church community, so that the next hundred years begin with
+                no sister left without a veil to worship in.
               </p>
+            </div>
+
+            {/* Centennial stats ribbon */}
+            <div className="mt-12 grid grid-cols-3 gap-4 max-w-xl mx-auto">
+              {[
+                { num: "100", label: "Years of Faith" },
+                { num: "3", label: "Generations" },
+                { num: "1", label: "Family Mission" },
+              ].map((stat) => (
+                <div
+                  key={stat.label}
+                  className="relative luxury-card rounded-2xl p-5"
+                >
+                  <p className="font-heading text-3xl text-burgundy mb-1">
+                    {stat.num}
+                  </p>
+                  <p className="text-[10px] tracking-[0.2em] uppercase text-warm-gray font-medium">
+                    {stat.label}
+                  </p>
+                </div>
+              ))}
             </div>
 
             <div className="mt-10 inline-flex items-center gap-2 text-[11px] tracking-[0.25em] uppercase text-gold/80 font-medium">
               <span className="w-8 h-px bg-gold/40" />
-              Faith, beauty, sisterhood
+              Faith · Beauty · Sisterhood
               <span className="w-8 h-px bg-gold/40" />
             </div>
           </Reveal>
