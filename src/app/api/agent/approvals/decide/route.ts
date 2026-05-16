@@ -27,16 +27,18 @@ export async function POST(req: NextRequest) {
       return fail("id and decision are required.", { status: 400 });
     }
 
-    const updated = decideApproval(id, decision, reviewer, note);
+    const updated = await decideApproval(id, decision, reviewer, note);
     if (!updated) {
       return fail(`Unknown approval: ${id}`, { status: 404 });
     }
 
     let effects: string[] = [];
     if (decision === "approved") {
-      const original = listApprovalsStore().find((a) => a.id === id);
+      const all = await listApprovalsStore();
+      const original = all.find((a) => a.id === id);
       if (original) {
-        effects = executeApproval(original, reviewer).effects;
+        const result = await executeApproval(original, reviewer);
+        effects = result.effects;
       }
     }
 

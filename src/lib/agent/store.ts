@@ -1,19 +1,22 @@
 // ─────────────────────────────────────────────────────────────
-// Lace — In-memory agent store (dev + demo).
+// Lace — Agent state store.
 //
-// Holds approvals, agent messages, and audit entries in process
-// memory while we iterate on the console. Every function here gets
-// a DB-backed sibling once the lace.* tables are live; callers
-// (chat, API, cron) keep their shape.
+// Two co-located backends behind one async public API:
 //
-// Seeds from mock.ts on first access so the console boots with a
-// live-feeling queue. Subsequent writes (from /admin/chat, from
-// /api/agent/turn, from cron jobs) append to the same store.
+//   In-memory (fallback)
+//     - Holds approvals, agent messages, sessions, inbox, audit.
+//     - Process-local. Resets on server reload. Used when
+//       SUPABASE_SERVICE_ROLE_KEY is missing so the console boots
+//       with live-feeling mock data.
 //
-// Note: this is process-local, so it resets on server reload and
-// does not survive across serverless invocations in prod. That is
-// intentional — the minute you set SUPABASE_SERVICE_ROLE_KEY, the
-// sibling write-through module takes over.
+//   lace.* DB (Phase 2.A)
+//     - Writes through to lace.agent_sessions / agent_messages /
+//       agent_approvals / audit_log. Survives reloads and serves
+//       the multi-instance prod deploy.
+//
+// Inbox still lives in-memory regardless of backend — it moves to
+// lace.contact_messages in Phase 2.B. The contact form route
+// already writes there (Phase 1), so the read side is the next step.
 // ─────────────────────────────────────────────────────────────
 
 import type {
@@ -30,8 +33,16 @@ import {
   MOCK_MESSAGES,
   MOCK_SESSIONS,
 } from "@/lib/lace/mock";
+import { getLaceDb, type LaceServiceClient } from "@/lib/db";
 
-type AuditEntry = {
+export type ActorType =
+  | "user"
+  | "agent"
+  | "system"
+  | "customer"
+  | "webhook";
+
+export type AuditEntry = {
   id: string;
   actor_label: string;
   action: string;
@@ -41,9 +52,10 @@ type AuditEntry = {
   created_at: string;
 };
 
-// Module-level singleton state, pinned to `globalThis` so Next.js dev
-// hot-reload doesn't clear the store on every file edit. The cast is
-// contained in this one accessor; everything else uses `ensure()`.
+// ─────────────────────────────────────────────────────────────
+// In-memory state (fallback)
+// ─────────────────────────────────────────────────────────────
+
 interface LaceStore {
   approvals: ApprovalRow[];
   messages: AgentMessage[];
@@ -69,11 +81,6 @@ function ensure(): LaceStore {
   return g[STORE_KEY]!;
 }
 
-/**
- * Seed a few audit rows that match the pre-seeded approvals, so the
- * audit log has something to show on a fresh boot. In real life this
- * happens organically as createApproval() writes rows on every turn.
- */
 function seedAudit(): AuditEntry[] {
   const now = Date.now();
   return MOCK_APPROVALS.map((a, i) => ({
@@ -83,18 +90,22 @@ function seedAudit(): AuditEntry[] {
     entity_type: "approval",
     entity_id: a.id,
     metadata: { action_type: a.action_type, risk: a.risk },
-    created_at: new Date(now - (MOCK_APPROVALS.length - i) * 60_000).toISOString(),
+    created_at: new Date(
+      now - (MOCK_APPROVALS.length - i) * 60_000,
+    ).toISOString(),
   }));
 }
 
-// ── Approvals ──────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// In-memory implementations
+// ─────────────────────────────────────────────────────────────
 
-export function listApprovalsStore(status?: ApprovalStatus): ApprovalRow[] {
+function listApprovalsMemory(status?: ApprovalStatus): ApprovalRow[] {
   const s = ensure();
   return status ? s.approvals.filter((a) => a.status === status) : s.approvals;
 }
 
-export function createApproval(row: {
+function createApprovalMemory(row: {
   session_id: string | null;
   action_type: string;
   action_payload: Record<string, unknown>;
@@ -112,21 +123,12 @@ export function createApproval(row: {
     ...row,
   };
   s.approvals.unshift(approval);
-  writeAudit({
-    actor_label: row.requested_by_label,
-    action: "approval.created",
-    entity_type: "approval",
-    entity_id: approval.id,
-    metadata: { action_type: row.action_type, risk: row.risk },
-  });
   return approval;
 }
 
-export function decideApproval(
+function decideApprovalMemory(
   id: string,
   decision: "approved" | "denied",
-  reviewer_label: string,
-  comment?: string
 ): ApprovalRow | null {
   const s = ensure();
   const idx = s.approvals.findIndex((a) => a.id === id);
@@ -134,31 +136,21 @@ export function decideApproval(
   const updated: ApprovalRow = {
     ...s.approvals[idx],
     status: decision,
-    executed_at:
-      decision === "approved" ? new Date().toISOString() : null,
+    executed_at: decision === "approved" ? new Date().toISOString() : null,
   };
   s.approvals[idx] = updated;
-  writeAudit({
-    actor_label: reviewer_label,
-    action: `approval.${decision}`,
-    entity_type: "approval",
-    entity_id: id,
-    metadata: { comment },
-  });
   return updated;
 }
 
-// ── Sessions + messages ────────────────────────────────────────
-
-export function listSessionsStore(): AgentSession[] {
+function listSessionsMemory(): AgentSession[] {
   return ensure().sessions;
 }
 
-export function getSession(id: string): AgentSession | undefined {
+function getSessionMemory(id: string): AgentSession | undefined {
   return ensure().sessions.find((s) => s.id === id);
 }
 
-export function createSession(opts: {
+function createSessionMemory(opts: {
   title: string;
   actor_label: string;
   channel?: AgentSession["channel"];
@@ -179,19 +171,23 @@ export function createSession(opts: {
   return session;
 }
 
-export function listMessagesStore(sessionId: string): AgentMessage[] {
+function listMessagesMemory(sessionId: string): AgentMessage[] {
   return ensure()
     .messages.filter((m) => m.session_id === sessionId)
     .sort((a, b) => a.turn - b.turn);
 }
 
-export function appendMessage(msg: Omit<AgentMessage, "id" | "created_at"> & {
-  id?: string;
-  created_at?: string;
-}): AgentMessage {
+function appendMessageMemory(
+  msg: Omit<AgentMessage, "id" | "created_at"> & {
+    id?: string;
+    created_at?: string;
+  },
+): AgentMessage {
   const s = ensure();
   const full: AgentMessage = {
-    id: msg.id ?? `msg-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    id:
+      msg.id ??
+      `msg-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     created_at: msg.created_at ?? new Date().toISOString(),
     ...msg,
   };
@@ -201,9 +197,7 @@ export function appendMessage(msg: Omit<AgentMessage, "id" | "created_at"> & {
   return full;
 }
 
-// ── Audit log ──────────────────────────────────────────────────
-
-export function writeAudit(entry: Omit<AuditEntry, "id" | "created_at">) {
+function writeAuditMemory(entry: Omit<AuditEntry, "id" | "created_at">) {
   const s = ensure();
   s.audit.push({
     id: `au-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -212,14 +206,437 @@ export function writeAudit(entry: Omit<AuditEntry, "id" | "created_at">) {
   });
 }
 
-export function listAudit(limit = 100): AuditEntry[] {
+function listAuditMemory(limit: number): AuditEntry[] {
   const s = ensure();
   return s.audit.slice(-limit).reverse();
 }
 
-export type { AuditEntry };
+// ─────────────────────────────────────────────────────────────
+// DB-backed implementations
+// ─────────────────────────────────────────────────────────────
 
-// ── Inbox ──────────────────────────────────────────────────────
+interface ApprovalDbRow {
+  id: string;
+  session_id: string | null;
+  action_type: string;
+  action_payload: Record<string, unknown> | null;
+  human_summary: string;
+  risk: string;
+  status: string;
+  requested_by_label: string | null;
+  created_at: string;
+  expires_at: string;
+  executed_at: string | null;
+}
+
+const APPROVAL_COLS =
+  "id, session_id, action_type, action_payload, human_summary, risk, status, requested_by_label, created_at, expires_at, executed_at";
+
+function toApprovalRow(r: ApprovalDbRow): ApprovalRow {
+  return {
+    id: r.id,
+    session_id: r.session_id,
+    action_type: r.action_type,
+    action_payload: r.action_payload ?? {},
+    human_summary: r.human_summary,
+    risk: r.risk as ApprovalRisk,
+    status: r.status as ApprovalStatus,
+    requested_by_label: r.requested_by_label ?? "Agent",
+    created_at: r.created_at,
+    expires_at: r.expires_at,
+    executed_at: r.executed_at,
+  };
+}
+
+async function listApprovalsDb(
+  db: LaceServiceClient,
+  status?: ApprovalStatus,
+): Promise<ApprovalRow[]> {
+  let q = db
+    .from("agent_approvals")
+    .select(APPROVAL_COLS)
+    .order("created_at", { ascending: false });
+  if (status) q = q.eq("status", status);
+  const { data, error } = await q;
+  if (error) {
+    console.error("[agent/store] listApprovals DB failed:", error);
+    return [];
+  }
+  return ((data ?? []) as ApprovalDbRow[]).map(toApprovalRow);
+}
+
+async function createApprovalDb(
+  db: LaceServiceClient,
+  row: {
+    session_id: string | null;
+    action_type: string;
+    action_payload: Record<string, unknown>;
+    human_summary: string;
+    risk: ApprovalRisk;
+    requested_by_label: string;
+  },
+): Promise<ApprovalRow> {
+  const { data, error } = await db
+    .from("agent_approvals")
+    .insert({
+      session_id: row.session_id,
+      action_type: row.action_type,
+      action_payload: row.action_payload,
+      human_summary: row.human_summary,
+      risk: row.risk,
+      requested_by_label: row.requested_by_label,
+      status: "pending",
+    })
+    .select(APPROVAL_COLS)
+    .single();
+  if (error || !data) {
+    console.error("[agent/store] createApproval DB failed:", error);
+    throw error ?? new Error("createApproval returned no row");
+  }
+  return toApprovalRow(data as ApprovalDbRow);
+}
+
+async function decideApprovalDb(
+  db: LaceServiceClient,
+  id: string,
+  decision: "approved" | "denied",
+  reviewerLabel: string,
+  comment?: string,
+): Promise<ApprovalRow | null> {
+  const { data, error } = await db
+    .from("agent_approvals")
+    .update({
+      status: decision,
+      reviewed_at: new Date().toISOString(),
+      review_comment: comment ?? null,
+      executed_at: decision === "approved" ? new Date().toISOString() : null,
+    })
+    .eq("id", id)
+    .select(APPROVAL_COLS)
+    .maybeSingle();
+  if (error) {
+    console.error("[agent/store] decideApproval DB failed:", error);
+    return null;
+  }
+  if (!data) return null;
+  // reviewer label moves into the audit row that decideApproval's
+  // public dispatcher writes below; the column on the table is uuid.
+  void reviewerLabel;
+  return toApprovalRow(data as ApprovalDbRow);
+}
+
+interface SessionDbRow {
+  id: string;
+  title: string | null;
+  actor_label: string | null;
+  channel: string;
+  started_at: string;
+  ended_at: string | null;
+  approvals_pending: number;
+  agent_messages: { id: string }[] | null;
+}
+
+const SESSION_COLS =
+  "id, title, actor_label, channel, started_at, ended_at, approvals_pending, agent_messages(id)";
+
+function toAgentSession(r: SessionDbRow): AgentSession {
+  return {
+    id: r.id,
+    title: r.title ?? "Untitled session",
+    actor_label: r.actor_label ?? "",
+    channel: r.channel as AgentSession["channel"],
+    started_at: r.started_at,
+    ended_at: r.ended_at,
+    message_count: r.agent_messages?.length ?? 0,
+    approvals_pending: r.approvals_pending,
+  };
+}
+
+async function listSessionsDb(db: LaceServiceClient): Promise<AgentSession[]> {
+  const { data, error } = await db
+    .from("agent_sessions")
+    .select(SESSION_COLS)
+    .order("started_at", { ascending: false });
+  if (error) {
+    console.error("[agent/store] listSessions DB failed:", error);
+    return [];
+  }
+  return ((data ?? []) as SessionDbRow[]).map(toAgentSession);
+}
+
+async function createSessionDb(
+  db: LaceServiceClient,
+  opts: {
+    title: string;
+    actor_label: string;
+    channel?: AgentSession["channel"];
+  },
+): Promise<AgentSession> {
+  const { data, error } = await db
+    .from("agent_sessions")
+    .insert({
+      title: opts.title,
+      actor_label: opts.actor_label,
+      channel: opts.channel ?? "console",
+    })
+    .select(SESSION_COLS)
+    .single();
+  if (error || !data) {
+    console.error("[agent/store] createSession DB failed:", error);
+    throw error ?? new Error("createSession returned no row");
+  }
+  return toAgentSession(data as SessionDbRow);
+}
+
+interface MessageDbRow {
+  id: string;
+  session_id: string;
+  turn: number;
+  role: string;
+  content: string | null;
+  tool_name: string | null;
+  tool_input: Record<string, unknown> | null;
+  tool_output: Record<string, unknown> | null;
+  approval_id: string | null;
+  created_at: string;
+}
+
+const MESSAGE_COLS =
+  "id, session_id, turn, role, content, tool_name, tool_input, tool_output, approval_id, created_at";
+
+function toAgentMessage(r: MessageDbRow): AgentMessage {
+  return {
+    id: r.id,
+    session_id: r.session_id,
+    turn: r.turn,
+    role: r.role as AgentMessage["role"],
+    content: r.content,
+    tool_name: r.tool_name,
+    tool_input: r.tool_input,
+    tool_output: r.tool_output,
+    approval_id: r.approval_id,
+    created_at: r.created_at,
+  };
+}
+
+async function listMessagesDb(
+  db: LaceServiceClient,
+  sessionId: string,
+): Promise<AgentMessage[]> {
+  const { data, error } = await db
+    .from("agent_messages")
+    .select(MESSAGE_COLS)
+    .eq("session_id", sessionId)
+    .order("turn", { ascending: true });
+  if (error) {
+    console.error("[agent/store] listMessages DB failed:", error);
+    return [];
+  }
+  return ((data ?? []) as MessageDbRow[]).map(toAgentMessage);
+}
+
+async function appendMessageDb(
+  db: LaceServiceClient,
+  msg: Omit<AgentMessage, "id" | "created_at"> & {
+    id?: string;
+    created_at?: string;
+  },
+): Promise<AgentMessage> {
+  const { data, error } = await db
+    .from("agent_messages")
+    .insert({
+      session_id: msg.session_id,
+      turn: msg.turn,
+      role: msg.role,
+      content: msg.content,
+      tool_name: msg.tool_name,
+      tool_input: msg.tool_input,
+      tool_output: msg.tool_output,
+      approval_id: msg.approval_id,
+    })
+    .select(MESSAGE_COLS)
+    .single();
+  if (error || !data) {
+    console.error("[agent/store] appendMessage DB failed:", error);
+    throw error ?? new Error("appendMessage returned no row");
+  }
+  return toAgentMessage(data as MessageDbRow);
+}
+
+async function writeAuditDb(
+  db: LaceServiceClient,
+  entry: Omit<AuditEntry, "id" | "created_at"> & { actor_type?: ActorType },
+): Promise<void> {
+  const { error } = await db.from("audit_log").insert({
+    actor_type: entry.actor_type ?? "agent",
+    actor_label: entry.actor_label,
+    action: entry.action,
+    entity_type: entry.entity_type ?? null,
+    entity_id: entry.entity_id ?? null,
+    metadata: entry.metadata,
+  });
+  if (error) {
+    console.error("[agent/store] writeAudit DB failed:", error);
+  }
+}
+
+interface AuditDbRow {
+  id: string;
+  actor_label: string | null;
+  action: string;
+  entity_type: string | null;
+  entity_id: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+}
+
+async function listAuditDb(
+  db: LaceServiceClient,
+  limit: number,
+): Promise<AuditEntry[]> {
+  const { data, error } = await db
+    .from("audit_log")
+    .select(
+      "id, actor_label, action, entity_type, entity_id, metadata, created_at",
+    )
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) {
+    console.error("[agent/store] listAudit DB failed:", error);
+    return [];
+  }
+  return ((data ?? []) as AuditDbRow[]).map((r) => ({
+    id: r.id,
+    actor_label: r.actor_label ?? "—",
+    action: r.action,
+    entity_type: r.entity_type ?? undefined,
+    entity_id: r.entity_id ?? undefined,
+    metadata: r.metadata ?? {},
+    created_at: r.created_at,
+  }));
+}
+
+// ─────────────────────────────────────────────────────────────
+// Public async API (DB when configured, in-memory otherwise)
+// ─────────────────────────────────────────────────────────────
+
+export async function listApprovalsStore(
+  status?: ApprovalStatus,
+): Promise<ApprovalRow[]> {
+  const db = getLaceDb();
+  return db ? listApprovalsDb(db, status) : listApprovalsMemory(status);
+}
+
+export async function createApproval(row: {
+  session_id: string | null;
+  action_type: string;
+  action_payload: Record<string, unknown>;
+  human_summary: string;
+  risk: ApprovalRisk;
+  requested_by_label: string;
+}): Promise<ApprovalRow> {
+  const db = getLaceDb();
+  const approval = db
+    ? await createApprovalDb(db, row)
+    : createApprovalMemory(row);
+  await writeAudit({
+    actor_type: "agent",
+    actor_label: row.requested_by_label,
+    action: "approval.created",
+    entity_type: "approval",
+    entity_id: approval.id,
+    metadata: { action_type: row.action_type, risk: row.risk },
+  });
+  return approval;
+}
+
+export async function decideApproval(
+  id: string,
+  decision: "approved" | "denied",
+  reviewerLabel: string,
+  comment?: string,
+): Promise<ApprovalRow | null> {
+  const db = getLaceDb();
+  const updated = db
+    ? await decideApprovalDb(db, id, decision, reviewerLabel, comment)
+    : decideApprovalMemory(id, decision);
+  if (!updated) return null;
+  await writeAudit({
+    actor_type: "user",
+    actor_label: reviewerLabel,
+    action: `approval.${decision}`,
+    entity_type: "approval",
+    entity_id: id,
+    metadata: { comment },
+  });
+  return updated;
+}
+
+export async function listSessionsStore(): Promise<AgentSession[]> {
+  const db = getLaceDb();
+  return db ? listSessionsDb(db) : listSessionsMemory();
+}
+
+export async function getSession(
+  id: string,
+): Promise<AgentSession | undefined> {
+  const db = getLaceDb();
+  if (!db) return getSessionMemory(id);
+  const { data, error } = await db
+    .from("agent_sessions")
+    .select(SESSION_COLS)
+    .eq("id", id)
+    .maybeSingle();
+  if (error) {
+    console.error("[agent/store] getSession DB failed:", error);
+    return undefined;
+  }
+  return data ? toAgentSession(data as SessionDbRow) : undefined;
+}
+
+export async function createSession(opts: {
+  title: string;
+  actor_label: string;
+  channel?: AgentSession["channel"];
+}): Promise<AgentSession> {
+  const db = getLaceDb();
+  return db ? createSessionDb(db, opts) : createSessionMemory(opts);
+}
+
+export async function listMessagesStore(
+  sessionId: string,
+): Promise<AgentMessage[]> {
+  const db = getLaceDb();
+  return db ? listMessagesDb(db, sessionId) : listMessagesMemory(sessionId);
+}
+
+export async function appendMessage(
+  msg: Omit<AgentMessage, "id" | "created_at"> & {
+    id?: string;
+    created_at?: string;
+  },
+): Promise<AgentMessage> {
+  const db = getLaceDb();
+  return db ? appendMessageDb(db, msg) : appendMessageMemory(msg);
+}
+
+export async function writeAudit(
+  entry: Omit<AuditEntry, "id" | "created_at"> & { actor_type?: ActorType },
+): Promise<void> {
+  const db = getLaceDb();
+  if (db) {
+    await writeAuditDb(db, entry);
+    return;
+  }
+  writeAuditMemory(entry);
+}
+
+export async function listAudit(limit = 100): Promise<AuditEntry[]> {
+  const db = getLaceDb();
+  return db ? listAuditDb(db, limit) : listAuditMemory(limit);
+}
+
+// ── Inbox (still in-memory; Phase 2.B moves to lace.contact_messages) ──
 
 export function listInboxStore(): InboxMessage[] {
   return ensure().inbox;
@@ -227,7 +644,7 @@ export function listInboxStore(): InboxMessage[] {
 
 export function updateInboxMessage(
   id: string,
-  patch: Partial<InboxMessage>
+  patch: Partial<InboxMessage>,
 ): InboxMessage | null {
   const s = ensure();
   const idx = s.inbox.findIndex((m) => m.id === id);
@@ -237,37 +654,34 @@ export function updateInboxMessage(
   return updated;
 }
 
-// ── Approval execution (demo-mode simulator) ───────────────────
+// ─────────────────────────────────────────────────────────────
+// Approval execution (demo simulator)
 //
-// When an approval is approved, `executeApproval` applies the most
-// plausible side effect we can fake without real infrastructure:
+// Phase 2.A only persists agent state; the side effects of an
+// "approved" action — Stripe refund, broadcast send, customer tag
+// — are still simulated. Phase 2.C wires them up for real.
 //
-//   - draft_inbox_reply  → flip the inbox row to "drafted" + save
-//                          the reply_draft so the Inbox UI updates.
-//   - refund_order, send_broadcast, mark_gift_delivered, etc. →
-//     append a "system" turn to the originating session transcript
-//     so the chat reflects the executed action.
-//
-// Everything also writes an audit entry. Returns short,
-// human-readable strings describing the effects so the UI can
-// surface them as toast details.
+// The simulator's session-transcript append now lands in DB
+// because appendMessage is dispatched. The inbox update stays
+// in-memory until Phase 2.B.
+// ─────────────────────────────────────────────────────────────
 
 export interface ExecutionResult {
   effects: string[];
 }
 
-export function executeApproval(
+export async function executeApproval(
   approval: ApprovalRow,
-  reviewerLabel: string
-): ExecutionResult {
+  reviewerLabel: string,
+): Promise<ExecutionResult> {
   const effects: string[] = [];
   const payload = approval.action_payload;
 
-  const appendToSession = (content: string) => {
+  const appendToSession = async (content: string) => {
     if (!approval.session_id) return;
-    const turn =
-      (listMessagesStore(approval.session_id).at(-1)?.turn ?? 0) + 1;
-    appendMessage({
+    const prior = await listMessagesStore(approval.session_id);
+    const turn = (prior.at(-1)?.turn ?? 0) + 1;
+    await appendMessage({
       session_id: approval.session_id,
       turn,
       role: "system",
@@ -292,10 +706,10 @@ export function executeApproval(
       } else {
         effects.push("Draft noted (message not found in demo data).");
       }
-      appendToSession(
+      await appendToSession(
         `Draft reply saved to the inbox for review${
           updated ? ` (${updated.name})` : ""
-        }.`
+        }.`,
       );
       break;
     }
@@ -305,28 +719,30 @@ export function executeApproval(
         : "full amount";
       const orderNumber = payload.order_number ?? "—";
       effects.push(`Refunded ${amount} on ${orderNumber}.`);
-      appendToSession(
-        `Refund of ${amount} issued on order ${orderNumber} (demo).`
+      await appendToSession(
+        `Refund of ${amount} issued on order ${orderNumber} (demo).`,
       );
       break;
     }
     case "send_broadcast": {
       const audience = payload.audience ?? "audience";
       effects.push(`Broadcast queued to ${audience}.`);
-      appendToSession(
-        `Broadcast "${payload.subject ?? "(no subject)"}" scheduled for ${audience} (demo).`
+      await appendToSession(
+        `Broadcast "${payload.subject ?? "(no subject)"}" scheduled for ${audience} (demo).`,
       );
       break;
     }
     case "mark_gift_delivered": {
       effects.push("Gift marked delivered.");
-      appendToSession(`Gift ${payload.gift_id ?? ""} marked delivered (demo).`);
+      await appendToSession(
+        `Gift ${payload.gift_id ?? ""} marked delivered (demo).`,
+      );
       break;
     }
     case "tag_customer": {
       effects.push(`Tagged customer with "${payload.tag ?? ""}".`);
-      appendToSession(
-        `Added tag "${payload.tag ?? ""}" to customer ${payload.customer_id ?? ""} (demo).`
+      await appendToSession(
+        `Added tag "${payload.tag ?? ""}" to customer ${payload.customer_id ?? ""} (demo).`,
       );
       break;
     }
@@ -335,45 +751,43 @@ export function executeApproval(
         ? `$${(Number(payload.price_cents) / 100).toFixed(2)}`
         : "";
       effects.push(`Price updated on ${payload.slug ?? ""} to ${price}.`);
-      appendToSession(
-        `Changed ${payload.slug ?? ""} price to ${price} (demo).`
+      await appendToSession(
+        `Changed ${payload.slug ?? ""} price to ${price} (demo).`,
       );
       break;
     }
     case "archive_product": {
       effects.push(`Archived product ${payload.slug ?? ""}.`);
-      appendToSession(`Archived ${payload.slug ?? ""} (demo).`);
+      await appendToSession(`Archived ${payload.slug ?? ""} (demo).`);
       break;
     }
     case "unsubscribe_customer": {
       effects.push(`Unsubscribed ${payload.email ?? ""}.`);
-      appendToSession(
-        `Unsubscribed ${payload.email ?? ""} from the newsletter (demo).`
+      await appendToSession(
+        `Unsubscribed ${payload.email ?? ""} from the newsletter (demo).`,
       );
       break;
     }
     case "draft_journal_post": {
       effects.push(`Journal draft "${payload.title ?? ""}" saved.`);
-      appendToSession(
-        `Journal post draft "${payload.title ?? ""}" saved (demo).`
+      await appendToSession(
+        `Journal post draft "${payload.title ?? ""}" saved (demo).`,
       );
       break;
     }
     default: {
       effects.push("Action recorded.");
-      appendToSession(`${approval.action_type} executed (demo).`);
+      await appendToSession(`${approval.action_type} executed (demo).`);
     }
   }
 
-  writeAudit({
+  await writeAudit({
+    actor_type: "user",
     actor_label: reviewerLabel,
     action: "approval.executed",
     entity_type: "approval",
     entity_id: approval.id,
-    metadata: {
-      action_type: approval.action_type,
-      effects,
-    },
+    metadata: { action_type: approval.action_type, effects },
   });
 
   return { effects };

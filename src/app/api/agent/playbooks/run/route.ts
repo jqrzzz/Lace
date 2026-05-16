@@ -18,13 +18,13 @@ export async function POST(req: NextRequest) {
       return fail(`Unknown playbook: ${id}`, { status: 404 });
     }
 
-    const session = createSession({
+    const session = await createSession({
       title: `Playbook: ${pb.name}`,
       actor_label: "Agent (playbook runner)",
       channel: "console",
     });
 
-    appendMessage({
+    await appendMessage({
       session_id: session.id,
       turn: 1,
       role: "system",
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
       approval_id: null,
     });
 
-    appendMessage({
+    await appendMessage({
       session_id: session.id,
       turn: 2,
       role: "user",
@@ -46,7 +46,8 @@ export async function POST(req: NextRequest) {
       approval_id: null,
     });
 
-    writeAudit({
+    await writeAudit({
+      actor_type: "agent",
       actor_label: "Agent (playbook runner)",
       action: "playbook.started",
       entity_type: "playbook",
