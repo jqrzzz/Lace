@@ -1,18 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Mail, ArrowLeft, Check, Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginInner />
+    </Suspense>
+  );
+}
+
+function LoginInner() {
   const { signInWithMagicLink, configured, user } = useAuth();
+  const params = useSearchParams();
+  const next = params?.get("next") || null;
+  const safeNext = next && next.startsWith("/") ? next : null;
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   if (user) {
+    const destination = safeNext ?? "/account";
+    const destinationLabel = safeNext?.startsWith("/admin")
+      ? "Go to Admin Console"
+      : "Go to Your Account";
     return (
       <section className="py-32 relative">
         <div className="absolute inset-0 lace-pattern opacity-15 pointer-events-none" />
@@ -25,10 +41,10 @@ export default function LoginPage() {
           </h1>
           <p className="text-warm-gray mb-6">{user.email}</p>
           <Link
-            href="/account"
+            href={destination}
             className="btn-luxe inline-flex items-center gap-2 px-8 py-3.5 bg-burgundy text-white text-sm tracking-[0.04em] rounded-full"
           >
-            Go to Your Account
+            {destinationLabel}
           </Link>
         </div>
       </section>
@@ -39,7 +55,9 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
-    const result = await signInWithMagicLink(email);
+    const result = await signInWithMagicLink(email, {
+      redirectTo: safeNext ?? undefined,
+    });
     setLoading(false);
     if (result.error) {
       setError(result.error);

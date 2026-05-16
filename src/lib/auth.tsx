@@ -21,7 +21,10 @@ interface AuthState {
   user: User | null;
   loading: boolean;
   configured: boolean;
-  signInWithMagicLink: (email: string) => Promise<{ error?: string }>;
+  signInWithMagicLink: (
+    email: string,
+    options?: { redirectTo?: string },
+  ) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
 }
 
@@ -62,17 +65,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signInWithMagicLink = useCallback(async (email: string) => {
-    if (!supabase) return { error: "Authentication is not configured yet." };
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/account`,
-      },
-    });
-    if (error) return { error: error.message };
-    return {};
-  }, []);
+  const signInWithMagicLink = useCallback(
+    async (email: string, options?: { redirectTo?: string }) => {
+      if (!supabase) return { error: "Authentication is not configured yet." };
+      const path =
+        options?.redirectTo && options.redirectTo.startsWith("/")
+          ? options.redirectTo
+          : "/account";
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}${path}`,
+        },
+      });
+      if (error) return { error: error.message };
+      return {};
+    },
+    [],
+  );
 
   const signOut = useCallback(async () => {
     if (!supabase) return;

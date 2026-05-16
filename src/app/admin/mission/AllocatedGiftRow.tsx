@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Check, Loader2, MapPin, PackageCheck } from "lucide-react";
+import { adminFetch } from "@/lib/admin-fetch";
 import { timeAgo } from "@/lib/format";
 
 interface AllocatedGift {
@@ -28,7 +29,7 @@ export default function AllocatedGiftRow({ gift }: { gift: AllocatedGift }) {
 
   async function markDelivered() {
     setError(null);
-    const res = await fetch(
+    const res = await adminFetch(
       `/api/admin/mission/gifts/${gift.id}/mark-delivered`,
       {
         method: "POST",

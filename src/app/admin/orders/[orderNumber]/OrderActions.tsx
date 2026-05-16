@@ -10,6 +10,7 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react";
+import { adminFetch } from "@/lib/admin-fetch";
 import type { OrderStatus } from "@/lib/lace/types";
 
 interface OrderActionsProps {
@@ -59,7 +60,7 @@ export default function OrderActions({
   ) {
     setError(null);
     setSuccess(null);
-    const res = await fetch(
+    const res = await adminFetch(
       `/api/admin/orders/${encodeURIComponent(orderNumber)}/${path}`,
       {
         method: "POST",

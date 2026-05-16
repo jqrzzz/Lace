@@ -11,6 +11,7 @@ import {
   Send,
   Sparkles,
 } from "lucide-react";
+import { adminFetch } from "@/lib/admin-fetch";
 import type { InboxStatus } from "@/lib/lace/types";
 
 interface ReplyPaneProps {
@@ -46,7 +47,7 @@ export default function ReplyPane({
     setSuccess(null);
     setPendingAction(action);
     try {
-      const res = await fetch(`/api/admin/inbox/${messageId}/${action}`, {
+      const res = await adminFetch(`/api/admin/inbox/${messageId}/${action}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),

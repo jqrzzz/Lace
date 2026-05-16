@@ -8,6 +8,7 @@ import { NextRequest } from "next/server";
 import { revalidatePath } from "next/cache";
 import { getLaceDb } from "@/lib/db";
 import { writeAudit } from "@/lib/agent/store";
+import { actorLabel, getAdminActor } from "@/lib/admin-auth";
 import { fail, ok } from "@/lib/api";
 
 interface RouteParams {
@@ -15,12 +16,16 @@ interface RouteParams {
 }
 
 export async function POST(req: NextRequest, { params }: RouteParams) {
+  const actor = await getAdminActor(req);
+  if (!actor) return fail("Not signed in.", { status: 401 });
+  if (actor.role === "viewer") {
+    return fail("Viewers can't take action here.", { status: 403 });
+  }
   const { id } = await params;
   const db = getLaceDb();
   if (!db) return fail("Database is not configured.", { status: 503 });
   const body = (await req.json().catch(() => ({}))) as {
     reply?: string;
-    actor?: string;
   };
   const reply = (body.reply ?? "").trim();
   if (!reply) {
@@ -37,7 +42,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   }
   await writeAudit({
     actor_type: "user",
-    actor_label: body.actor ?? "Luz Maria (owner)",
+    actor_label: actorLabel(actor),
     action: "inbox.draft_saved",
     entity_type: "inbox_message",
     entity_id: id,

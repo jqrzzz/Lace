@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { ArrowRight, Check, Heart, Loader2 } from "lucide-react";
+import { adminFetch } from "@/lib/admin-fetch";
 import { timeAgo } from "@/lib/format";
 
 interface Recipient {
@@ -38,7 +39,7 @@ export default function PendingGiftRow({
   async function assign() {
     if (!recipientId) return;
     setError(null);
-    const res = await fetch(`/api/admin/mission/gifts/${gift.id}/assign`, {
+    const res = await adminFetch(`/api/admin/mission/gifts/${gift.id}/assign`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ recipient_id: recipientId }),

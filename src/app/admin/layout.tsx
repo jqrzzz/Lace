@@ -16,9 +16,11 @@ import {
   Zap,
   Settings,
   ScrollText,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import CommandPalette from "@/components/ui/CommandPalette";
+import { AdminProvider, useAdminActor } from "./AdminContext";
 
 const NAV = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
@@ -39,7 +41,38 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
+  return (
+    <AdminProvider>
+      <AdminShell>{children}</AdminShell>
+    </AdminProvider>
+  );
+}
+
+function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { actor, loading } = useAdminActor();
+
+  if (loading || !actor) {
+    return (
+      <div className="min-h-screen bg-cream flex items-center justify-center">
+        <div className="flex items-center gap-3 text-warm-gray">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          <span className="text-sm">
+            {loading ? "Signing you in…" : "Taking you to sign-in…"}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  const displayName = actor.name || actor.email;
+  const initials = displayName
+    .split(/[\s@]+/)
+    .map((s) => s[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 
   return (
     <div className="min-h-screen bg-cream flex">
@@ -57,6 +90,20 @@ export default function AdminLayout({
         </div>
 
         <div className="px-3 pt-3 pb-1">
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 border border-white/10">
+            <span className="w-9 h-9 rounded-full bg-gold/20 text-gold flex items-center justify-center text-xs font-medium flex-shrink-0">
+              {initials || "•"}
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm text-white truncate">{displayName}</p>
+              <p className="text-[10px] uppercase tracking-[0.18em] text-rose-gold">
+                {actor.role}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="px-3 pt-2 pb-1">
           <div className="flex items-center justify-between gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10">
             <span className="text-[10px] uppercase tracking-[0.2em] text-soft-gray">
               Quick switch
@@ -76,7 +123,7 @@ export default function AdminLayout({
                 "flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-colors",
                 pathname === item.href
                   ? "bg-white/10 text-white"
-                  : "text-soft-gray hover:text-white hover:bg-white/5"
+                  : "text-soft-gray hover:text-white hover:bg-white/5",
               )}
             >
               <item.icon className="w-4 h-4" />
@@ -95,7 +142,8 @@ export default function AdminLayout({
               <span className="text-xs font-medium text-gold">Ask Luz</span>
             </div>
             <p className="text-[10px] text-soft-gray">
-              Your AI assistant — ask anything about the store, customers, or write something for you.
+              Your AI assistant — ask anything about the store, customers, or
+              write something for you.
             </p>
           </Link>
         </div>
@@ -114,9 +162,9 @@ export default function AdminLayout({
         {/* Mobile header */}
         <div className="lg:hidden bg-charcoal text-white px-4 py-3 flex items-center justify-between">
           <span className="font-heading text-lg tracking-wide">Admin</span>
-          <Link href="/" className="text-sm text-soft-gray">
-            Back to Store
-          </Link>
+          <span className="text-xs text-rose-gold uppercase tracking-[0.2em]">
+            {displayName}
+          </span>
         </div>
 
         {/* Mobile nav */}
@@ -129,7 +177,7 @@ export default function AdminLayout({
                 "flex items-center gap-2 px-4 py-3 text-sm whitespace-nowrap border-b-2 transition-colors",
                 pathname === item.href
                   ? "border-burgundy text-burgundy"
-                  : "border-transparent text-warm-gray"
+                  : "border-transparent text-warm-gray",
               )}
             >
               <item.icon className="w-4 h-4" />
@@ -141,7 +189,8 @@ export default function AdminLayout({
         {/* Pre-launch banner */}
         <div className="bg-gold/10 border-b border-gold/20 px-4 py-2.5 text-center">
           <p className="text-xs text-gold-dark">
-            <span className="font-medium">Pre-launch mode</span> — Connect Stripe and Supabase in your Vercel environment to go live.
+            <span className="font-medium">Pre-launch mode</span> — Connect
+            Stripe and Supabase in your Vercel environment to go live.
           </p>
         </div>
 
