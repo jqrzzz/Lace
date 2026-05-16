@@ -25,8 +25,12 @@ import type {
   AgentMessage,
   AgentSession,
   ApprovalRow,
+  CustomerFull,
+  CustomerInboxRow,
+  CustomerOrderRow,
   CustomerSummary,
   InboxMessage,
+  InboxStatus,
   MissionRecipientSummary,
   OrderCustomerCard,
   OrderFull,
@@ -374,6 +378,142 @@ export async function listCustomers(opts?: {
     return [];
   }
   return ((data ?? []) as CustomerRow[]).map(toCustomerSummary);
+}
+
+interface CustomerFullDbRow {
+  id: string;
+  email: string;
+  first_name: string | null;
+  last_name: string | null;
+  phone: string | null;
+  marketing_opt_in: boolean;
+  notes: string | null;
+  tags: string[] | null;
+  total_orders: number;
+  total_spent_cents: number;
+  first_ordered_at: string | null;
+  last_ordered_at: string | null;
+  created_at: string;
+  orders:
+    | Array<{
+        id: string;
+        order_number: string | null;
+        status: OrderStatus;
+        total_cents: number;
+        created_at: string;
+        order_items: { id: string }[] | null;
+      }>
+    | null;
+}
+
+const CUSTOMER_FULL_COLS = `
+  id, email, first_name, last_name, phone, marketing_opt_in, notes, tags,
+  total_orders, total_spent_cents, first_ordered_at, last_ordered_at, created_at,
+  orders ( id, order_number, status, total_cents, created_at, order_items(id) )
+`;
+
+interface CustomerInboxDbRow {
+  id: string;
+  subject: string | null;
+  message: string;
+  status: InboxStatus;
+  created_at: string;
+}
+
+/** Full customer graph: profile + order history + inbox messages by email. */
+export async function getCustomerFull(
+  id: string,
+): Promise<CustomerFull | null> {
+  const db = getLaceDb();
+  if (!db) {
+    const c = MOCK_CUSTOMERS.find((x) => x.id === id);
+    if (!c) return null;
+    const orders: CustomerOrderRow[] = MOCK_ORDERS.filter(
+      (o) => o.customer_email.toLowerCase() === c.email.toLowerCase(),
+    ).map((o) => ({
+      id: o.id,
+      order_number: o.order_number,
+      status: o.status,
+      total_cents: o.total_cents,
+      created_at: o.created_at,
+      item_count: o.item_count,
+    }));
+    return {
+      id: c.id,
+      email: c.email,
+      name: c.name,
+      phone: null,
+      marketing_opt_in: false,
+      notes: null,
+      tags: c.tags,
+      total_orders: c.total_orders,
+      total_spent_cents: c.total_spent_cents,
+      first_ordered_at: null,
+      last_ordered_at: c.last_ordered_at,
+      created_at: c.last_ordered_at ?? new Date().toISOString(),
+      orders,
+      inbox_messages: [],
+    };
+  }
+
+  const { data: cRow, error: cErr } = await db
+    .from("customers")
+    .select(CUSTOMER_FULL_COLS)
+    .eq("id", id)
+    .maybeSingle();
+  if (cErr) {
+    console.error("[queries] getCustomerFull failed:", cErr);
+    return null;
+  }
+  if (!cRow) return null;
+  const c = cRow as unknown as CustomerFullDbRow;
+
+  const { data: msgRows } = await db
+    .from("contact_messages")
+    .select("id, subject, message, status, created_at")
+    .eq("email", c.email)
+    .order("created_at", { ascending: false })
+    .limit(50);
+  const inbox: CustomerInboxRow[] = ((msgRows ?? []) as CustomerInboxDbRow[]).map(
+    (m) => ({
+      id: m.id,
+      subject: m.subject,
+      message: m.message,
+      status: m.status,
+      created_at: m.created_at,
+    }),
+  );
+
+  const orders: CustomerOrderRow[] = (c.orders ?? [])
+    .map((o) => ({
+      id: o.id,
+      order_number: o.order_number ?? o.id.slice(0, 8),
+      status: o.status,
+      total_cents: o.total_cents,
+      created_at: o.created_at,
+      item_count: o.order_items?.length ?? 0,
+    }))
+    .sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+
+  const name =
+    [c.first_name, c.last_name].filter(Boolean).join(" ").trim() || null;
+
+  return {
+    id: c.id,
+    email: c.email,
+    name,
+    phone: c.phone,
+    marketing_opt_in: c.marketing_opt_in,
+    notes: c.notes,
+    tags: c.tags ?? [],
+    total_orders: c.total_orders,
+    total_spent_cents: c.total_spent_cents,
+    first_ordered_at: c.first_ordered_at,
+    last_ordered_at: c.last_ordered_at,
+    created_at: c.created_at,
+    orders,
+    inbox_messages: inbox,
+  };
 }
 
 // ── Inbox ──────────────────────────────────────────────────────

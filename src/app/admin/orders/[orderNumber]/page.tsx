@@ -247,11 +247,21 @@ export default async function OrderDetailPage({ params }: PageProps) {
         {/* Right: customer + shipping + meta */}
         <div className="space-y-4">
           <div className="bg-white rounded-2xl border border-border-light p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <User className="w-4 h-4 text-gold" />
-              <h2 className="font-medium text-charcoal text-sm uppercase tracking-wide">
-                Customer
-              </h2>
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <div className="flex items-center gap-2">
+                <User className="w-4 h-4 text-gold" />
+                <h2 className="font-medium text-charcoal text-sm uppercase tracking-wide">
+                  Customer
+                </h2>
+              </div>
+              {order.customer.id && (
+                <Link
+                  href={`/admin/customers/${encodeURIComponent(order.customer.id)}`}
+                  className="text-[11px] text-burgundy hover:underline"
+                >
+                  View profile →
+                </Link>
+              )}
             </div>
             <p className="text-charcoal font-medium">
               {order.customer.name || "—"}

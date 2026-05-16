@@ -107,6 +107,43 @@ export interface ConciergeMessage {
   content: string;
 }
 
+/** Lightweight order row shown in a customer's order history. */
+export interface CustomerOrderRow {
+  id: string;
+  order_number: string;
+  status: OrderStatus;
+  total_cents: number;
+  created_at: string;
+  item_count: number;
+}
+
+/** Inbox message attached to a customer (matched by email). */
+export interface CustomerInboxRow {
+  id: string;
+  subject: string | null;
+  message: string;
+  status: InboxStatus;
+  created_at: string;
+}
+
+/** Full customer graph for the admin detail page. */
+export interface CustomerFull {
+  id: string;
+  email: string;
+  name: string | null;
+  phone: string | null;
+  marketing_opt_in: boolean;
+  notes: string | null;
+  tags: string[];
+  total_orders: number;
+  total_spent_cents: number;
+  first_ordered_at: string | null;
+  last_ordered_at: string | null;
+  created_at: string;
+  orders: CustomerOrderRow[];
+  inbox_messages: CustomerInboxRow[];
+}
+
 export interface OrderItemRow {
   id: string;
   sku: string | null;
