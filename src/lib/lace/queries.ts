@@ -58,14 +58,6 @@ export async function listProducts(): Promise<Product[]> {
 
 // ── Orders ─────────────────────────────────────────────────────
 
-// Statuses we count as "shipped or earlier in the fulfilment funnel".
-const FULFILLED_STATUSES: OrderStatus[] = [
-  "paid",
-  "processing",
-  "shipped",
-  "delivered",
-];
-
 interface OrderRow {
   id: string;
   order_number: string | null;
@@ -627,73 +619,60 @@ function dayLabel(d: Date): string {
   return `${DAY_LABELS[d.getDay()]}, ${MONTH_LABELS[d.getMonth()]} ${d.getDate()}`;
 }
 
+interface DailyMetricRow {
+  day: string; // ISO date
+  new_orders: number;
+  revenue_cents: number;
+  new_inbox_messages: number;
+  new_subscribers: number;
+  new_approvals: number;
+  unshipped_orders: number;
+}
+
 export async function getTodayBriefing() {
   const db = getLaceDb();
   if (!db) return MOCK_BRIEFING;
 
   const now = new Date();
-  const startOfToday = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
-  ).toISOString();
 
-  const [
-    todaysOrders,
-    todaysRevenue,
-    unshipped,
-    pendingApprovals,
-    newInbox,
-    newSubs,
-  ] = await Promise.all([
+  const [metricsResp, pendingApprovals, unshipped] = await Promise.all([
     db
-      .from("orders")
-      .select("id", { count: "exact", head: true })
-      .gte("created_at", startOfToday),
-    db
-      .from("orders")
-      .select("total_cents")
-      .gte("created_at", startOfToday)
-      .in("status", FULFILLED_STATUSES),
-    db
-      .from("orders")
-      .select("id", { count: "exact", head: true })
-      .in("status", ["paid", "processing"]),
+      .from("daily_metrics")
+      .select(
+        "day, new_orders, revenue_cents, new_inbox_messages, new_subscribers, new_approvals, unshipped_orders",
+      )
+      .order("day", { ascending: true }),
     db
       .from("agent_approvals")
       .select("id", { count: "exact", head: true })
       .eq("status", "pending"),
     db
-      .from("contact_messages")
+      .from("orders")
       .select("id", { count: "exact", head: true })
-      .eq("status", "new"),
-    db
-      .from("newsletter_subscribers")
-      .select("id", { count: "exact", head: true })
-      .gte("created_at", startOfToday)
-      .eq("status", "active"),
+      .in("status", ["paid", "processing"]),
   ]);
 
-  const revenueCents = (todaysRevenue.data ?? []).reduce(
-    (s, r) => s + ((r as { total_cents?: number }).total_cents ?? 0),
-    0,
-  );
+  const metrics = (metricsResp.data ?? []) as DailyMetricRow[];
+  const today = metrics.at(-1);
+  const last7 = metrics.slice(-7);
 
   return {
     dayLabel: dayLabel(now),
-    newOrders: todaysOrders.count ?? 0,
-    revenueCents,
+    newOrders: today?.new_orders ?? 0,
+    revenueCents: today?.revenue_cents ?? 0,
     unshippedOrders: unshipped.count ?? 0,
     pendingApprovals: pendingApprovals.count ?? 0,
-    newInboxMessages: newInbox.count ?? 0,
-    newSubscribers: newSubs.count ?? 0,
-    // Real sparkline trends come with a daily-rollup view in a later phase.
-    // Empty arrays render nothing (Sparkline returns null on values < 2).
+    newInboxMessages: today?.new_inbox_messages ?? 0,
+    newSubscribers: today?.new_subscribers ?? 0,
     trends: {
-      newOrders: [] as number[],
-      pendingApprovals: [] as number[],
-      newInboxMessages: [] as number[],
-      unshippedOrders: [] as number[],
+      newOrders: last7.map((r) => r.new_orders),
+      // Trend uses approvals created per day, not snapshot pending count
+      // (snapshots would require event-sourced history). Good-enough proxy.
+      pendingApprovals: last7.map((r) => r.new_approvals),
+      newInboxMessages: last7.map((r) => r.new_inbox_messages),
+      // Same shape: count of orders created per day that are currently still
+      // unshipped — pile-up signal rather than literal snapshot history.
+      unshippedOrders: last7.map((r) => r.unshipped_orders),
     },
   };
 }
