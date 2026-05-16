@@ -1,8 +1,8 @@
 // POST /api/admin/orders/[orderNumber]/refund
 //
-// Refunds are still simulated — Phase 2.C wires Stripe into the shared
-// refundOrder handler. From the UI's perspective the response shape is
-// already final, so 2.C is a swap-in.
+// Calls Stripe.refunds.create via the shared refundOrder handler when
+// STRIPE_SECRET_KEY is set; falls back to an audit-only record when it
+// isn't (local dev / pre-launch).
 
 import { NextRequest } from "next/server";
 import { revalidatePath } from "next/cache";
@@ -18,9 +18,8 @@ interface RouteParams {
 export async function POST(req: NextRequest, { params }: RouteParams) {
   const actor = await getAdminActor(req);
   if (!actor) return fail("Not signed in.", { status: 401 });
-  // Refunds are money — even staff route through approval rather than
-  // direct admin action. Phase 2.C will move them through the approval
-  // gate properly; for now we keep them owner-only here.
+  // Refunds are money — owner-only direct action. Staff route their
+  // refund intents through the agent's approval queue instead.
   if (actor.role !== "owner") {
     return fail("Refunds need an owner.", { status: 403 });
   }

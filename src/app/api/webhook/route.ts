@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { getLaceDb, type LaceServiceClient } from "@/lib/db";
+import { sendEmail } from "@/lib/email";
 
 function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -195,38 +196,41 @@ async function sendConfirmationEmail(
   lineItems: Stripe.LineItem[],
 ): Promise<void> {
   const email = session.customer_email || session.customer_details?.email;
-  const resendKey = process.env.RESEND_API_KEY;
-  if (!resendKey || !email) return;
+  if (!email) return;
 
   const totalVeils = lineItems.reduce((s, li) => s + (li.quantity ?? 1), 0);
-  await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${resendKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: "Lace by La Luz <orders@lacebylaluz.com>",
-      to: email,
-      subject: "Thank you, Sister — Your order is confirmed",
-      html: `
-        <div style="font-family: Georgia, serif; max-width: 560px; margin: 0 auto; padding: 40px 20px;">
-          <h1 style="font-size: 28px; color: #2C2527; margin-bottom: 8px;">Thank You, Sister</h1>
-          <p style="color: #8B7A7E; font-size: 15px; line-height: 1.8;">
-            Your order is confirmed. A beautiful veil is on its way to you — and
-            ${totalVeils} matching veil${totalVeils > 1 ? "s" : ""} will be gifted to a sister in need.
-          </p>
-          <hr style="border: none; border-top: 1px solid #E8E0DC; margin: 24px 0;" />
-          <p style="color: #8B7A7E; font-size: 13px; line-height: 1.8;">
-            We'll send you an update when your gifted veil is assigned to a destination church.
-            Later, you'll receive a photo of the sisters who received your gift.
-          </p>
-          <p style="color: #C9A96E; font-size: 12px; margin-top: 32px; text-align: center;">
-            Buy one. Give one. — Lace by La Luz
-          </p>
-        </div>
-      `,
-    }),
+  const veilWord = totalVeils === 1 ? "veil" : "veils";
+  const text = [
+    "Thank you, Sister.",
+    "",
+    `Your order is confirmed. A beautiful veil is on its way to you — and ${totalVeils} matching ${veilWord} will be gifted to a sister in need.`,
+    "",
+    "We'll send you an update when your gifted veil is assigned to a destination church. Later, you'll receive a photo of the sisters who received your gift.",
+    "",
+    "Buy one. Give one. — Lace by La Luz",
+  ].join("\n");
+  const html = `
+    <div style="font-family: Georgia, serif; max-width: 560px; margin: 0 auto; padding: 40px 20px;">
+      <h1 style="font-size: 28px; color: #2C2527; margin-bottom: 8px;">Thank You, Sister</h1>
+      <p style="color: #8B7A7E; font-size: 15px; line-height: 1.8;">
+        Your order is confirmed. A beautiful veil is on its way to you — and
+        ${totalVeils} matching ${veilWord} will be gifted to a sister in need.
+      </p>
+      <hr style="border: none; border-top: 1px solid #E8E0DC; margin: 24px 0;" />
+      <p style="color: #8B7A7E; font-size: 13px; line-height: 1.8;">
+        We&apos;ll send you an update when your gifted veil is assigned to a destination church.
+        Later, you&apos;ll receive a photo of the sisters who received your gift.
+      </p>
+      <p style="color: #C9A96E; font-size: 12px; margin-top: 32px; text-align: center;">
+        Buy one. Give one. — Lace by La Luz
+      </p>
+    </div>
+  `;
+  await sendEmail({
+    to: email,
+    subject: "Thank you, Sister — Your order is confirmed",
+    text,
+    html,
   });
 }
 

@@ -207,7 +207,7 @@ export default function SettingsForm() {
               <ToggleCard
                 icon={Mail}
                 title="Send me a daily briefing"
-                description="A short morning email summarizing yesterday: new orders, revenue, anything that needs your attention. (Email sending lands in Phase 2.C.)"
+                description="A short morning email summarizing yesterday: new orders, revenue, anything that needs your attention. Sent through the configured email provider."
                 checked={toggles.daily_briefing_enabled}
                 onToggle={() => toggle("daily_briefing_enabled")}
               />

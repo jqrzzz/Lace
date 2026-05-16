@@ -167,8 +167,9 @@ export default function ReplyPane({
       </div>
 
       <p className="text-[11px] text-warm-gray mt-3">
-        Send goes to the customer&apos;s email. Phase 2.C wires the real send
-        — for now the draft saves and an audit entry is written.
+        Send delivers the reply to the customer&apos;s email when sending is
+        configured. Without an email key set, the reply is saved and audited
+        but no email leaves the building.
       </p>
 
       {success && (

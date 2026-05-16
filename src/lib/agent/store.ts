@@ -39,6 +39,7 @@ import {
   assignMissionGift,
   markGiftDelivered,
   markOrderShipped,
+  refundOrder,
   tagCustomer,
   type ActionContext,
 } from "./actions";
@@ -803,15 +804,14 @@ export async function updateInboxMessage(
 }
 
 // ─────────────────────────────────────────────────────────────
-// Approval execution (demo simulator)
+// Approval execution
 //
-// Phase 2.A only persists agent state; the side effects of an
-// "approved" action — Stripe refund, broadcast send, customer tag
-// — are still simulated. Phase 2.C wires them up for real.
-//
-// The simulator's session-transcript append now lands in DB
-// because appendMessage is dispatched. The inbox update stays
-// in-memory until Phase 2.B.
+// Order, mission, and customer mutations route through real DB +
+// Stripe handlers in ./actions.ts (see tryRealExecution above).
+// Broadcasts and journal posts stay simulated for now — broadcasts
+// need the audience-evaluation worker; journal needs the editor UI.
+// Anything that falls into the switch below is recorded but doesn't
+// touch external state.
 // ─────────────────────────────────────────────────────────────
 
 export interface ExecutionResult {
@@ -819,15 +819,13 @@ export interface ExecutionResult {
 }
 
 /**
- * Real DB execution for pure-state mutations (no external APIs needed).
- * Returns null if the action type isn't handled here or DB is not
- * configured — caller then falls through to the demo simulator.
+ * Real execution for state mutations that have a shared handler in
+ * ./actions.ts. Returns null when the action type isn't handled here
+ * or DB is not configured — caller falls through to the simulator.
  *
- * Refund / broadcast still simulate because they need Stripe / Resend;
- * those move to real execution in Phase 2.C.
- *
- * Each branch delegates to the shared handler in ./actions.ts so the
- * admin API routes and the approval flow run identical code.
+ * Each branch delegates to ./actions.ts so the admin API routes and
+ * the approval flow run identical code (and write the same audit row
+ * shape).
  */
 async function tryRealExecution(
   approval: ApprovalRow,
@@ -903,6 +901,19 @@ async function tryRealExecution(
       );
       return { effects: r.effects, sessionNote: r.sessionNote };
     }
+    case "refund_order": {
+      const r = await refundOrder(
+        db,
+        {
+          order_number: String(p.order_number ?? ""),
+          amount_cents:
+            typeof p.amount_cents === "number" ? p.amount_cents : undefined,
+          reason: String(p.reason ?? ""),
+        },
+        ctx,
+      );
+      return { effects: r.effects, sessionNote: r.sessionNote };
+    }
   }
   return null;
 }
@@ -968,17 +979,6 @@ export async function executeApproval(
         `Draft reply saved to the inbox for review${
           updated ? ` (${updated.name})` : ""
         }.`,
-      );
-      break;
-    }
-    case "refund_order": {
-      const amount = payload.amount_cents
-        ? `$${(Number(payload.amount_cents) / 100).toFixed(2)}`
-        : "full amount";
-      const orderNumber = payload.order_number ?? "—";
-      effects.push(`Refunded ${amount} on ${orderNumber}.`);
-      await appendToSession(
-        `Refund of ${amount} issued on order ${orderNumber} (demo).`,
       );
       break;
     }

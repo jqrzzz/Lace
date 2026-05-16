@@ -16,6 +16,7 @@
 // can share the same response shape.
 // ─────────────────────────────────────────────────────────────
 
+import Stripe from "stripe";
 import type { LaceServiceClient } from "@/lib/db";
 import { writeAudit } from "./store";
 
@@ -144,43 +145,113 @@ export interface RefundOrderPayload {
   reason: string;
 }
 
-// Refund is intentionally simulated for now. Phase 2.C wires Stripe
-// (stripe.refunds.create) into this same handler — the response shape
-// and audit row stay identical.
+/**
+ * Refund a Stripe-paid order. Calls stripe.refunds.create when
+ * STRIPE_SECRET_KEY is configured; otherwise records the intent and
+ * marks the audit row simulated=true so local dev keeps working.
+ *
+ * Full refunds flip the order status to 'refunded'. Partial refunds
+ * leave the status alone and rely on the audit row + Stripe to keep
+ * the truth.
+ */
 export async function refundOrder(
   db: LaceServiceClient,
   payload: RefundOrderPayload,
   ctx: ActionContext,
 ): Promise<ActionResult> {
-  if (!payload.order_number || !payload.reason) {
+  if (!payload.order_number || !payload.reason?.trim()) {
     return notOk("Order number and reason are required for refunds.");
   }
-  // Look up the order so we can compute the refund amount and record id.
+
   const { data: order, error: readErr } = await db
     .from("orders")
-    .select("id, order_number, total_cents, status")
+    .select(
+      "id, order_number, total_cents, stripe_payment_intent, status",
+    )
     .eq("order_number", payload.order_number)
     .maybeSingle();
   if (readErr || !order) {
     return notOk(`Couldn't find order ${payload.order_number}.`);
   }
+
   const amount = payload.amount_cents ?? order.total_cents;
-  const human = `Refund queued: $${(amount / 100).toFixed(2)} on ${order.order_number}. (Stripe call lands in Phase 2.C.)`;
+  if (amount <= 0 || amount > order.total_cents) {
+    return notOk(
+      `Refund amount must be between $0.01 and $${(order.total_cents / 100).toFixed(2)}.`,
+    );
+  }
+  if (order.status === "refunded") {
+    return notOk(`${order.order_number} has already been refunded.`);
+  }
+
+  const stripeKey = process.env.STRIPE_SECRET_KEY?.trim();
+  let stripeRefundId: string | null = null;
+  let simulated = true;
+
+  if (stripeKey) {
+    if (!order.stripe_payment_intent) {
+      return notOk(
+        `${order.order_number} has no Stripe payment recorded — can't refund.`,
+      );
+    }
+    try {
+      const stripe = new Stripe(stripeKey, {
+        apiVersion: "2026-03-25.dahlia",
+      });
+      const refund = await stripe.refunds.create({
+        payment_intent: order.stripe_payment_intent,
+        amount,
+        reason: "requested_by_customer",
+        metadata: {
+          order_number: order.order_number ?? "",
+          reason: payload.reason.slice(0, 500),
+          actor: ctx.actorLabel.slice(0, 200),
+        },
+      });
+      stripeRefundId = refund.id;
+      simulated = false;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error("[actions/refundOrder] Stripe refund failed:", err);
+      return notOk(`Stripe refund failed: ${message}`);
+    }
+  }
+
+  const isFull = amount === order.total_cents;
+  if (isFull) {
+    const { error: statusErr } = await db
+      .from("orders")
+      .update({ status: "refunded" })
+      .eq("id", order.id);
+    if (statusErr) {
+      console.error(
+        "[actions/refundOrder] status update failed:",
+        statusErr,
+      );
+    }
+  }
+
+  const human = simulated
+    ? `Refund recorded: $${(amount / 100).toFixed(2)} on ${order.order_number} (no Stripe key set — audit only).`
+    : `Refunded $${(amount / 100).toFixed(2)} on ${order.order_number} via Stripe.`;
 
   await writeAudit({
     actor_type: ctx.actorType ?? "user",
     actor_label: ctx.actorLabel,
-    action: "order.refund_requested",
+    action: "order.refund",
     entity_type: "order",
     entity_id: order.id,
     metadata: {
       order_number: order.order_number,
       amount_cents: amount,
+      full_refund: isFull,
       reason: payload.reason,
+      stripe_refund_id: stripeRefundId,
+      simulated,
       approval_id: ctx.approvalId ?? null,
-      simulated: true,
     },
   });
+
   return { ok: true, effects: [human], sessionNote: human };
 }
 
