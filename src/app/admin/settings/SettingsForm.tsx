@@ -9,14 +9,10 @@ import {
   Mail,
   Save,
   ShieldCheck,
+  User,
 } from "lucide-react";
 import { adminFetch } from "@/lib/admin-fetch";
 import { useAdminActor } from "../AdminContext";
-
-// Plain-language autonomy toggles. The DB columns underneath are
-// lace.app_users.confirm_money_actions / confirm_destructive /
-// daily_briefing_enabled. We don't expose the raw names anywhere —
-// these labels are mom's mental model.
 
 interface Toggles {
   confirm_money_actions: boolean;
@@ -24,16 +20,25 @@ interface Toggles {
   daily_briefing_enabled: boolean;
 }
 
+interface Profile {
+  name: string;
+}
+
 export default function SettingsForm() {
   const { actor, loading, applyLocalActor } = useAdminActor();
-  const [draft, setDraft] = useState<Toggles | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [toggles, setToggles] = useState<Toggles | null>(null);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [savedProfile, setSavedProfile] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [savingToggles, setSavingToggles] = useState(false);
+  const [savedToggles, setSavedToggles] = useState(false);
+  const [togglesError, setTogglesError] = useState<string | null>(null);
 
   useEffect(() => {
     if (actor) {
-      setDraft({
+      setProfile({ name: actor.name ?? "" });
+      setToggles({
         confirm_money_actions: actor.confirm_money_actions,
         confirm_destructive: actor.confirm_destructive,
         daily_briefing_enabled: actor.daily_briefing_enabled,
@@ -41,7 +46,7 @@ export default function SettingsForm() {
     }
   }, [actor]);
 
-  if (loading || !actor || !draft) {
+  if (loading || !actor || !profile || !toggles) {
     return (
       <div className="bg-white rounded-2xl border border-border-light p-10 text-center">
         <Loader2 className="w-5 h-5 text-warm-gray animate-spin mx-auto mb-2" />
@@ -50,103 +55,191 @@ export default function SettingsForm() {
     );
   }
 
-  if (actor.role !== "owner") {
-    return (
-      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6">
-        <p className="text-sm text-amber-900">
-          These settings are owner-only. You&apos;re signed in as{" "}
-          <span className="font-medium">{actor.role}</span> — ask the owner to
-          adjust them or to promote your account.
-        </p>
-      </div>
-    );
-  }
-
   function toggle(key: keyof Toggles) {
-    setDraft((d) => (d ? { ...d, [key]: !d[key] } : d));
-    setSaved(false);
+    setToggles((d) => (d ? { ...d, [key]: !d[key] } : d));
+    setSavedToggles(false);
   }
 
-  async function save() {
-    if (!draft) return;
-    setSaving(true);
-    setError(null);
+  async function saveProfile() {
+    if (!profile) return;
+    setSavingProfile(true);
+    setProfileError(null);
     try {
       const res = await adminFetch("/api/admin/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(draft),
+        body: JSON.stringify({ name: profile.name }),
       });
       if (!res.ok) {
         const j = await res.json().catch(() => ({}));
-        setError(j?.error ?? "Couldn't save your settings.");
+        setProfileError(j?.error ?? "Couldn't save your name.");
         return;
       }
-      // Mirror the change locally so the rest of the admin reflects it
-      // without waiting for a re-fetch.
-      applyLocalActor(draft);
-      setSaved(true);
+      applyLocalActor({
+        name: profile.name.trim().length > 0 ? profile.name.trim() : null,
+      });
+      setSavedProfile(true);
     } finally {
-      setSaving(false);
+      setSavingProfile(false);
+    }
+  }
+
+  async function saveToggles() {
+    if (!toggles) return;
+    setSavingToggles(true);
+    setTogglesError(null);
+    try {
+      const res = await adminFetch("/api/admin/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(toggles),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        setTogglesError(j?.error ?? "Couldn't save your settings.");
+        return;
+      }
+      applyLocalActor(toggles);
+      setSavedToggles(true);
+    } finally {
+      setSavingToggles(false);
     }
   }
 
   return (
-    <div className="space-y-4">
-      <ToggleCard
-        icon={DollarSign}
-        title="Always ask me before money goes out"
-        description="Every refund or paid action shows up in Approvals first — Luz never spends a dollar without your tap."
-        checked={draft.confirm_money_actions}
-        onToggle={() => toggle("confirm_money_actions")}
-        cautionRecommended
-      />
+    <div className="space-y-8">
+      {/* Profile section */}
+      <section>
+        <h2 className="text-xs uppercase tracking-[0.18em] text-warm-gray mb-3">
+          Your profile
+        </h2>
+        <div className="bg-white rounded-2xl border border-border-light p-5">
+          <div className="flex items-start gap-4">
+            <span className="w-9 h-9 rounded-xl bg-gold/15 flex items-center justify-center flex-shrink-0">
+              <User className="w-4 h-4 text-gold-dark" />
+            </span>
+            <div className="flex-1 min-w-0">
+              <label className="block">
+                <span className="text-sm font-medium text-charcoal block mb-1">
+                  Your name
+                </span>
+                <span className="text-xs text-warm-gray block mb-2">
+                  Shows up in the sidebar and on every audit entry so we can
+                  see who did what.
+                </span>
+                <input
+                  type="text"
+                  value={profile.name}
+                  onChange={(e) => {
+                    setProfile({ name: e.target.value });
+                    setSavedProfile(false);
+                  }}
+                  placeholder="e.g. Luz Maria"
+                  className="w-full max-w-sm px-3 py-2 border border-border rounded-lg text-sm text-charcoal focus:outline-none focus:border-gold"
+                />
+              </label>
+              <p className="text-xs text-warm-gray mt-3">
+                Signed in as <span className="font-medium">{actor.email}</span>{" "}
+                · {actor.role}
+              </p>
+            </div>
+          </div>
 
-      <ToggleCard
-        icon={ShieldCheck}
-        title="Always ask me before customer-facing changes"
-        description="Edits to products, customer tags, journal posts, and inbox replies all wait for your approval. Turn down once you trust Luz with the small stuff."
-        checked={draft.confirm_destructive}
-        onToggle={() => toggle("confirm_destructive")}
-      />
+          <div className="flex items-center gap-3 mt-4 pt-4 border-t border-border-light">
+            <button
+              onClick={saveProfile}
+              disabled={savingProfile}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-burgundy text-white text-sm rounded-xl hover:bg-burgundy/90 disabled:opacity-60 transition-colors"
+            >
+              {savingProfile ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              Save name
+            </button>
+            {savedProfile && (
+              <span className="inline-flex items-center gap-1.5 text-sm text-emerald-700">
+                <Check className="w-4 h-4" /> Saved.
+              </span>
+            )}
+            {profileError && (
+              <span className="inline-flex items-center gap-1.5 text-sm text-red-700">
+                <AlertCircle className="w-4 h-4" /> {profileError}
+              </span>
+            )}
+          </div>
+        </div>
+      </section>
 
-      <ToggleCard
-        icon={Mail}
-        title="Send me a daily briefing"
-        description="A short morning email summarizing yesterday: new orders, revenue, anything that needs your attention. (Email sending lands in Phase 2.C.)"
-        checked={draft.daily_briefing_enabled}
-        onToggle={() => toggle("daily_briefing_enabled")}
-      />
+      {/* Autonomy section */}
+      <section>
+        <h2 className="text-xs uppercase tracking-[0.18em] text-warm-gray mb-3">
+          How cautious should Luz be?
+        </h2>
 
-      <div className="flex items-center gap-3 pt-2">
-        <button
-          onClick={save}
-          disabled={saving}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-burgundy text-white text-sm rounded-xl hover:bg-burgundy/90 disabled:opacity-60 transition-colors"
-        >
-          {saving ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Save className="w-4 h-4" />
-          )}
-          Save changes
-        </button>
-        {saved && (
-          <span className="inline-flex items-center gap-1.5 text-sm text-emerald-700">
-            <Check className="w-4 h-4" /> Saved.
-          </span>
+        {actor.role !== "owner" ? (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
+            <p className="text-sm text-amber-900">
+              Autonomy settings are owner-only. You&apos;re signed in as{" "}
+              <span className="font-medium">{actor.role}</span> — the owner
+              can adjust these, or promote your account.
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="space-y-3">
+              <ToggleCard
+                icon={DollarSign}
+                title="Always ask me before money goes out"
+                description="Every refund or paid action shows up in Approvals first — Luz never spends a dollar without your tap."
+                checked={toggles.confirm_money_actions}
+                onToggle={() => toggle("confirm_money_actions")}
+                cautionRecommended
+              />
+              <ToggleCard
+                icon={ShieldCheck}
+                title="Always ask me before customer-facing changes"
+                description="Edits to products, customer tags, journal posts, and inbox replies all wait for your approval. Turn down once you trust Luz with the small stuff."
+                checked={toggles.confirm_destructive}
+                onToggle={() => toggle("confirm_destructive")}
+              />
+              <ToggleCard
+                icon={Mail}
+                title="Send me a daily briefing"
+                description="A short morning email summarizing yesterday: new orders, revenue, anything that needs your attention. (Email sending lands in Phase 2.C.)"
+                checked={toggles.daily_briefing_enabled}
+                onToggle={() => toggle("daily_briefing_enabled")}
+              />
+            </div>
+
+            <div className="flex items-center gap-3 mt-4">
+              <button
+                onClick={saveToggles}
+                disabled={savingToggles}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-burgundy text-white text-sm rounded-xl hover:bg-burgundy/90 disabled:opacity-60 transition-colors"
+              >
+                {savingToggles ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                Save changes
+              </button>
+              {savedToggles && (
+                <span className="inline-flex items-center gap-1.5 text-sm text-emerald-700">
+                  <Check className="w-4 h-4" /> Saved.
+                </span>
+              )}
+              {togglesError && (
+                <span className="inline-flex items-center gap-1.5 text-sm text-red-700">
+                  <AlertCircle className="w-4 h-4" /> {togglesError}
+                </span>
+              )}
+            </div>
+          </>
         )}
-        {error && (
-          <span className="inline-flex items-center gap-1.5 text-sm text-red-700">
-            <AlertCircle className="w-4 h-4" /> {error}
-          </span>
-        )}
-      </div>
-
-      <p className="text-xs text-warm-gray pt-2">
-        Signed in as <span className="font-medium">{actor.email}</span> ·{" "}
-        {actor.role}
-      </p>
+      </section>
     </div>
   );
 }

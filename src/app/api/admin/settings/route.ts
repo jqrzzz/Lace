@@ -13,29 +13,44 @@ import { fail, ok } from "@/lib/api";
 export async function PATCH(req: NextRequest) {
   const actor = await getAdminActor(req);
   if (!actor) return fail("Not signed in.", { status: 401 });
-  if (actor.role !== "owner") {
-    return fail("Only the owner can change autonomy settings.", {
-      status: 403,
-    });
-  }
   const db = getLaceDb();
   if (!db) return fail("Database is not configured.", { status: 503 });
 
   const body = (await req.json().catch(() => ({}))) as {
+    name?: string | null;
     confirm_money_actions?: boolean;
     confirm_destructive?: boolean;
     daily_briefing_enabled?: boolean;
   };
+
   const patch: Record<string, unknown> = {};
-  if (typeof body.confirm_money_actions === "boolean") {
-    patch.confirm_money_actions = body.confirm_money_actions;
+
+  // Anyone can edit their own display name.
+  if (body.name !== undefined) {
+    const trimmed = (body.name ?? "").trim();
+    patch.name = trimmed.length > 0 ? trimmed : null;
   }
-  if (typeof body.confirm_destructive === "boolean") {
-    patch.confirm_destructive = body.confirm_destructive;
+
+  // Autonomy toggles are owner-only.
+  const autonomyKeys = [
+    "confirm_money_actions",
+    "confirm_destructive",
+    "daily_briefing_enabled",
+  ] as const;
+  const wantsAutonomyChange = autonomyKeys.some(
+    (k) => typeof body[k] === "boolean",
+  );
+  if (wantsAutonomyChange) {
+    if (actor.role !== "owner") {
+      return fail("Only the owner can change autonomy settings.", {
+        status: 403,
+      });
+    }
+    for (const k of autonomyKeys) {
+      if (typeof body[k] === "boolean") patch[k] = body[k];
+    }
   }
-  if (typeof body.daily_briefing_enabled === "boolean") {
-    patch.daily_briefing_enabled = body.daily_briefing_enabled;
-  }
+
   if (Object.keys(patch).length === 0) {
     return fail("Nothing to update.", { status: 400 });
   }
@@ -45,7 +60,7 @@ export async function PATCH(req: NextRequest) {
     .update(patch)
     .eq("id", actor.id)
     .select(
-      "id, confirm_money_actions, confirm_destructive, daily_briefing_enabled",
+      "id, name, confirm_money_actions, confirm_destructive, daily_briefing_enabled",
     )
     .maybeSingle();
   if (error || !data) {

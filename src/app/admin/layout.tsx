@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+import { useState } from "react";
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -17,21 +18,45 @@ import {
   Settings,
   ScrollText,
   Loader2,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import CommandPalette from "@/components/ui/CommandPalette";
-import { AdminProvider, useAdminActor } from "./AdminContext";
+import { useAuth } from "@/lib/auth";
+import { AdminProvider, useAdminActor, type AdminCounts } from "./AdminContext";
 
-const NAV = [
+type NavItem = {
+  href: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  badgeKey?: keyof AdminCounts;
+};
+
+const NAV: NavItem[] = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
-  { href: "/admin/approvals", label: "Approvals", icon: ShieldCheck },
+  {
+    href: "/admin/approvals",
+    label: "Approvals",
+    icon: ShieldCheck,
+    badgeKey: "approvals_pending",
+  },
   { href: "/admin/chat", label: "Agent Chat", icon: MessageSquare },
   { href: "/admin/playbooks", label: "Playbooks", icon: Zap },
-  { href: "/admin/inbox", label: "Inbox", icon: Inbox },
+  {
+    href: "/admin/inbox",
+    label: "Inbox",
+    icon: Inbox,
+    badgeKey: "inbox_new",
+  },
   { href: "/admin/orders", label: "Orders", icon: ClipboardList },
   { href: "/admin/customers", label: "Customers", icon: Users },
   { href: "/admin/products", label: "Products", icon: ShoppingBag },
-  { href: "/admin/mission", label: "Mission", icon: Heart },
+  {
+    href: "/admin/mission",
+    label: "Mission",
+    icon: Heart,
+    badgeKey: "mission_pending",
+  },
   { href: "/admin/audit", label: "Audit", icon: ScrollText },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
@@ -50,7 +75,19 @@ export default function AdminLayout({
 
 function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { actor, loading } = useAdminActor();
+  const router = useRouter();
+  const { actor, counts, loading } = useAdminActor();
+  const { signOut } = useAuth();
+  const [signingOut, setSigningOut] = useState(false);
+
+  async function handleSignOut() {
+    setSigningOut(true);
+    try {
+      await signOut();
+    } finally {
+      router.replace("/");
+    }
+  }
 
   if (loading || !actor) {
     return (
@@ -115,21 +152,37 @@ function AdminShell({ children }: { children: React.ReactNode }) {
         </div>
 
         <nav className="flex-1 px-3 py-3 space-y-1">
-          {NAV.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-colors",
-                pathname === item.href
-                  ? "bg-white/10 text-white"
-                  : "text-soft-gray hover:text-white hover:bg-white/5",
-              )}
-            >
-              <item.icon className="w-4 h-4" />
-              {item.label}
-            </Link>
-          ))}
+          {NAV.map((item) => {
+            const badge = item.badgeKey ? counts[item.badgeKey] : 0;
+            const active = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-colors",
+                  active
+                    ? "bg-white/10 text-white"
+                    : "text-soft-gray hover:text-white hover:bg-white/5",
+                )}
+              >
+                <item.icon className="w-4 h-4" />
+                <span className="flex-1">{item.label}</span>
+                {badge > 0 && (
+                  <span
+                    className={cn(
+                      "text-[10px] font-medium rounded-full px-1.5 py-0.5 min-w-[18px] text-center",
+                      active
+                        ? "bg-gold text-charcoal"
+                        : "bg-burgundy/80 text-pearl",
+                    )}
+                  >
+                    {badge}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="px-3 pb-4">
@@ -148,42 +201,89 @@ function AdminShell({ children }: { children: React.ReactNode }) {
           </Link>
         </div>
 
-        <Link
-          href="/"
-          className="flex items-center gap-2 px-6 py-4 text-sm text-soft-gray hover:text-white border-t border-white/10 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Store
-        </Link>
+        <div className="border-t border-white/10 grid grid-cols-2 divide-x divide-white/10">
+          <Link
+            href="/"
+            className="flex items-center justify-center gap-2 py-3 text-xs text-soft-gray hover:text-white transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Store
+          </Link>
+          <button
+            onClick={handleSignOut}
+            disabled={signingOut}
+            className="flex items-center justify-center gap-2 py-3 text-xs text-soft-gray hover:text-white transition-colors disabled:opacity-60"
+          >
+            {signingOut ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <LogOut className="w-3.5 h-3.5" />
+            )}
+            Sign out
+          </button>
+        </div>
       </aside>
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-h-screen">
         {/* Mobile header */}
-        <div className="lg:hidden bg-charcoal text-white px-4 py-3 flex items-center justify-between">
-          <span className="font-heading text-lg tracking-wide">Admin</span>
-          <span className="text-xs text-rose-gold uppercase tracking-[0.2em]">
-            {displayName}
-          </span>
+        <div className="lg:hidden bg-charcoal text-white px-4 py-3 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <span className="font-heading text-lg tracking-wide block">
+              Admin
+            </span>
+            <span className="text-[10px] text-rose-gold uppercase tracking-[0.2em] truncate block">
+              {displayName}
+            </span>
+          </div>
+          <button
+            onClick={handleSignOut}
+            disabled={signingOut}
+            aria-label="Sign out"
+            className="inline-flex items-center gap-1.5 text-xs text-soft-gray hover:text-white disabled:opacity-60"
+          >
+            {signingOut ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <LogOut className="w-3.5 h-3.5" />
+            )}
+            Sign out
+          </button>
         </div>
 
         {/* Mobile nav */}
         <div className="lg:hidden bg-white border-b border-border flex overflow-x-auto">
-          {NAV.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-2 px-4 py-3 text-sm whitespace-nowrap border-b-2 transition-colors",
-                pathname === item.href
-                  ? "border-burgundy text-burgundy"
-                  : "border-transparent text-warm-gray",
-              )}
-            >
-              <item.icon className="w-4 h-4" />
-              {item.label}
-            </Link>
-          ))}
+          {NAV.map((item) => {
+            const badge = item.badgeKey ? counts[item.badgeKey] : 0;
+            const active = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-3 text-sm whitespace-nowrap border-b-2 transition-colors",
+                  active
+                    ? "border-burgundy text-burgundy"
+                    : "border-transparent text-warm-gray",
+                )}
+              >
+                <item.icon className="w-4 h-4" />
+                {item.label}
+                {badge > 0 && (
+                  <span
+                    className={cn(
+                      "text-[10px] font-medium rounded-full px-1.5 py-0.5",
+                      active
+                        ? "bg-burgundy text-pearl"
+                        : "bg-cream text-warm-gray border border-border",
+                    )}
+                  >
+                    {badge}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
         </div>
 
         {/* Pre-launch banner */}
