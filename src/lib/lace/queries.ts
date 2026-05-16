@@ -31,6 +31,8 @@ import type {
   CustomerSummary,
   InboxMessage,
   InboxStatus,
+  MissionGiftConsoleRow,
+  MissionGiftStatus,
   MissionRecipientSummary,
   OrderCustomerCard,
   OrderFull,
@@ -567,6 +569,79 @@ export async function listMissionRecipients(): Promise<
     veils_gifted: r.veils_gifted,
     active: r.active,
   }));
+}
+
+interface MissionGiftDbRow {
+  id: string;
+  quantity: number;
+  status: MissionGiftStatus;
+  created_at: string;
+  allocated_at: string | null;
+  shipped_at: string | null;
+  delivered_at: string | null;
+  story: string | null;
+  order_id: string | null;
+  orders: {
+    id: string;
+    order_number: string | null;
+    customer_email: string;
+  } | null;
+  recipient_id: string | null;
+  mission_recipients: {
+    community: string;
+    city: string;
+    country: string;
+  } | null;
+}
+
+const MISSION_GIFT_COLS = `
+  id, quantity, status, created_at, allocated_at, shipped_at, delivered_at, story,
+  order_id, orders ( id, order_number, customer_email ),
+  recipient_id, mission_recipients ( community, city, country )
+`;
+
+function toMissionGiftRow(r: MissionGiftDbRow): MissionGiftConsoleRow {
+  return {
+    id: r.id,
+    quantity: r.quantity,
+    status: r.status,
+    created_at: r.created_at,
+    allocated_at: r.allocated_at,
+    shipped_at: r.shipped_at,
+    delivered_at: r.delivered_at,
+    story: r.story,
+    order_id: r.orders?.id ?? r.order_id,
+    order_number: r.orders?.order_number ?? null,
+    customer_email: r.orders?.customer_email ?? null,
+    recipient_id: r.recipient_id,
+    recipient_community: r.mission_recipients?.community ?? null,
+    recipient_city: r.mission_recipients?.city ?? null,
+    recipient_country: r.mission_recipients?.country ?? null,
+  };
+}
+
+/** Mission gifts for the admin console, optionally filtered by status. */
+export async function listMissionGifts(opts?: {
+  status?: MissionGiftStatus;
+  statuses?: MissionGiftStatus[];
+  limit?: number;
+}): Promise<MissionGiftConsoleRow[]> {
+  const db = getLaceDb();
+  if (!db) return [];
+  let q = db
+    .from("mission_gifts")
+    .select(MISSION_GIFT_COLS)
+    .order("created_at", { ascending: false });
+  if (opts?.status) q = q.eq("status", opts.status);
+  if (opts?.statuses && opts.statuses.length)
+    q = q.in("status", opts.statuses);
+  if (opts?.limit) q = q.limit(opts.limit);
+  const { data, error } = await q;
+  if (error) {
+    console.error("[queries] listMissionGifts failed:", error);
+    return [];
+  }
+  return ((data ?? []) as unknown as MissionGiftDbRow[]).map(toMissionGiftRow);
 }
 
 // ── Approvals ──────────────────────────────────────────────────

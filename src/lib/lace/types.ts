@@ -210,6 +210,27 @@ export interface OrderFull {
   gifts: OrderGiftRow[];
 }
 
+/** A single mission gift row shown on the mission console. */
+export interface MissionGiftConsoleRow {
+  id: string;
+  quantity: number;
+  status: MissionGiftStatus;
+  created_at: string;
+  allocated_at: string | null;
+  shipped_at: string | null;
+  delivered_at: string | null;
+  story: string | null;
+  // Source order — so mom knows whose purchase committed this gift.
+  order_id: string | null;
+  order_number: string | null;
+  customer_email: string | null;
+  // Recipient — null when status='pending'.
+  recipient_id: string | null;
+  recipient_community: string | null;
+  recipient_city: string | null;
+  recipient_country: string | null;
+}
+
 export interface MissionRecipientSummary {
   id: string;
   community: string;

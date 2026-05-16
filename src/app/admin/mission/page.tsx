@@ -1,179 +1,270 @@
-"use client";
-
+import Link from "next/link";
+import { Heart, Gift, MapPin, PackageCheck, Sparkles } from "lucide-react";
 import {
-  Heart,
-  MapPin,
-  Gift,
-  Camera,
-  Plus,
-  Globe,
-} from "lucide-react";
+  isLiveData,
+  listMissionGifts,
+  listMissionRecipients,
+} from "@/lib/lace/queries";
+import { timeAgo } from "@/lib/format";
+import PendingGiftRow from "./PendingGiftRow";
+import AllocatedGiftRow from "./AllocatedGiftRow";
 
-const DESTINATIONS: {
-  name: string;
-  location: string;
-  veilsNeeded: number;
-  veilsCollected: number;
-  status: string;
-}[] = [];
+export const dynamic = "force-dynamic";
 
-export default function AdminMissionPage() {
+export default async function AdminMissionPage() {
+  const [pending, inflight, delivered, recipients] = await Promise.all([
+    listMissionGifts({ status: "pending", limit: 100 }),
+    listMissionGifts({ statuses: ["allocated", "shipped"], limit: 100 }),
+    listMissionGifts({ status: "delivered", limit: 10 }),
+    listMissionRecipients(),
+  ]);
+  const live = isLiveData();
+
+  const totalCommitted =
+    pending.reduce((s, g) => s + g.quantity, 0) +
+    inflight.reduce((s, g) => s + g.quantity, 0) +
+    delivered.reduce((s, g) => s + g.quantity, 0);
+  const totalInFlight = inflight.reduce((s, g) => s + g.quantity, 0);
+  const totalDelivered = recipients.reduce((s, r) => s + r.veils_gifted, 0);
+
+  const stats = [
+    {
+      icon: Gift,
+      label: "Committed",
+      value: totalCommitted,
+      hint:
+        pending.length > 0
+          ? `${pending.length} waiting for a home`
+          : "all matched up",
+    },
+    {
+      icon: PackageCheck,
+      label: "In flight",
+      value: totalInFlight,
+      hint: inflight.length === 0 ? "nothing on the road" : "on their way",
+    },
+    {
+      icon: Heart,
+      label: "Delivered",
+      value: totalDelivered,
+      hint: totalDelivered === 0 ? "your first is coming" : "to sister hands",
+    },
+    {
+      icon: MapPin,
+      label: "Communities",
+      value: recipients.length,
+      hint: recipients.length === 0 ? "add your first" : "active churches",
+    },
+  ];
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
           <h1 className="font-heading text-3xl text-charcoal mb-1">
-            Mission Tracker
+            Mission
           </h1>
-          <p className="text-sm text-warm-gray">
-            Track donated veils and manage destinations
+          <p className="text-sm text-warm-gray max-w-2xl">
+            One veil sold, one veil given. Match each new gift to a sister
+            community, then mark it delivered when it arrives so the original
+            buyer hears the story.
           </p>
         </div>
-        <button
-          onClick={() => alert("Destination management will be available once Supabase is connected.")}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-burgundy text-white text-sm rounded-full hover:bg-burgundy/90 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Add Destination
-        </button>
+        {!live && (
+          <span className="text-[10px] uppercase tracking-[0.18em] text-warm-gray bg-cream border border-border rounded-full px-3 py-1.5">
+            Demo mode · no DB connected
+          </span>
+        )}
       </div>
 
-      {/* Mission Stats */}
-      <div className="grid sm:grid-cols-4 gap-4 mb-8">
-        {[
-          {
-            icon: Gift,
-            label: "Veils Donated",
-            value: "0",
-            desc: "Awaiting first orders",
-          },
-          {
-            icon: Globe,
-            label: "Destinations",
-            value: "0",
-            desc: "Add your first church",
-          },
-          {
-            icon: MapPin,
-            label: "Shipments Sent",
-            value: "0",
-            desc: "No shipments yet",
-          },
-          {
-            icon: Camera,
-            label: "Impact Photos",
-            value: "0",
-            desc: "Upload when received",
-          },
-        ].map((stat) => (
+      {/* Stat tiles */}
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        {stats.map((s) => (
           <div
-            key={stat.label}
-            className="bg-white rounded-2xl border border-border-light p-5"
+            key={s.label}
+            className="bg-white rounded-2xl border border-border-light p-4"
           >
-            <stat.icon className="w-5 h-5 text-gold mb-3" />
-            <p className="text-2xl font-heading text-charcoal">{stat.value}</p>
-            <p className="text-xs text-warm-gray mt-0.5">{stat.label}</p>
-            <p className="text-[10px] text-soft-gray mt-1">{stat.desc}</p>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[10px] uppercase tracking-wide text-warm-gray">
+                {s.label}
+              </span>
+              <s.icon className="w-4 h-4 text-gold" />
+            </div>
+            <p className="text-3xl font-heading text-charcoal">{s.value}</p>
+            <p className="text-xs text-warm-gray mt-1">{s.hint}</p>
           </div>
         ))}
       </div>
 
-      {/* Destination Churches */}
-      <div className="bg-white rounded-2xl border border-border-light p-6 mb-6">
-        <h2 className="font-heading text-xl text-charcoal mb-4">
-          Destination Churches
-        </h2>
-        <p className="text-sm text-warm-gray mb-6">
-          Add churches where donated veils will be sent. Track collection
-          progress and upload photos when veils arrive.
-        </p>
-
-        {DESTINATIONS.length === 0 ? (
-          <div className="border-2 border-dashed border-border rounded-2xl p-12 text-center">
-            <MapPin className="w-10 h-10 text-soft-gray mx-auto mb-3" />
-            <h3 className="font-heading text-lg text-charcoal mb-2">
-              No Destinations Added
-            </h3>
-            <p className="text-sm text-warm-gray max-w-sm mx-auto mb-4">
-              Add a church community to start tracking your mission. Once enough
-              veils are collected, you can ship them and share the impact.
+      {/* Pending — needs you */}
+      <section className="mb-8">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-heading text-xl text-charcoal">
+            Waiting for a home
+          </h2>
+          {pending.length > 0 && (
+            <span className="text-xs text-burgundy bg-blush/40 px-2.5 py-1 rounded-full">
+              {pending.length} pending
+            </span>
+          )}
+        </div>
+        {pending.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-border-light p-10 text-center">
+            <Sparkles className="w-7 h-7 text-gold mx-auto mb-2" />
+            <p className="text-sm text-charcoal mb-1">All matched up.</p>
+            <p className="text-xs text-warm-gray">
+              Every gift has a destination — beautiful work.
             </p>
-            <button
-              onClick={() => alert("Destination management will be available once Supabase is connected.")}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-burgundy text-white text-sm rounded-full hover:bg-burgundy/90 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              Add First Destination
-            </button>
           </div>
         ) : (
-          <div className="space-y-4">
-            {DESTINATIONS.map((dest) => (
+          <div className="space-y-2">
+            {pending.map((g) => (
+              <PendingGiftRow
+                key={g.id}
+                gift={{
+                  id: g.id,
+                  quantity: g.quantity,
+                  created_at: g.created_at,
+                  order_number: g.order_number,
+                  customer_email: g.customer_email,
+                }}
+                recipients={recipients.map((r) => ({
+                  id: r.id,
+                  community: r.community,
+                  city: r.city,
+                  country: r.country,
+                }))}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* In flight — allocated or shipped, not yet delivered */}
+      {inflight.length > 0 && (
+        <section className="mb-8">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-heading text-xl text-charcoal">On their way</h2>
+            <span className="text-xs text-warm-gray bg-cream px-2.5 py-1 rounded-full border border-border-light">
+              {inflight.length}
+            </span>
+          </div>
+          <div className="space-y-2">
+            {inflight.map((g) => (
+              <AllocatedGiftRow
+                key={g.id}
+                gift={{
+                  id: g.id,
+                  quantity: g.quantity,
+                  status: g.status as "allocated" | "shipped",
+                  allocated_at: g.allocated_at,
+                  shipped_at: g.shipped_at,
+                  order_number: g.order_number,
+                  customer_email: g.customer_email,
+                  recipient_community: g.recipient_community,
+                  recipient_city: g.recipient_city,
+                  recipient_country: g.recipient_country,
+                }}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Recipient communities */}
+      <section className="mb-8">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-heading text-xl text-charcoal">
+            Sister communities
+          </h2>
+          <span className="text-xs text-warm-gray">
+            {recipients.length} active
+          </span>
+        </div>
+        {recipients.length === 0 ? (
+          <div className="bg-white rounded-2xl border-2 border-dashed border-border p-10 text-center">
+            <MapPin className="w-7 h-7 text-soft-gray mx-auto mb-2" />
+            <p className="text-sm text-charcoal mb-1">
+              No communities set up yet
+            </p>
+            <p className="text-xs text-warm-gray max-w-sm mx-auto">
+              Recipients are stored in lace.mission_recipients. Add the first
+              church through Supabase Studio or ask Luz to add one for you.
+            </p>
+          </div>
+        ) : (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {recipients.map((r) => (
               <div
-                key={dest.name}
-                className="flex items-center justify-between p-4 bg-cream rounded-xl"
+                key={r.id}
+                className="bg-white rounded-2xl border border-border-light p-4"
               >
-                <div className="flex items-center gap-3">
-                  <MapPin className="w-5 h-5 text-burgundy" />
-                  <div>
-                    <p className="text-sm font-medium text-charcoal">
-                      {dest.name}
-                    </p>
-                    <p className="text-xs text-warm-gray">{dest.location}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium text-charcoal">
-                    {dest.veilsCollected}/{dest.veilsNeeded} veils
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">{r.flag_emoji ?? "🤍"}</span>
+                  <p className="text-sm font-medium text-charcoal truncate">
+                    {r.community}
                   </p>
-                  <p className="text-xs text-warm-gray">{dest.status}</p>
+                </div>
+                <p className="text-xs text-warm-gray mb-3">
+                  {r.city}, {r.country}
+                </p>
+                <div className="flex items-baseline justify-between">
+                  <span className="text-[10px] uppercase tracking-wide text-warm-gray">
+                    Veils gifted
+                  </span>
+                  <span className="text-2xl font-heading text-charcoal">
+                    {r.veils_gifted}
+                  </span>
                 </div>
               </div>
             ))}
           </div>
         )}
-      </div>
+      </section>
 
-      {/* How Mission Flow Works */}
-      <div className="bg-blush/20 rounded-2xl border border-rose/20 p-6">
-        <h3 className="font-heading text-lg text-charcoal mb-4 flex items-center gap-2">
-          <Heart className="w-5 h-5 text-burgundy" />
-          Mission Flow
-        </h3>
-        <div className="grid sm:grid-cols-4 gap-4">
-          {[
-            {
-              step: "1",
-              title: "Orders Come In",
-              desc: "Each order automatically marks a veil for donation",
-            },
-            {
-              step: "2",
-              title: "Veils Accumulate",
-              desc: "Track collected veils against each destination's goal",
-            },
-            {
-              step: "3",
-              title: "Ship Batch",
-              desc: "When goal is met, ship veils and notify customers",
-            },
-            {
-              step: "4",
-              title: "Share Impact",
-              desc: "Upload photos and send updates to customers",
-            },
-          ].map((s) => (
-            <div key={s.step}>
-              <span className="w-6 h-6 bg-burgundy text-white text-xs font-bold rounded-full inline-flex items-center justify-center mb-2">
-                {s.step}
-              </span>
-              <h4 className="text-sm font-medium text-charcoal mb-1">
-                {s.title}
-              </h4>
-              <p className="text-xs text-warm-gray">{s.desc}</p>
-            </div>
-          ))}
-        </div>
+      {/* Recently delivered — warmth */}
+      {delivered.length > 0 && (
+        <section>
+          <h2 className="font-heading text-xl text-charcoal mb-3">
+            Recently delivered
+          </h2>
+          <div className="space-y-2">
+            {delivered.slice(0, 5).map((g) => (
+              <div
+                key={g.id}
+                className="bg-blush/20 border border-rose/20 rounded-2xl p-4 flex items-center gap-3"
+              >
+                <Heart className="w-4 h-4 text-burgundy flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-charcoal">
+                    {g.quantity} veil{g.quantity === 1 ? "" : "s"} arrived in{" "}
+                    <span className="font-medium">
+                      {g.recipient_community ?? "the community"}
+                    </span>
+                    .
+                  </p>
+                  {g.story && (
+                    <p className="text-xs text-warm-gray italic mt-0.5 line-clamp-2">
+                      &ldquo;{g.story}&rdquo;
+                    </p>
+                  )}
+                </div>
+                <span className="text-xs text-warm-gray whitespace-nowrap">
+                  {g.delivered_at && timeAgo(g.delivered_at)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <div className="mt-10 pt-6 border-t border-border-light text-center">
+        <Link
+          href="/mission"
+          className="text-xs text-warm-gray hover:text-charcoal"
+        >
+          See the public mission page →
+        </Link>
       </div>
     </div>
   );
