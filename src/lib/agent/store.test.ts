@@ -133,10 +133,31 @@ import {
   createApproval,
   createSession,
   decideApproval,
+  executeApproval,
   listInboxStore,
   updateInboxMessage,
   writeAudit,
 } from "./store";
+import type { ApprovalRow } from "@/lib/lace/types";
+
+function fakeApproval(
+  action_type: string,
+  payload: Record<string, unknown>,
+): ApprovalRow {
+  return {
+    id: "a-1",
+    session_id: null,
+    action_type,
+    action_payload: payload,
+    human_summary: "test",
+    risk: "normal",
+    status: "approved",
+    requested_by_label: "Agent",
+    created_at: new Date().toISOString(),
+    expires_at: new Date(Date.now() + 3600_000).toISOString(),
+    executed_at: new Date().toISOString(),
+  };
+}
 
 beforeEach(() => {
   calls.length = 0;
@@ -276,6 +297,64 @@ describe("agent/store — DB dispatch", () => {
       status: "drafted",
       reply_draft: "Hello Patricia — yes, in time.",
     });
+  });
+
+  it("executeApproval(mark_order_shipped) updates the order in DB", async () => {
+    const result = await executeApproval(
+      fakeApproval("mark_order_shipped", {
+        order_number: "LL-2026-1042",
+        tracking_number: "9405511899223456789001",
+        carrier: "usps",
+      }),
+      "Luz Maria (owner)",
+    );
+
+    expect(result.effects[0]).toContain("shipped");
+
+    const update = calls.find(
+      (c) => c.op === "update" && c.table === "orders",
+    );
+    expect(update?.payload).toMatchObject({
+      status: "shipped",
+      tracking_number: "9405511899223456789001",
+      carrier: "usps",
+    });
+    expect(
+      (update?.payload as Record<string, unknown>).shipped_at,
+    ).toEqual(expect.any(String));
+
+    const audit = calls.find(
+      (c) => c.op === "insert" && c.table === "audit_log",
+    );
+    expect(audit?.payload).toMatchObject({
+      action: "approval.executed",
+      metadata: expect.objectContaining({
+        action_type: "mark_order_shipped",
+        executed: "real",
+      }),
+    });
+  });
+
+  it("executeApproval(assign_mission_gift) updates the gift in DB", async () => {
+    const result = await executeApproval(
+      fakeApproval("assign_mission_gift", {
+        gift_id: "gift-abc",
+        recipient_id: "rec-xyz",
+      }),
+      "Luz Maria (owner)",
+    );
+
+    expect(result.effects[0]).toContain("assigned");
+    const update = calls.find(
+      (c) => c.op === "update" && c.table === "mission_gifts",
+    );
+    expect(update?.payload).toMatchObject({
+      recipient_id: "rec-xyz",
+      status: "allocated",
+    });
+    expect(
+      (update?.payload as Record<string, unknown>).allocated_at,
+    ).toEqual(expect.any(String));
   });
 
   it("writeAudit defaults actor_type to 'agent' when not provided", async () => {

@@ -254,6 +254,81 @@ const tagCustomer: ToolDefinition<{ customer_id: string; tag: string }> = {
   summarize: (i) => `Tag customer ${i.customer_id.slice(0, 8)}… as "${i.tag}".`,
 };
 
+const markOrderShipped: ToolDefinition<{
+  order_number: string;
+  tracking_number?: string;
+  carrier?: string;
+}> = {
+  name: "mark_order_shipped",
+  description:
+    "Mark an order as shipped. Sets status='shipped' and shipped_at=now(). Optionally records a tracking number and carrier in one go.",
+  input_schema: {
+    type: "object",
+    properties: {
+      order_number: { type: "string" },
+      tracking_number: { type: "string" },
+      carrier: {
+        type: "string",
+        description: "Carrier slug e.g. 'usps', 'fedex', 'ups', 'dhl'.",
+      },
+    },
+    required: ["order_number"],
+  },
+  risk: "normal",
+  readonly: false,
+  category: "orders",
+  summarize: (i) =>
+    i.tracking_number
+      ? `Mark ${i.order_number} shipped via ${i.carrier ?? "carrier"} (${i.tracking_number}).`
+      : `Mark ${i.order_number} shipped.`,
+};
+
+const addTrackingNumber: ToolDefinition<{
+  order_number: string;
+  tracking_number: string;
+  carrier?: string;
+}> = {
+  name: "add_tracking_number",
+  description:
+    "Attach a tracking number (and optionally a carrier) to an order without changing its status. Use when the label was printed in the warehouse but the order isn't shipped yet.",
+  input_schema: {
+    type: "object",
+    properties: {
+      order_number: { type: "string" },
+      tracking_number: { type: "string" },
+      carrier: { type: "string" },
+    },
+    required: ["order_number", "tracking_number"],
+  },
+  risk: "normal",
+  readonly: false,
+  category: "orders",
+  summarize: (i) =>
+    `Add tracking ${i.tracking_number} to ${i.order_number}${i.carrier ? ` via ${i.carrier}` : ""}.`,
+};
+
+const assignMissionGift: ToolDefinition<{
+  gift_id: string;
+  recipient_id: string;
+}> = {
+  name: "assign_mission_gift",
+  description:
+    "Allocate a pending mission gift to a recipient community. Sets status='allocated' and allocated_at=now(). Use the recipient id from list_mission_recipients.",
+  input_schema: {
+    type: "object",
+    properties: {
+      gift_id: { type: "string" },
+      recipient_id: { type: "string" },
+    },
+    required: ["gift_id", "recipient_id"],
+  },
+  risk: "normal",
+  readonly: false,
+  category: "mission",
+  summarize: (i) =>
+    `Allocate gift ${i.gift_id.slice(0, 8)}… to recipient ${i.recipient_id.slice(0, 8)}….`,
+};
+
 const markGiftDelivered: ToolDefinition<{ gift_id: string; story?: string }> = {
   name: "mark_gift_delivered",
   description:
@@ -418,6 +493,9 @@ export const TOOL_REGISTRY = {
   draft_inbox_reply: replyToInboxDraft,
   draft_journal_post: draftJournalPost,
   tag_customer: tagCustomer,
+  mark_order_shipped: markOrderShipped,
+  add_tracking_number: addTrackingNumber,
+  assign_mission_gift: assignMissionGift,
   mark_gift_delivered: markGiftDelivered,
   refund_order: refundOrder,
   update_product_price: updateProductPrice,

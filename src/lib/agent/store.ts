@@ -810,6 +810,177 @@ export interface ExecutionResult {
   effects: string[];
 }
 
+/**
+ * Real DB execution for pure-state mutations (no external APIs needed).
+ * Returns null if the action type isn't handled here or DB is not
+ * configured — caller then falls through to the demo simulator.
+ *
+ * Refund / broadcast still simulate because they need Stripe / Resend;
+ * those move to real execution in Phase 2.C.
+ */
+async function tryRealExecution(
+  approval: ApprovalRow,
+): Promise<{ effects: string[]; sessionNote: string } | null> {
+  const db = getLaceDb();
+  if (!db) return null;
+  const payload = approval.action_payload;
+  const nowIso = new Date().toISOString();
+
+  switch (approval.action_type) {
+    case "mark_order_shipped": {
+      const orderNumber = String(payload.order_number ?? "");
+      if (!orderNumber) return null;
+      const update: Record<string, unknown> = {
+        status: "shipped",
+        shipped_at: nowIso,
+      };
+      if (payload.tracking_number)
+        update.tracking_number = payload.tracking_number;
+      if (payload.carrier) update.carrier = payload.carrier;
+      const { data, error } = await db
+        .from("orders")
+        .update(update)
+        .eq("order_number", orderNumber)
+        .select("order_number")
+        .maybeSingle();
+      if (error || !data) {
+        return {
+          effects: [
+            `Couldn't mark ${orderNumber} shipped (${error?.message ?? "not found"}).`,
+          ],
+          sessionNote: `Failed to mark ${orderNumber} shipped.`,
+        };
+      }
+      return {
+        effects: [`Marked ${data.order_number ?? orderNumber} shipped.`],
+        sessionNote: `Marked order ${data.order_number ?? orderNumber} shipped.`,
+      };
+    }
+    case "add_tracking_number": {
+      const orderNumber = String(payload.order_number ?? "");
+      const tracking = String(payload.tracking_number ?? "");
+      if (!orderNumber || !tracking) return null;
+      const update: Record<string, unknown> = { tracking_number: tracking };
+      if (payload.carrier) update.carrier = payload.carrier;
+      const { data, error } = await db
+        .from("orders")
+        .update(update)
+        .eq("order_number", orderNumber)
+        .select("order_number")
+        .maybeSingle();
+      if (error || !data) {
+        return {
+          effects: [
+            `Couldn't add tracking to ${orderNumber} (${error?.message ?? "not found"}).`,
+          ],
+          sessionNote: `Failed to add tracking to ${orderNumber}.`,
+        };
+      }
+      return {
+        effects: [
+          `Tracking ${tracking} added to ${data.order_number ?? orderNumber}.`,
+        ],
+        sessionNote: `Added tracking ${tracking} to order ${data.order_number ?? orderNumber}.`,
+      };
+    }
+    case "assign_mission_gift": {
+      const giftId = String(payload.gift_id ?? "");
+      const recipientId = String(payload.recipient_id ?? "");
+      if (!giftId || !recipientId) return null;
+      const { data, error } = await db
+        .from("mission_gifts")
+        .update({
+          recipient_id: recipientId,
+          status: "allocated",
+          allocated_at: nowIso,
+        })
+        .eq("id", giftId)
+        .select("id")
+        .maybeSingle();
+      if (error || !data) {
+        return {
+          effects: [
+            `Couldn't assign gift (${error?.message ?? "not found"}).`,
+          ],
+          sessionNote: `Failed to assign gift ${giftId.slice(0, 8)}…`,
+        };
+      }
+      return {
+        effects: [
+          `Gift ${giftId.slice(0, 8)}… assigned to recipient ${recipientId.slice(0, 8)}….`,
+        ],
+        sessionNote: `Allocated gift ${giftId.slice(0, 8)}… to recipient.`,
+      };
+    }
+    case "mark_gift_delivered": {
+      const giftId = String(payload.gift_id ?? "");
+      if (!giftId) return null;
+      const update: Record<string, unknown> = {
+        status: "delivered",
+        delivered_at: nowIso,
+      };
+      if (typeof payload.story === "string") update.story = payload.story;
+      const { data, error } = await db
+        .from("mission_gifts")
+        .update(update)
+        .eq("id", giftId)
+        .select("id")
+        .maybeSingle();
+      if (error || !data) {
+        return {
+          effects: [
+            `Couldn't mark gift delivered (${error?.message ?? "not found"}).`,
+          ],
+          sessionNote: `Failed to mark gift ${giftId.slice(0, 8)}… delivered.`,
+        };
+      }
+      return {
+        effects: ["Gift marked delivered."],
+        sessionNote: `Gift ${giftId.slice(0, 8)}… marked delivered.`,
+      };
+    }
+    case "tag_customer": {
+      const customerId = String(payload.customer_id ?? "");
+      const tag = String(payload.tag ?? "");
+      if (!customerId || !tag) return null;
+      const { data: row, error: readErr } = await db
+        .from("customers")
+        .select("id, tags")
+        .eq("id", customerId)
+        .maybeSingle();
+      if (readErr || !row) {
+        return {
+          effects: [
+            `Couldn't tag customer (${readErr?.message ?? "not found"}).`,
+          ],
+          sessionNote: `Failed to tag customer ${customerId.slice(0, 8)}…`,
+        };
+      }
+      const existing: string[] = Array.isArray(
+        (row as { tags?: unknown }).tags,
+      )
+        ? ((row as { tags: string[] }).tags as string[])
+        : [];
+      const tags = Array.from(new Set([...existing, tag]));
+      const { error: writeErr } = await db
+        .from("customers")
+        .update({ tags })
+        .eq("id", customerId);
+      if (writeErr) {
+        return {
+          effects: [`Couldn't tag customer (${writeErr.message}).`],
+          sessionNote: `Failed to tag customer ${customerId.slice(0, 8)}…`,
+        };
+      }
+      return {
+        effects: [`Tagged customer with "${tag}".`],
+        sessionNote: `Added tag "${tag}" to customer ${customerId.slice(0, 8)}….`,
+      };
+    }
+  }
+  return null;
+}
+
 export async function executeApproval(
   approval: ApprovalRow,
   reviewerLabel: string,
@@ -832,6 +1003,27 @@ export async function executeApproval(
       approval_id: approval.id,
     });
   };
+
+  // Try the real DB-only execution path first. If handled, skip the
+  // simulator switch entirely.
+  const real = await tryRealExecution(approval);
+  if (real) {
+    effects.push(...real.effects);
+    await appendToSession(real.sessionNote);
+    await writeAudit({
+      actor_type: "user",
+      actor_label: reviewerLabel,
+      action: "approval.executed",
+      entity_type: "approval",
+      entity_id: approval.id,
+      metadata: {
+        action_type: approval.action_type,
+        effects,
+        executed: "real",
+      },
+    });
+    return { effects };
+  }
 
   switch (approval.action_type) {
     case "draft_inbox_reply": {
@@ -927,7 +1119,11 @@ export async function executeApproval(
     action: "approval.executed",
     entity_type: "approval",
     entity_id: approval.id,
-    metadata: { action_type: approval.action_type, effects },
+    metadata: {
+      action_type: approval.action_type,
+      effects,
+      executed: "simulated",
+    },
   });
 
   return { effects };
