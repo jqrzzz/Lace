@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Heart, ShoppingBag } from "lucide-react";
 import Link from "next/link";
@@ -11,23 +11,25 @@ import Reveal from "@/components/ui/Reveal";
 
 type FilterType = "all" | "collection" | "style";
 
+function initialFilter(
+  params: URLSearchParams,
+): { type: FilterType; value: string } {
+  const collection = params.get("collection");
+  if (collection && COLLECTIONS.includes(collection)) {
+    return { type: "collection", value: collection };
+  }
+  const style = params.get("style");
+  if (style && STYLES.includes(style)) {
+    return { type: "style", value: style };
+  }
+  return { type: "all", value: "" };
+}
+
 function ShopContent() {
   const searchParams = useSearchParams();
-  const [filterType, setFilterType] = useState<FilterType>("all");
-  const [filterValue, setFilterValue] = useState<string>("");
+  const [filter, setFilter] = useState(() => initialFilter(searchParams));
+  const { type: filterType, value: filterValue } = filter;
   const [sortBy, setSortBy] = useState<string>("featured");
-
-  useEffect(() => {
-    const collection = searchParams.get("collection");
-    const style = searchParams.get("style");
-    if (collection && COLLECTIONS.includes(collection)) {
-      setFilterType("collection");
-      setFilterValue(collection);
-    } else if (style && STYLES.includes(style)) {
-      setFilterType("style");
-      setFilterValue(style);
-    }
-  }, [searchParams]);
 
   const filtered =
     filterType === "all"
@@ -74,7 +76,7 @@ function ShopContent() {
             {/* Horizontally scrollable filter pills on mobile */}
             <div className="flex gap-2 overflow-x-auto sm:overflow-visible sm:flex-wrap pb-2 sm:pb-0 scrollbar-hide">
               <button
-                onClick={() => { setFilterType("all"); setFilterValue(""); }}
+                onClick={() => setFilter({ type: "all", value: "" })}
                 className={cn(
                   "px-5 py-2.5 text-[13px] rounded-full border transition-all duration-300 whitespace-nowrap flex-shrink-0",
                   filterType === "all"
@@ -87,7 +89,7 @@ function ShopContent() {
               {COLLECTIONS.map((c) => (
                 <button
                   key={c}
-                  onClick={() => { setFilterType("collection"); setFilterValue(c); }}
+                  onClick={() => setFilter({ type: "collection", value: c })}
                   className={cn(
                     "px-5 py-2.5 text-[13px] rounded-full border transition-all duration-300 whitespace-nowrap flex-shrink-0",
                     filterType === "collection" && filterValue === c
@@ -101,7 +103,7 @@ function ShopContent() {
               {STYLES.map((s) => (
                 <button
                   key={s}
-                  onClick={() => { setFilterType("style"); setFilterValue(s); }}
+                  onClick={() => setFilter({ type: "style", value: s })}
                   className={cn(
                     "px-5 py-2.5 text-[13px] rounded-full border transition-all duration-300 whitespace-nowrap flex-shrink-0",
                     filterType === "style" && filterValue === s
@@ -146,7 +148,7 @@ function ShopContent() {
                 Try a different filter or browse all veils.
               </p>
               <button
-                onClick={() => { setFilterType("all"); setFilterValue(""); }}
+                onClick={() => setFilter({ type: "all", value: "" })}
                 className="btn-luxe inline-flex items-center gap-2 px-7 py-3 bg-burgundy text-white text-sm tracking-[0.04em] rounded-full"
               >
                 View All Veils

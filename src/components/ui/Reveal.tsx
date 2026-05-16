@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
 
 interface RevealProps {
   children: ReactNode;
@@ -10,6 +16,18 @@ interface RevealProps {
   duration?: number;
   distance?: number;
   once?: boolean;
+}
+
+const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
+
+function subscribeReducedMotion(callback: () => void) {
+  const mql = window.matchMedia(REDUCED_MOTION_QUERY);
+  mql.addEventListener("change", callback);
+  return () => mql.removeEventListener("change", callback);
+}
+
+function getReducedMotion(): boolean {
+  return window.matchMedia(REDUCED_MOTION_QUERY).matches;
 }
 
 export default function Reveal({
@@ -22,36 +40,35 @@ export default function Reveal({
   once = true,
 }: RevealProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const reduceMotion = useSyncExternalStore(
+    subscribeReducedMotion,
+    getReducedMotion,
+    () => false,
+  );
+  const [intersected, setIntersected] = useState(false);
 
   useEffect(() => {
-    const mql = window.matchMedia?.("(prefers-reduced-motion: reduce)");
-    if (mql?.matches) setReduceMotion(true);
-
+    // When reduced motion is requested we show immediately (see `shown`
+    // below), so the observer is unnecessary.
+    if (reduceMotion) return;
     const el = ref.current;
     if (!el) return;
-
-    // When reduced motion is requested, skip the observer dance entirely —
-    // content is revealed immediately without transform/opacity animation.
-    if (mql?.matches) {
-      setIsVisible(true);
-      return;
-    }
 
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setIsVisible(true);
+          setIntersected(true);
           if (once) observer.unobserve(el);
         }
       },
-      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
+      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" },
     );
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, [once]);
+  }, [once, reduceMotion]);
+
+  const isVisible = reduceMotion || intersected;
 
   const transforms: Record<string, string> = {
     up: `translateY(${distance}px)`,

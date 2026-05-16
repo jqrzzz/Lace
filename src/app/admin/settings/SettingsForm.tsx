@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ShieldCheck, DollarSign, Zap, Save, Check } from "lucide-react";
 import type { ActorPolicy } from "@/lib/agent/router";
 
@@ -35,12 +35,8 @@ function readPolicy(): ActorPolicy {
 }
 
 export default function SettingsForm() {
-  const [policy, setPolicy] = useState<ActorPolicy>(DEFAULT_POLICY);
+  const [policy, setPolicy] = useState<ActorPolicy>(readPolicy);
   const [saved, setSaved] = useState(false);
-
-  useEffect(() => {
-    setPolicy(readPolicy());
-  }, []);
 
   function update<K extends keyof ActorPolicy>(key: K, value: ActorPolicy[K]) {
     setPolicy((p) => ({ ...p, [key]: value }));

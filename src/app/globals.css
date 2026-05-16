@@ -21,8 +21,8 @@
   --color-border-light: #F0EAE5;
   --color-paper: #FFFFFF;
 
-  --font-heading: 'Playfair Display', Georgia, serif;
-  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-heading: var(--font-playfair), 'Playfair Display', Georgia, serif;
+  --font-body: var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif;
 
   --animate-fade-in: fade-in 0.7s ease-out both;
   --animate-fade-up: fade-up 0.7s ease-out both;
