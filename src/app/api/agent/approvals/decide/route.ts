@@ -1,11 +1,10 @@
 // POST /api/agent/approvals/decide
 //
-// { id, decision: "approved" | "denied", note?, reviewer? }
+// Body: { id, decision: "approved" | "denied", note? }
 //
-// Applies mom's decision. On "approved" we run the demo-mode
-// execution simulator so the downstream state (inbox, session
-// transcript, audit log) reflects the action — makes the approval
-// gate feel like a real control surface even with no real backend.
+// Applies the signed-in actor's decision. Auth required (JWT in the
+// Authorization header). Viewers can't decide — owner or staff only.
+// Approval triggers the real action via executeApproval -> actions.ts.
 
 import { NextRequest } from "next/server";
 import { fail, ok } from "@/lib/api";
@@ -14,14 +13,20 @@ import {
   executeApproval,
   listApprovalsStore,
 } from "@/lib/agent/store";
+import { actorLabel, getAdminActor } from "@/lib/admin-auth";
 
 export async function POST(req: NextRequest) {
   try {
+    const actor = await getAdminActor(req);
+    if (!actor) return fail("Not signed in.", { status: 401 });
+    if (actor.role === "viewer") {
+      return fail("Viewers can't decide approvals.", { status: 403 });
+    }
     const body = await req.json();
     const id: string = body.id;
     const decision: "approved" | "denied" = body.decision;
     const note: string | undefined = body.note;
-    const reviewer: string = body.reviewer ?? "Luz Maria (owner)";
+    const reviewer = actorLabel(actor);
 
     if (!id || (decision !== "approved" && decision !== "denied")) {
       return fail("id and decision are required.", { status: 400 });

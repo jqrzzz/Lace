@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Send, Sparkles, Wrench, ShieldCheck, User, Bot } from "lucide-react";
 import type { AgentMessage, AgentSession } from "@/lib/lace/types";
 import { cn } from "@/lib/utils";
-import { fetchJSON } from "@/lib/client";
+import { adminFetchJSON } from "@/lib/admin-fetch";
 
 const SUGGESTED_PROMPTS = [
   "How are we doing today?",
@@ -45,7 +45,7 @@ export default function AgentChat({
     setInput("");
 
     try {
-      const { data, mode } = await fetchJSON<{ messages: AgentMessage[] }>(
+      const { data, mode } = await adminFetchJSON<{ messages: AgentMessage[] }>(
         "/api/agent/turn",
         {
           method: "POST",

@@ -1,26 +1,31 @@
 // POST /api/agent/playbooks/run — kick off a playbook.
 //
-// In demo mode we just create a new session and append a seed message
-// so it's visible in /admin/chat. The actual agent execution will
-// happen once we have a persistent worker; for now, the user can
-// open the session in chat and drive it interactively.
+// Auth required (signed-in admin only). Creates a new session +
+// seed message + audit row so the playbook shows up in /admin/chat.
 
 import { NextRequest } from "next/server";
 import { getPlaybook } from "@/lib/agent/playbooks";
 import { appendMessage, createSession, writeAudit } from "@/lib/agent/store";
+import { actorLabel, getAdminActor } from "@/lib/admin-auth";
 import { fail, ok } from "@/lib/api";
 
 export async function POST(req: NextRequest) {
   try {
+    const actor = await getAdminActor(req);
+    if (!actor) return fail("Not signed in.", { status: 401 });
+    if (actor.role === "viewer") {
+      return fail("Viewers can't run playbooks.", { status: 403 });
+    }
     const { id } = await req.json();
     const pb = getPlaybook(id);
     if (!pb) {
       return fail(`Unknown playbook: ${id}`, { status: 404 });
     }
+    const runnerLabel = `${actorLabel(actor)} · playbook runner`;
 
     const session = await createSession({
       title: `Playbook: ${pb.name}`,
-      actor_label: "Agent (playbook runner)",
+      actor_label: runnerLabel,
       channel: "console",
     });
 
@@ -47,8 +52,8 @@ export async function POST(req: NextRequest) {
     });
 
     await writeAudit({
-      actor_type: "agent",
-      actor_label: "Agent (playbook runner)",
+      actor_type: "user",
+      actor_label: runnerLabel,
       action: "playbook.started",
       entity_type: "playbook",
       entity_id: id,

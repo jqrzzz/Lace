@@ -5,7 +5,8 @@ import { Check, X, Clock, ShieldAlert, DollarSign, Pencil } from "lucide-react";
 import type { ApprovalRow, ApprovalRisk } from "@/lib/lace/types";
 import { cn } from "@/lib/utils";
 import { formatValue, timeLeft } from "@/lib/format";
-import { fetchJSON, ApiClientError } from "@/lib/client";
+import { ApiClientError } from "@/lib/client";
+import { adminFetchJSON } from "@/lib/admin-fetch";
 import { useToast } from "@/components/ui/Toast";
 
 const RISK_STYLE: Record<
@@ -71,7 +72,7 @@ export default function ApprovalsQueue({
     setDeciding(id);
 
     try {
-      const { data } = await fetchJSON<{
+      const { data } = await adminFetchJSON<{
         approval: ApprovalRow;
         effects: string[];
       }>("/api/agent/approvals/decide", {

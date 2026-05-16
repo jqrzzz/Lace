@@ -30,6 +30,10 @@ import {
   createApproval,
   listMessagesStore,
 } from "@/lib/agent/store";
+import {
+  actorLabel as buildActorLabel,
+  getAdminActor,
+} from "@/lib/admin-auth";
 import type { AgentMessage } from "@/lib/lace/types";
 import {
   getOrder,
@@ -59,10 +63,12 @@ const MAX_TOOL_HOPS = 4;
 
 export async function POST(req: NextRequest) {
   try {
+    const actor = await getAdminActor(req);
+    if (!actor) return fail("Not signed in.", { status: 401 });
     const body = await req.json();
     const sessionId: string = body.sessionId;
     const userText: string = body.userText;
-    const actorLabel: string = body.actor ?? "Luz Maria (owner)";
+    const actorLabel: string = buildActorLabel(actor);
     if (!sessionId || !userText) {
       return fail("sessionId and userText are required.", { status: 400 });
     }

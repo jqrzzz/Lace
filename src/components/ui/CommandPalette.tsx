@@ -41,7 +41,7 @@ import {
 import { PLAYBOOKS } from "@/lib/agent/playbooks";
 import { useTheme } from "@/lib/theme";
 import { useToast } from "@/components/ui/Toast";
-import { fetchJSON } from "@/lib/client";
+import { adminFetchJSON } from "@/lib/admin-fetch";
 
 interface Command {
   id: string;
@@ -114,7 +114,7 @@ export default function CommandPalette() {
       section: "Playbooks" as const,
       run: async () => {
         try {
-          await fetchJSON<{ session_id: string }>("/api/agent/playbooks/run", {
+          await adminFetchJSON<{ session_id: string }>("/api/agent/playbooks/run", {
             method: "POST",
             headers: { "content-type": "application/json" },
             body: JSON.stringify({ id: p.id }),
