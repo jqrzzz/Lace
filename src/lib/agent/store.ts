@@ -708,6 +708,61 @@ export async function listAudit(limit = 100): Promise<AuditEntry[]> {
   return db ? listAuditDb(db, limit) : listAuditMemory(limit);
 }
 
+function listAuditForEntityMemory(
+  entityType: string,
+  entityId: string,
+  limit: number,
+): AuditEntry[] {
+  return ensure()
+    .audit.filter(
+      (e) => e.entity_type === entityType && e.entity_id === entityId,
+    )
+    .slice(-limit)
+    .reverse();
+}
+
+async function listAuditForEntityDb(
+  db: LaceServiceClient,
+  entityType: string,
+  entityId: string,
+  limit: number,
+): Promise<AuditEntry[]> {
+  const { data, error } = await db
+    .from("audit_log")
+    .select(
+      "id, actor_label, action, entity_type, entity_id, metadata, created_at",
+    )
+    .eq("entity_type", entityType)
+    .eq("entity_id", entityId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) {
+    console.error("[agent/store] listAuditForEntity DB failed:", error);
+    return [];
+  }
+  return ((data ?? []) as AuditDbRow[]).map((r) => ({
+    id: r.id,
+    actor_label: r.actor_label ?? "—",
+    action: r.action,
+    entity_type: r.entity_type ?? undefined,
+    entity_id: r.entity_id ?? undefined,
+    metadata: r.metadata ?? {},
+    created_at: r.created_at,
+  }));
+}
+
+/** Audit log entries scoped to one entity (e.g. an order or approval). */
+export async function listAuditForEntity(
+  entityType: string,
+  entityId: string,
+  limit = 50,
+): Promise<AuditEntry[]> {
+  const db = getLaceDb();
+  return db
+    ? listAuditForEntityDb(db, entityType, entityId, limit)
+    : listAuditForEntityMemory(entityType, entityId, limit);
+}
+
 // ── Inbox (lace.contact_messages when DB configured, mock otherwise) ──
 
 function listInboxMemory(): InboxMessage[] {

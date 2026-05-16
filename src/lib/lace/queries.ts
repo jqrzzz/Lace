@@ -28,6 +28,11 @@ import type {
   CustomerSummary,
   InboxMessage,
   MissionRecipientSummary,
+  OrderCustomerCard,
+  OrderFull,
+  OrderGiftRow,
+  OrderItemRow,
+  OrderShippingAddress,
   OrderStatus,
   OrderSummary,
 } from "./types";
@@ -111,6 +116,182 @@ export async function listOrders(opts?: {
     return [];
   }
   return ((data ?? []) as OrderRow[]).map(toOrderSummary);
+}
+
+interface OrderFullDbRow {
+  id: string;
+  order_number: string | null;
+  status: OrderStatus;
+  created_at: string;
+  shipped_at: string | null;
+  delivered_at: string | null;
+  tracking_number: string | null;
+  carrier: string | null;
+  subtotal_cents: number;
+  shipping_cents: number;
+  tax_cents: number;
+  discount_cents: number;
+  total_cents: number;
+  currency: string;
+  shipping_address: OrderShippingAddress | null;
+  gift_note: string | null;
+  internal_notes: string | null;
+  customer_id: string | null;
+  customer_email: string;
+  customer_name: string | null;
+  order_items: Array<{
+    id: string;
+    sku: string | null;
+    name: string;
+    variant_name: string | null;
+    unit_price_cents: number;
+    quantity: number;
+    line_total_cents: number;
+  }> | null;
+  mission_gifts: Array<{
+    id: string;
+    quantity: number;
+    status: OrderGiftRow["status"];
+    allocated_at: string | null;
+    shipped_at: string | null;
+    delivered_at: string | null;
+    mission_recipients: {
+      community: string;
+      city: string;
+      country: string;
+    } | null;
+  }> | null;
+  customers: {
+    id: string;
+    email: string;
+    first_name: string | null;
+    last_name: string | null;
+    total_orders: number;
+    total_spent_cents: number;
+    tags: string[] | null;
+  } | null;
+}
+
+const ORDER_FULL_COLS = `
+  id, order_number, status, created_at, shipped_at, delivered_at,
+  tracking_number, carrier,
+  subtotal_cents, shipping_cents, tax_cents, discount_cents, total_cents, currency,
+  shipping_address, gift_note, internal_notes,
+  customer_id, customer_email, customer_name,
+  order_items ( id, sku, name, variant_name, unit_price_cents, quantity, line_total_cents ),
+  mission_gifts ( id, quantity, status, allocated_at, shipped_at, delivered_at,
+    mission_recipients ( community, city, country )
+  ),
+  customers ( id, email, first_name, last_name, total_orders, total_spent_cents, tags )
+`;
+
+function toOrderFull(r: OrderFullDbRow): OrderFull {
+  const fallbackName =
+    [r.customers?.first_name, r.customers?.last_name]
+      .filter(Boolean)
+      .join(" ")
+      .trim() || null;
+  const customerName = r.customer_name ?? fallbackName;
+  const customer: OrderCustomerCard = {
+    id: r.customers?.id ?? r.customer_id,
+    email: r.customer_email,
+    name: customerName,
+    total_orders: r.customers?.total_orders ?? 0,
+    total_spent_cents: r.customers?.total_spent_cents ?? 0,
+    tags: r.customers?.tags ?? [],
+  };
+  const items: OrderItemRow[] = (r.order_items ?? []).map((i) => ({
+    id: i.id,
+    sku: i.sku,
+    name: i.name,
+    variant_name: i.variant_name,
+    unit_price_cents: i.unit_price_cents,
+    quantity: i.quantity,
+    line_total_cents: i.line_total_cents,
+  }));
+  const gifts: OrderGiftRow[] = (r.mission_gifts ?? []).map((g) => ({
+    id: g.id,
+    quantity: g.quantity,
+    status: g.status,
+    recipient_community: g.mission_recipients?.community ?? null,
+    recipient_city: g.mission_recipients?.city ?? null,
+    recipient_country: g.mission_recipients?.country ?? null,
+    allocated_at: g.allocated_at,
+    shipped_at: g.shipped_at,
+    delivered_at: g.delivered_at,
+  }));
+  return {
+    id: r.id,
+    order_number: r.order_number ?? r.id.slice(0, 8),
+    status: r.status,
+    created_at: r.created_at,
+    shipped_at: r.shipped_at,
+    delivered_at: r.delivered_at,
+    tracking_number: r.tracking_number,
+    carrier: r.carrier,
+    subtotal_cents: r.subtotal_cents,
+    shipping_cents: r.shipping_cents,
+    tax_cents: r.tax_cents,
+    discount_cents: r.discount_cents,
+    total_cents: r.total_cents,
+    currency: r.currency,
+    shipping_address: r.shipping_address,
+    gift_note: r.gift_note,
+    internal_notes: r.internal_notes,
+    customer,
+    items,
+    gifts,
+  };
+}
+
+/** Full order graph — items + gifts (with recipient) + customer card. */
+export async function getOrderFull(
+  orderNumber: string,
+): Promise<OrderFull | null> {
+  const db = getLaceDb();
+  if (!db) {
+    const summary = MOCK_ORDERS.find((o) => o.order_number === orderNumber);
+    if (!summary) return null;
+    return {
+      id: summary.id,
+      order_number: summary.order_number,
+      status: summary.status,
+      created_at: summary.created_at,
+      shipped_at: summary.shipped_at ?? null,
+      delivered_at: null,
+      tracking_number: summary.tracking_number ?? null,
+      carrier: null,
+      subtotal_cents: summary.total_cents,
+      shipping_cents: 0,
+      tax_cents: 0,
+      discount_cents: 0,
+      total_cents: summary.total_cents,
+      currency: "USD",
+      shipping_address: null,
+      gift_note: null,
+      internal_notes: null,
+      customer: {
+        id: null,
+        email: summary.customer_email,
+        name: summary.customer_name || null,
+        total_orders: 1,
+        total_spent_cents: summary.total_cents,
+        tags: [],
+      },
+      items: [],
+      gifts: [],
+    };
+  }
+  const { data, error } = await db
+    .from("orders")
+    .select(ORDER_FULL_COLS)
+    .eq("order_number", orderNumber)
+    .maybeSingle();
+  if (error) {
+    console.error("[queries] getOrderFull failed:", error);
+    return null;
+  }
+  return data ? toOrderFull(data as unknown as OrderFullDbRow) : null;
 }
 
 export async function getOrder(

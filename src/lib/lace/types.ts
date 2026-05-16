@@ -107,6 +107,72 @@ export interface ConciergeMessage {
   content: string;
 }
 
+export interface OrderItemRow {
+  id: string;
+  sku: string | null;
+  name: string;
+  variant_name: string | null;
+  unit_price_cents: number;
+  quantity: number;
+  line_total_cents: number;
+}
+
+export type MissionGiftStatus = "pending" | "allocated" | "shipped" | "delivered";
+
+export interface OrderGiftRow {
+  id: string;
+  quantity: number;
+  status: MissionGiftStatus;
+  recipient_community: string | null;
+  recipient_city: string | null;
+  recipient_country: string | null;
+  allocated_at: string | null;
+  shipped_at: string | null;
+  delivered_at: string | null;
+}
+
+export interface OrderShippingAddress {
+  line1: string | null;
+  line2: string | null;
+  city: string | null;
+  state: string | null;
+  zip: string | null;
+  country: string | null;
+}
+
+export interface OrderCustomerCard {
+  id: string | null;
+  email: string;
+  name: string | null;
+  total_orders: number;
+  total_spent_cents: number;
+  tags: string[];
+}
+
+/** Full order graph for the admin detail page. */
+export interface OrderFull {
+  id: string;
+  order_number: string;
+  status: OrderStatus;
+  created_at: string;
+  shipped_at: string | null;
+  delivered_at: string | null;
+  tracking_number: string | null;
+  carrier: string | null;
+  subtotal_cents: number;
+  shipping_cents: number;
+  tax_cents: number;
+  discount_cents: number;
+  total_cents: number;
+  currency: string;
+  shipping_address: OrderShippingAddress | null;
+  gift_note: string | null;
+  internal_notes: string | null;
+  customer: OrderCustomerCard;
+  items: OrderItemRow[];
+  gifts: OrderGiftRow[];
+}
+
 export interface MissionRecipientSummary {
   id: string;
   community: string;
