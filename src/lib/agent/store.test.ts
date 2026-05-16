@@ -323,10 +323,17 @@ describe("agent/store — DB dispatch", () => {
       (update?.payload as Record<string, unknown>).shipped_at,
     ).toEqual(expect.any(String));
 
-    const audit = calls.find(
+    const audits = calls.filter(
       (c) => c.op === "insert" && c.table === "audit_log",
     );
-    expect(audit?.payload).toMatchObject({
+    // First audit row comes from the action handler itself (order.mark_shipped);
+    // the second is the approval.executed wrapper that records mom's decision.
+    expect(audits[0].payload).toMatchObject({
+      action: "order.mark_shipped",
+      actor_type: "user",
+      entity_type: "order",
+    });
+    expect(audits[1].payload).toMatchObject({
       action: "approval.executed",
       metadata: expect.objectContaining({
         action_type: "mark_order_shipped",

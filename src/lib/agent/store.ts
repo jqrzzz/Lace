@@ -34,6 +34,14 @@ import {
   MOCK_SESSIONS,
 } from "@/lib/lace/mock";
 import { getLaceDb, type LaceServiceClient } from "@/lib/db";
+import {
+  addTrackingNumber,
+  assignMissionGift,
+  markGiftDelivered,
+  markOrderShipped,
+  tagCustomer,
+  type ActionContext,
+} from "./actions";
 
 export type ActorType =
   | "user"
@@ -817,165 +825,83 @@ export interface ExecutionResult {
  *
  * Refund / broadcast still simulate because they need Stripe / Resend;
  * those move to real execution in Phase 2.C.
+ *
+ * Each branch delegates to the shared handler in ./actions.ts so the
+ * admin API routes and the approval flow run identical code.
  */
 async function tryRealExecution(
   approval: ApprovalRow,
+  reviewerLabel: string,
 ): Promise<{ effects: string[]; sessionNote: string } | null> {
   const db = getLaceDb();
   if (!db) return null;
-  const payload = approval.action_payload;
-  const nowIso = new Date().toISOString();
+  const ctx: ActionContext = {
+    actorLabel: reviewerLabel,
+    actorType: "user",
+    approvalId: approval.id,
+  };
+  const p = approval.action_payload as Record<string, unknown>;
 
   switch (approval.action_type) {
     case "mark_order_shipped": {
-      const orderNumber = String(payload.order_number ?? "");
-      if (!orderNumber) return null;
-      const update: Record<string, unknown> = {
-        status: "shipped",
-        shipped_at: nowIso,
-      };
-      if (payload.tracking_number)
-        update.tracking_number = payload.tracking_number;
-      if (payload.carrier) update.carrier = payload.carrier;
-      const { data, error } = await db
-        .from("orders")
-        .update(update)
-        .eq("order_number", orderNumber)
-        .select("order_number")
-        .maybeSingle();
-      if (error || !data) {
-        return {
-          effects: [
-            `Couldn't mark ${orderNumber} shipped (${error?.message ?? "not found"}).`,
-          ],
-          sessionNote: `Failed to mark ${orderNumber} shipped.`,
-        };
-      }
-      return {
-        effects: [`Marked ${data.order_number ?? orderNumber} shipped.`],
-        sessionNote: `Marked order ${data.order_number ?? orderNumber} shipped.`,
-      };
+      const r = await markOrderShipped(
+        db,
+        {
+          order_number: String(p.order_number ?? ""),
+          tracking_number:
+            typeof p.tracking_number === "string"
+              ? p.tracking_number
+              : undefined,
+          carrier: typeof p.carrier === "string" ? p.carrier : undefined,
+        },
+        ctx,
+      );
+      return { effects: r.effects, sessionNote: r.sessionNote };
     }
     case "add_tracking_number": {
-      const orderNumber = String(payload.order_number ?? "");
-      const tracking = String(payload.tracking_number ?? "");
-      if (!orderNumber || !tracking) return null;
-      const update: Record<string, unknown> = { tracking_number: tracking };
-      if (payload.carrier) update.carrier = payload.carrier;
-      const { data, error } = await db
-        .from("orders")
-        .update(update)
-        .eq("order_number", orderNumber)
-        .select("order_number")
-        .maybeSingle();
-      if (error || !data) {
-        return {
-          effects: [
-            `Couldn't add tracking to ${orderNumber} (${error?.message ?? "not found"}).`,
-          ],
-          sessionNote: `Failed to add tracking to ${orderNumber}.`,
-        };
-      }
-      return {
-        effects: [
-          `Tracking ${tracking} added to ${data.order_number ?? orderNumber}.`,
-        ],
-        sessionNote: `Added tracking ${tracking} to order ${data.order_number ?? orderNumber}.`,
-      };
+      const r = await addTrackingNumber(
+        db,
+        {
+          order_number: String(p.order_number ?? ""),
+          tracking_number: String(p.tracking_number ?? ""),
+          carrier: typeof p.carrier === "string" ? p.carrier : undefined,
+        },
+        ctx,
+      );
+      return { effects: r.effects, sessionNote: r.sessionNote };
     }
     case "assign_mission_gift": {
-      const giftId = String(payload.gift_id ?? "");
-      const recipientId = String(payload.recipient_id ?? "");
-      if (!giftId || !recipientId) return null;
-      const { data, error } = await db
-        .from("mission_gifts")
-        .update({
-          recipient_id: recipientId,
-          status: "allocated",
-          allocated_at: nowIso,
-        })
-        .eq("id", giftId)
-        .select("id")
-        .maybeSingle();
-      if (error || !data) {
-        return {
-          effects: [
-            `Couldn't assign gift (${error?.message ?? "not found"}).`,
-          ],
-          sessionNote: `Failed to assign gift ${giftId.slice(0, 8)}…`,
-        };
-      }
-      return {
-        effects: [
-          `Gift ${giftId.slice(0, 8)}… assigned to recipient ${recipientId.slice(0, 8)}….`,
-        ],
-        sessionNote: `Allocated gift ${giftId.slice(0, 8)}… to recipient.`,
-      };
+      const r = await assignMissionGift(
+        db,
+        {
+          gift_id: String(p.gift_id ?? ""),
+          recipient_id: String(p.recipient_id ?? ""),
+        },
+        ctx,
+      );
+      return { effects: r.effects, sessionNote: r.sessionNote };
     }
     case "mark_gift_delivered": {
-      const giftId = String(payload.gift_id ?? "");
-      if (!giftId) return null;
-      const update: Record<string, unknown> = {
-        status: "delivered",
-        delivered_at: nowIso,
-      };
-      if (typeof payload.story === "string") update.story = payload.story;
-      const { data, error } = await db
-        .from("mission_gifts")
-        .update(update)
-        .eq("id", giftId)
-        .select("id")
-        .maybeSingle();
-      if (error || !data) {
-        return {
-          effects: [
-            `Couldn't mark gift delivered (${error?.message ?? "not found"}).`,
-          ],
-          sessionNote: `Failed to mark gift ${giftId.slice(0, 8)}… delivered.`,
-        };
-      }
-      return {
-        effects: ["Gift marked delivered."],
-        sessionNote: `Gift ${giftId.slice(0, 8)}… marked delivered.`,
-      };
+      const r = await markGiftDelivered(
+        db,
+        {
+          gift_id: String(p.gift_id ?? ""),
+          story: typeof p.story === "string" ? p.story : undefined,
+        },
+        ctx,
+      );
+      return { effects: r.effects, sessionNote: r.sessionNote };
     }
     case "tag_customer": {
-      const customerId = String(payload.customer_id ?? "");
-      const tag = String(payload.tag ?? "");
-      if (!customerId || !tag) return null;
-      const { data: row, error: readErr } = await db
-        .from("customers")
-        .select("id, tags")
-        .eq("id", customerId)
-        .maybeSingle();
-      if (readErr || !row) {
-        return {
-          effects: [
-            `Couldn't tag customer (${readErr?.message ?? "not found"}).`,
-          ],
-          sessionNote: `Failed to tag customer ${customerId.slice(0, 8)}…`,
-        };
-      }
-      const existing: string[] = Array.isArray(
-        (row as { tags?: unknown }).tags,
-      )
-        ? ((row as { tags: string[] }).tags as string[])
-        : [];
-      const tags = Array.from(new Set([...existing, tag]));
-      const { error: writeErr } = await db
-        .from("customers")
-        .update({ tags })
-        .eq("id", customerId);
-      if (writeErr) {
-        return {
-          effects: [`Couldn't tag customer (${writeErr.message}).`],
-          sessionNote: `Failed to tag customer ${customerId.slice(0, 8)}…`,
-        };
-      }
-      return {
-        effects: [`Tagged customer with "${tag}".`],
-        sessionNote: `Added tag "${tag}" to customer ${customerId.slice(0, 8)}….`,
-      };
+      const r = await tagCustomer(
+        db,
+        {
+          customer_id: String(p.customer_id ?? ""),
+          tag: String(p.tag ?? ""),
+        },
+        ctx,
+      );
+      return { effects: r.effects, sessionNote: r.sessionNote };
     }
   }
   return null;
@@ -1006,7 +932,7 @@ export async function executeApproval(
 
   // Try the real DB-only execution path first. If handled, skip the
   // simulator switch entirely.
-  const real = await tryRealExecution(approval);
+  const real = await tryRealExecution(approval, reviewerLabel);
   if (real) {
     effects.push(...real.effects);
     await appendToSession(real.sessionNote);

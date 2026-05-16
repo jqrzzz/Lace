@@ -14,6 +14,7 @@ import { getOrderFull } from "@/lib/lace/queries";
 import { listAuditForEntity } from "@/lib/agent/store";
 import { formatCents, formatCentsExact, timeAgo } from "@/lib/format";
 import type { OrderStatus, OrderShippingAddress } from "@/lib/lace/types";
+import OrderActions from "./OrderActions";
 
 export const dynamic = "force-dynamic";
 
@@ -244,8 +245,14 @@ export default async function OrderDetailPage({ params }: PageProps) {
           </div>
         </div>
 
-        {/* Right: customer + shipping + meta */}
+        {/* Right: actions + customer + shipping + meta */}
         <div className="space-y-4">
+          <OrderActions
+            orderNumber={order.order_number}
+            status={order.status}
+            totalCents={order.total_cents}
+          />
+
           <div className="bg-white rounded-2xl border border-border-light p-5">
             <div className="flex items-center justify-between gap-2 mb-3">
               <div className="flex items-center gap-2">
