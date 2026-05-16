@@ -126,6 +126,29 @@ export interface CustomerInboxRow {
   created_at: string;
 }
 
+/** Inbox detail page payload — message + the sender's customer context. */
+export interface InboxMessageDetail {
+  id: string;
+  name: string;
+  email: string;
+  subject: string | null;
+  message: string;
+  status: InboxStatus;
+  reply_draft: string | null;
+  reply_sent: string | null;
+  replied_at: string | null;
+  created_at: string;
+  // Sender's customer profile when we can match by email.
+  customer: {
+    id: string;
+    name: string | null;
+    total_orders: number;
+    total_spent_cents: number;
+    tags: string[];
+    recent_orders: CustomerOrderRow[];
+  } | null;
+}
+
 /** Full customer graph for the admin detail page. */
 export interface CustomerFull {
   id: string;

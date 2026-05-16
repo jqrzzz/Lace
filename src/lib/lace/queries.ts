@@ -30,6 +30,7 @@ import type {
   CustomerOrderRow,
   CustomerSummary,
   InboxMessage,
+  InboxMessageDetail,
   InboxStatus,
   MissionGiftConsoleRow,
   MissionGiftStatus,
@@ -517,6 +518,124 @@ export async function listInbox(
 ): Promise<InboxMessage[]> {
   const rows = await listInboxStore();
   return status ? rows.filter((m) => m.status === status) : rows;
+}
+
+interface InboxDetailDbRow {
+  id: string;
+  name: string;
+  email: string;
+  subject: string | null;
+  message: string;
+  status: InboxStatus;
+  reply_draft: string | null;
+  reply_sent: string | null;
+  replied_at: string | null;
+  created_at: string;
+}
+
+/** Inbox detail: message + sender's customer profile + last few orders. */
+export async function getInboxMessageWithContext(
+  id: string,
+): Promise<InboxMessageDetail | null> {
+  const db = getLaceDb();
+  if (!db) {
+    const all = await listInboxStore();
+    const m = all.find((x) => x.id === id);
+    if (!m) return null;
+    return {
+      id: m.id,
+      name: m.name,
+      email: m.email,
+      subject: m.subject,
+      message: m.message,
+      status: m.status,
+      reply_draft: m.reply_draft,
+      reply_sent: null,
+      replied_at: null,
+      created_at: m.created_at,
+      customer: null,
+    };
+  }
+
+  const { data: msgRow, error: msgErr } = await db
+    .from("contact_messages")
+    .select(
+      "id, name, email, subject, message, status, reply_draft, reply_sent, replied_at, created_at",
+    )
+    .eq("id", id)
+    .maybeSingle();
+  if (msgErr || !msgRow) {
+    if (msgErr) console.error("[queries] getInboxMessageWithContext:", msgErr);
+    return null;
+  }
+  const m = msgRow as InboxDetailDbRow;
+
+  // Best-effort customer lookup by email (citext, so case-insensitive).
+  const { data: cRow } = await db
+    .from("customers")
+    .select(
+      "id, first_name, last_name, total_orders, total_spent_cents, tags, " +
+        "orders ( id, order_number, status, total_cents, created_at, order_items(id) )",
+    )
+    .eq("email", m.email)
+    .maybeSingle();
+
+  let customer: InboxMessageDetail["customer"] = null;
+  if (cRow) {
+    const c = cRow as unknown as {
+      id: string;
+      first_name: string | null;
+      last_name: string | null;
+      total_orders: number;
+      total_spent_cents: number;
+      tags: string[] | null;
+      orders:
+        | Array<{
+            id: string;
+            order_number: string | null;
+            status: OrderStatus;
+            total_cents: number;
+            created_at: string;
+            order_items: { id: string }[] | null;
+          }>
+        | null;
+    };
+    const name =
+      [c.first_name, c.last_name].filter(Boolean).join(" ").trim() || null;
+    const recent: CustomerOrderRow[] = (c.orders ?? [])
+      .map((o) => ({
+        id: o.id,
+        order_number: o.order_number ?? o.id.slice(0, 8),
+        status: o.status,
+        total_cents: o.total_cents,
+        created_at: o.created_at,
+        item_count: o.order_items?.length ?? 0,
+      }))
+      .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
+      .slice(0, 3);
+    customer = {
+      id: c.id,
+      name,
+      total_orders: c.total_orders,
+      total_spent_cents: c.total_spent_cents,
+      tags: c.tags ?? [],
+      recent_orders: recent,
+    };
+  }
+
+  return {
+    id: m.id,
+    name: m.name,
+    email: m.email,
+    subject: m.subject,
+    message: m.message,
+    status: m.status,
+    reply_draft: m.reply_draft,
+    reply_sent: m.reply_sent,
+    replied_at: m.replied_at,
+    created_at: m.created_at,
+    customer,
+  };
 }
 
 // ── Mission ────────────────────────────────────────────────────
