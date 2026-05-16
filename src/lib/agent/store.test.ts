@@ -133,6 +133,8 @@ import {
   createApproval,
   createSession,
   decideApproval,
+  listInboxStore,
+  updateInboxMessage,
   writeAudit,
 } from "./store";
 
@@ -246,6 +248,33 @@ describe("agent/store — DB dispatch", () => {
       title: "Morning",
       actor_label: "Luz Maria (owner)",
       channel: "console",
+    });
+  });
+
+  it("listInboxStore selects from contact_messages ordered by created_at desc", async () => {
+    const rows = await listInboxStore();
+    expect(rows).toEqual(expect.any(Array));
+
+    const select = calls.find(
+      (c) => c.op === "select" && c.table === "contact_messages",
+    );
+    expect(select).toBeDefined();
+  });
+
+  it("updateInboxMessage updates contact_messages and returns the row", async () => {
+    const updated = await updateInboxMessage("m-1", {
+      status: "drafted",
+      reply_draft: "Hello Patricia — yes, in time.",
+    });
+    expect(updated).not.toBeNull();
+    expect(updated!.id).toBe("m-1");
+
+    const update = calls.find(
+      (c) => c.op === "update" && c.table === "contact_messages",
+    );
+    expect(update?.payload).toMatchObject({
+      status: "drafted",
+      reply_draft: "Hello Patricia — yes, in time.",
     });
   });
 

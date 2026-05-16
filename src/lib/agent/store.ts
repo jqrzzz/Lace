@@ -14,9 +14,9 @@
 //       agent_approvals / audit_log. Survives reloads and serves
 //       the multi-instance prod deploy.
 //
-// Inbox still lives in-memory regardless of backend — it moves to
-// lace.contact_messages in Phase 2.B. The contact form route
-// already writes there (Phase 1), so the read side is the next step.
+// The contact form route writes inbox messages directly to
+// lace.contact_messages (Phase 1); this module's listInbox /
+// updateInboxMessage read and mutate the same table.
 // ─────────────────────────────────────────────────────────────
 
 import type {
@@ -480,6 +480,78 @@ async function writeAuditDb(
   }
 }
 
+interface ContactMessageDbRow {
+  id: string;
+  name: string;
+  email: string;
+  subject: string | null;
+  message: string;
+  status: string;
+  reply_draft: string | null;
+  created_at: string;
+}
+
+const CONTACT_COLS =
+  "id, name, email, subject, message, status, reply_draft, created_at";
+
+function toInboxMessage(r: ContactMessageDbRow): InboxMessage {
+  return {
+    id: r.id,
+    name: r.name,
+    email: r.email,
+    subject: r.subject,
+    message: r.message,
+    status: r.status as InboxMessage["status"],
+    reply_draft: r.reply_draft,
+    created_at: r.created_at,
+  };
+}
+
+async function listInboxDb(
+  db: LaceServiceClient,
+): Promise<InboxMessage[]> {
+  const { data, error } = await db
+    .from("contact_messages")
+    .select(CONTACT_COLS)
+    .order("created_at", { ascending: false });
+  if (error) {
+    console.error("[agent/store] listInbox DB failed:", error);
+    return [];
+  }
+  return ((data ?? []) as ContactMessageDbRow[]).map(toInboxMessage);
+}
+
+async function updateInboxMessageDb(
+  db: LaceServiceClient,
+  id: string,
+  patch: Partial<InboxMessage>,
+): Promise<InboxMessage | null> {
+  const dbPatch: Record<string, unknown> = {};
+  if (patch.status !== undefined) dbPatch.status = patch.status;
+  if (patch.reply_draft !== undefined) dbPatch.reply_draft = patch.reply_draft;
+  if (patch.subject !== undefined) dbPatch.subject = patch.subject;
+  if (patch.message !== undefined) dbPatch.message = patch.message;
+  if (Object.keys(dbPatch).length === 0) {
+    const { data } = await db
+      .from("contact_messages")
+      .select(CONTACT_COLS)
+      .eq("id", id)
+      .maybeSingle();
+    return data ? toInboxMessage(data as ContactMessageDbRow) : null;
+  }
+  const { data, error } = await db
+    .from("contact_messages")
+    .update(dbPatch)
+    .eq("id", id)
+    .select(CONTACT_COLS)
+    .maybeSingle();
+  if (error) {
+    console.error("[agent/store] updateInboxMessage DB failed:", error);
+    return null;
+  }
+  return data ? toInboxMessage(data as ContactMessageDbRow) : null;
+}
+
 interface AuditDbRow {
   id: string;
   actor_label: string | null;
@@ -636,13 +708,13 @@ export async function listAudit(limit = 100): Promise<AuditEntry[]> {
   return db ? listAuditDb(db, limit) : listAuditMemory(limit);
 }
 
-// ── Inbox (still in-memory; Phase 2.B moves to lace.contact_messages) ──
+// ── Inbox (lace.contact_messages when DB configured, mock otherwise) ──
 
-export function listInboxStore(): InboxMessage[] {
+function listInboxMemory(): InboxMessage[] {
   return ensure().inbox;
 }
 
-export function updateInboxMessage(
+function updateInboxMessageMemory(
   id: string,
   patch: Partial<InboxMessage>,
 ): InboxMessage | null {
@@ -652,6 +724,19 @@ export function updateInboxMessage(
   const updated = { ...s.inbox[idx], ...patch };
   s.inbox[idx] = updated;
   return updated;
+}
+
+export async function listInboxStore(): Promise<InboxMessage[]> {
+  const db = getLaceDb();
+  return db ? listInboxDb(db) : listInboxMemory();
+}
+
+export async function updateInboxMessage(
+  id: string,
+  patch: Partial<InboxMessage>,
+): Promise<InboxMessage | null> {
+  const db = getLaceDb();
+  return db ? updateInboxMessageDb(db, id, patch) : updateInboxMessageMemory(id, patch);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -697,7 +782,7 @@ export async function executeApproval(
     case "draft_inbox_reply": {
       const messageId = String(payload.message_id ?? "");
       const reply = String(payload.reply ?? "");
-      const updated = updateInboxMessage(messageId, {
+      const updated = await updateInboxMessage(messageId, {
         status: "drafted",
         reply_draft: reply,
       });

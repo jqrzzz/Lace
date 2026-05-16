@@ -200,10 +200,7 @@ export async function listCustomers(opts?: {
 export async function listInbox(
   status?: InboxMessage["status"],
 ): Promise<InboxMessage[]> {
-  // Phase 2: read contact_messages from lace.* and merge with the
-  // in-process agent store. For now we stick to the store; the
-  // store will be backed by lace.contact_messages in the next phase.
-  const rows = listInboxStore();
+  const rows = await listInboxStore();
   return status ? rows.filter((m) => m.status === status) : rows;
 }
 
