@@ -1,37 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServiceClient } from "@/lib/supabase";
+import { getLaceDb } from "@/lib/db";
 
 export async function POST(req: NextRequest) {
   try {
-    const { email } = await req.json();
+    const { email, source } = (await req.json()) as {
+      email?: string;
+      source?: string;
+    };
 
     if (!email || !email.includes("@")) {
       return NextResponse.json(
         { error: "A valid email is required." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    // Save to Supabase if configured
-    const supabase = getServiceClient();
-    if (supabase) {
-      const { error } = await supabase
-        .from("newsletter_subscribers")
-        .upsert({ email, subscribed_at: new Date().toISOString() }, {
-          onConflict: "email",
-        });
-
+    const db = getLaceDb();
+    if (db) {
+      const { error } = await db.from("newsletter_subscribers").upsert(
+        {
+          email: email.toLowerCase(),
+          status: "active",
+          source: source || "footer",
+        },
+        { onConflict: "email" },
+      );
       if (error) {
-        console.error("Newsletter subscribe error:", error);
+        console.error("[newsletter] subscribe failed:", error);
       }
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Newsletter error:", error);
+    console.error("[newsletter] handler error:", error);
     return NextResponse.json(
       { error: "Failed to subscribe. Please try again." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

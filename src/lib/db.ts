@@ -1,31 +1,37 @@
 // ─────────────────────────────────────────────────────────────
-// Lace — typed Supabase client, pinned to the `lace` schema.
+// Lace — typed Supabase clients.
 //
-// We deliberately keep two client factories:
+// Three factories, all reading the same env vars:
 //
-//   getLaceDb()        — service-role client, bypasses RLS. Use
-//                        from server code only (route handlers,
-//                        server actions, workers). Never expose.
+//   getLaceDb()        — service-role + `lace` schema. Server only.
+//                        Bypasses RLS. Never expose to the browser.
 //
-//   getLacePublicDb()  — anon client, obeys RLS. Safe to call from
-//                        the browser for the public read paths we
-//                        opened in 0005_lace_rls_and_grants.sql
-//                        (active products, published journal,
-//                        active mission recipients, etc).
+//   getLacePublicDb()  — anon key + `lace` schema. Safe in the
+//                        browser. Subject to RLS — only the rows
+//                        the policies in 0005/0007 permit.
 //
-// Both point at the `lace` schema so queries are written as plain
-// table names (`.from("products")` not `.from("lace.products")`).
+//   getAuthClient()    — anon key, no schema pin. Used by the
+//                        AuthProvider for Supabase Auth (magic links,
+//                        sessions). Auth tables live in the `auth`
+//                        schema, so this one must not pin to `lace`.
 //
 // When Lace moves to its own Supabase project later we only have
 // to change the env vars — nothing in the callers needs to change.
 // ─────────────────────────────────────────────────────────────
 
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+
+/** Concrete type of the service-role client returned by getLaceDb (never null). */
+export type LaceServiceClient = NonNullable<ReturnType<typeof getLaceDb>>;
 
 const LACE_SCHEMA = "lace" as const;
 
 function url(): string | null {
   return process.env.NEXT_PUBLIC_SUPABASE_URL ?? null;
+}
+
+function anonKey(): string | null {
+  return process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? null;
 }
 
 /**
@@ -49,14 +55,36 @@ export function getLaceDb() {
  */
 export function getLacePublicDb() {
   const u = url();
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!u || !anonKey) return null;
-  return createClient(u, anonKey, {
+  const k = anonKey();
+  if (!u || !k) return null;
+  return createClient(u, k, {
     db: { schema: LACE_SCHEMA },
   });
+}
+
+// Cached so React subscribers (AuthProvider) keep the same instance
+// across renders — Supabase Auth's onAuthStateChange depends on it.
+let cachedAuthClient: SupabaseClient | null | undefined;
+
+/**
+ * Anon client without a schema pin, for Supabase Auth flows
+ * (magic links, sessions). Same key as getLacePublicDb but does
+ * not constrain queries to `lace`, so `auth.*` works as expected.
+ */
+export function getAuthClient(): SupabaseClient | null {
+  if (cachedAuthClient !== undefined) return cachedAuthClient;
+  const u = url();
+  const k = anonKey();
+  cachedAuthClient = u && k ? createClient(u, k) : null;
+  return cachedAuthClient;
 }
 
 /** True when both URL + service key are present (server-side readiness check). */
 export function isLaceDbConfigured(): boolean {
   return Boolean(url() && process.env.SUPABASE_SERVICE_ROLE_KEY);
+}
+
+/** True when URL + anon key are present (client-side readiness check). */
+export function isSupabaseConfigured(): boolean {
+  return Boolean(url() && anonKey());
 }

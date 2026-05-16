@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServiceClient } from "@/lib/supabase";
+import { getLaceDb } from "@/lib/db";
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,15 +12,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Try to save to Supabase if configured
-    const supabase = getServiceClient();
-    if (supabase) {
-      await supabase.from("contact_messages").insert({
+    const db = getLaceDb();
+    if (db) {
+      const { error } = await db.from("contact_messages").insert({
         name,
         email,
         subject: subject || "General",
         message,
       });
+      if (error) {
+        console.error("[contact] insert failed:", error);
+      }
     }
 
     // Try to send email via Resend if configured

@@ -8,7 +8,9 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
-import { supabase, isSupabaseConfigured } from "./supabase";
+import { getAuthClient, isSupabaseConfigured } from "./db";
+
+const supabase = getAuthClient();
 
 interface User {
   id: string;
