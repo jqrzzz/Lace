@@ -18,7 +18,10 @@ function LoginInner() {
   const { signInWithMagicLink, configured, user } = useAuth();
   const params = useSearchParams();
   const next = params?.get("next") || null;
-  const safeNext = next && next.startsWith("/") ? next : null;
+  // Internal-path only: must start with "/" but not "//" (protocol-relative
+  // URLs would otherwise redirect to evil.com via //evil.com).
+  const safeNext =
+    next && next.startsWith("/") && !next.startsWith("//") ? next : null;
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
