@@ -80,7 +80,7 @@ export default async function HomePage() {
 
             {/* Hero Visual */}
             <div className="relative hidden lg:block animate-fade-up" style={{ animationDelay: "0.2s" }}>
-              <div className="aspect-[3/4] rounded-[2rem] bg-gradient-to-br from-rose/25 via-blush/40 via-60% to-champagne/30 border border-white/60 shadow-[0_30px_80px_rgba(139,58,74,0.12)] overflow-hidden relative">
+              <div className="aspect-[3/4] rounded-[2rem] bg-gradient-to-br from-rose/25 via-blush/40 via-60% to-champagne/30 border border-white/60 shadow-[0_30px_80px_rgba(139,58,74,0.12)] overflow-hidden relative product-lace-trim">
                 {/* Lace texture inside */}
                 <div className="absolute inset-0 product-lace opacity-40" />
                 <div className="absolute inset-0 bg-gradient-to-t from-white/60 via-transparent to-white/20" />
@@ -234,7 +234,7 @@ export default async function HomePage() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-14 items-center">
             <Reveal direction="left">
-              <div className="aspect-[4/5] rounded-[2rem] bg-gradient-to-br from-rose/15 via-blush/25 to-champagne/15 border border-border-light/60 flex items-center justify-center shadow-[0_20px_60px_rgba(44,37,39,0.06)] overflow-hidden relative">
+              <div className="aspect-[4/5] rounded-[2rem] bg-gradient-to-br from-rose/15 via-blush/25 to-champagne/15 border border-border-light/60 flex items-center justify-center shadow-[0_20px_60px_rgba(44,37,39,0.06)] overflow-hidden relative product-lace-trim">
                 <div className="absolute inset-0 product-lace opacity-30" />
                 <div className="text-center relative">
                   <Heart className="w-10 h-10 text-rose-gold/30 mx-auto mb-3" />

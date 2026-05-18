@@ -209,7 +209,7 @@ export default function JourneyPage() {
                 <article className="luxury-card rounded-2xl overflow-hidden h-full flex flex-col">
                   {/* Photo placeholder with gradient */}
                   <div
-                    className={`relative aspect-[4/3] bg-gradient-to-br ${c.accentGradient} overflow-hidden`}
+                    className={`relative aspect-[4/3] bg-gradient-to-br ${c.accentGradient} overflow-hidden product-lace-trim`}
                   >
                     <div className="absolute inset-0 product-lace opacity-30" />
                     <div className="absolute inset-0 bg-gradient-to-t from-charcoal/40 via-transparent to-transparent" />

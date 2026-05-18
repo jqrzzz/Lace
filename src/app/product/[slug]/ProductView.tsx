@@ -120,7 +120,7 @@ export default function ProductView({ product, related }: ProductViewProps) {
             <Reveal direction="left">
               <div>
                 <div
-                  className={`aspect-[3/4] rounded-[2rem] bg-gradient-to-br ${product.placeholder.gradient} border border-border-light/50 overflow-hidden relative shadow-[0_20px_60px_rgba(44,37,39,0.06)]`}
+                  className={`aspect-[3/4] rounded-[2rem] bg-gradient-to-br ${product.placeholder.gradient} border border-border-light/50 overflow-hidden relative shadow-[0_20px_60px_rgba(44,37,39,0.06)] product-lace-trim`}
                 >
                   <div className="absolute inset-0 product-lace opacity-30" />
                   <div className="absolute inset-0 bg-gradient-to-t from-white/30 via-transparent to-white/10" />

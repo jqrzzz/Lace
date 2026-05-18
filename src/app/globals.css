@@ -401,15 +401,92 @@ h1, h2, h3, h4, h5, h6 {
   background-clip: text;
 }
 
-/* ── Product Lace Texture ── */
+/* ── Veil drape texture for placeholder cards ──
+   Used on product photo / founder photo cards before real
+   photography lands. Three layered ideas:
+     1. A single warm radial pooling at the upper-third — light
+        catching the high point of hanging fabric.
+     2. Vertical low-alpha stripes — long folds in the drape.
+     3. (Optional, via .product-lace-trim) scalloped lace borders
+        anchored to the top + bottom edges of the card.
+   No tiled dots. Spans the full card so scaling never reveals a
+   repeating grid. */
 .product-lace {
   background-image:
-    radial-gradient(circle at 25% 25%, rgba(255,255,255,0.6) 0%, transparent 30%),
-    radial-gradient(circle at 75% 75%, rgba(255,255,255,0.4) 0%, transparent 30%),
-    radial-gradient(circle at 50% 50%, rgba(255,255,255,0.5) 0%, transparent 25%),
-    radial-gradient(circle at 25% 75%, rgba(255,255,255,0.3) 0%, transparent 20%),
-    radial-gradient(circle at 75% 25%, rgba(255,255,255,0.3) 0%, transparent 20%);
-  background-size: 50px 50px;
+    radial-gradient(
+      ellipse 70% 90% at 50% 30%,
+      rgba(255, 250, 240, 0.32) 0%,
+      transparent 70%
+    ),
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.05) 14%,
+      transparent 28%,
+      rgba(255, 255, 255, 0.035) 42%,
+      transparent 54%,
+      rgba(255, 255, 255, 0.06) 66%,
+      transparent 78%,
+      rgba(255, 255, 255, 0.03) 90%,
+      transparent 100%
+    );
+  background-size: 100% 100%, 100% 100%;
+  background-position: center, center;
+  background-repeat: no-repeat;
+}
+
+.dark .product-lace {
+  background-image:
+    radial-gradient(
+      ellipse 70% 90% at 50% 30%,
+      rgba(245, 176, 185, 0.10) 0%,
+      transparent 70%
+    ),
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(245, 176, 185, 0.05) 14%,
+      transparent 28%,
+      rgba(231, 179, 187, 0.04) 42%,
+      transparent 54%,
+      rgba(245, 176, 185, 0.06) 66%,
+      transparent 78%,
+      rgba(208, 162, 94, 0.04) 90%,
+      transparent 100%
+    );
+}
+
+/* Scalloped lace trim — paired pseudo-elements at the top + bottom
+   edges of the card. Add to large placeholders only; the SVG is
+   16px tall so it'd dominate a 72px thumbnail. Mirrors the existing
+   .lace-border-top / .lace-border-bottom motifs so trim is visually
+   continuous across sections. */
+.product-lace-trim::before,
+.product-lace-trim::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 16px;
+  background-repeat: repeat-x;
+  background-size: 120px 16px;
+  pointer-events: none;
+  opacity: 0.55;
+}
+.product-lace-trim::before {
+  top: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='120' height='16' viewBox='0 0 120 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 16 Q15 0 30 16 Q45 0 60 16 Q75 0 90 16 Q105 0 120 16' fill='none' stroke='%23E8C4CE' stroke-width='1' opacity='0.85'/%3E%3C/svg%3E");
+}
+.product-lace-trim::after {
+  bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='120' height='16' viewBox='0 0 120 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0 Q15 16 30 0 Q45 16 60 0 Q75 16 90 0 Q105 16 120 0' fill='none' stroke='%23E8C4CE' stroke-width='1' opacity='0.85'/%3E%3C/svg%3E");
+}
+
+.dark .product-lace-trim::before {
+  background-image: url("data:image/svg+xml,%3Csvg width='120' height='16' viewBox='0 0 120 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 16 Q15 0 30 16 Q45 0 60 16 Q75 0 90 16 Q105 0 120 16' fill='none' stroke='%23E7B3BB' stroke-width='1' opacity='0.7'/%3E%3C/svg%3E");
+}
+.dark .product-lace-trim::after {
+  background-image: url("data:image/svg+xml,%3Csvg width='120' height='16' viewBox='0 0 120 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0 Q15 16 30 0 Q45 16 60 0 Q75 16 90 0 Q105 16 120 0' fill='none' stroke='%23E7B3BB' stroke-width='1' opacity='0.7'/%3E%3C/svg%3E");
 }
 
 /* ── Staggered Animations ── */
