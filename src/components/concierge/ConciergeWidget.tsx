@@ -204,6 +204,7 @@ export default function ConciergeWidget() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask about veils, shipping, or the mission…"
+              aria-label="Ask Luz a question"
               className="flex-1 px-3 py-2 text-sm border border-border rounded-xl focus:outline-none focus:border-gold"
             />
             <button
