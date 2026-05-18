@@ -118,7 +118,7 @@ export default async function JournalPostPage({ params }: PageProps) {
       <section className="relative -mt-4 mb-16">
         <div className="max-w-5xl mx-auto px-4">
           <div
-            className={`relative aspect-[16/9] rounded-[2rem] overflow-hidden bg-gradient-to-br ${post.coverGradient} shadow-[0_20px_60px_rgba(44,37,39,0.12)]`}
+            className={`relative aspect-[16/9] rounded-[2rem] overflow-hidden bg-gradient-to-br ${post.coverGradient} shadow-[0_20px_60px_rgba(44,37,39,0.12)] product-lace-trim`}
           >
             <div className="absolute inset-0 product-lace opacity-40" />
             <div className="absolute inset-0 bg-gradient-to-t from-charcoal/10 to-transparent" />

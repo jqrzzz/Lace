@@ -212,7 +212,7 @@ export default function CentennialPage() {
             <Reveal direction="left">
               <div className="relative">
                 <div className="absolute -inset-4 rounded-[2.5rem] bg-gradient-to-br from-gold/25 via-rose/15 to-champagne/30 blur-2xl" />
-                <div className="relative aspect-[4/5] rounded-[2rem] bg-gradient-to-br from-champagne/40 via-gold/15 to-blush/30 border border-gold/30 overflow-hidden">
+                <div className="relative aspect-[4/5] rounded-[2rem] bg-gradient-to-br from-champagne/40 via-gold/15 to-blush/30 border border-gold/30 overflow-hidden product-lace-trim">
                   <div className="absolute inset-0 product-lace opacity-40" />
                   <div className="absolute top-5 left-5 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-charcoal/85 backdrop-blur-sm border border-gold/30">
                     <Sparkles className="w-3 h-3 text-gold" strokeWidth={1.5} />

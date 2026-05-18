@@ -221,17 +221,8 @@ export const PRODUCTS: Product[] = [
   },
 ];
 
-export function getProduct(slug: string): Product | undefined {
-  return PRODUCTS.find((p) => p.slug === slug);
-}
-
-export function getProductsByCollection(collection: string): Product[] {
-  return PRODUCTS.filter((p) => p.collection === collection);
-}
-
-export function getProductsByStyle(style: string): Product[] {
-  return PRODUCTS.filter((p) => p.style === style);
-}
-
-export const COLLECTIONS = [...new Set(PRODUCTS.map((p) => p.collection))];
-export const STYLES = [...new Set(PRODUCTS.map((p) => p.style))];
+// Catalog reads go through @/lib/lace/queries.ts (listProducts /
+// getProductBySlug) — the PRODUCTS const above is kept as the demo
+// fallback used when SUPABASE_SERVICE_ROLE_KEY isn't set, and as the
+// source of truth for the seed data in
+// supabase/migrations/0006_lace_seed.sql.

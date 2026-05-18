@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Play, Check, Loader2 } from "lucide-react";
-import { fetchJSON } from "@/lib/client";
+import { adminFetchJSON } from "@/lib/admin-fetch";
 
 /**
  * A manual-trigger button for a playbook. In demo mode it simulates
@@ -24,7 +24,7 @@ export default function PlaybookRunButton({
     try {
       // We don't block on the result — the agent runs async and the
       // new messages / approvals show up in their respective tabs.
-      await fetchJSON<{ session_id: string }>("/api/agent/playbooks/run", {
+      await adminFetchJSON<{ session_id: string }>("/api/agent/playbooks/run", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ id }),

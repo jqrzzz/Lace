@@ -65,7 +65,7 @@ export default function StoryPage() {
                 {/* Frame accent */}
                 <div className="absolute -inset-1.5 rounded-[2rem] bg-gradient-to-br from-rose/10 to-champagne/20 border border-border-light/50" />
 
-                <div className="relative aspect-[4/5] rounded-[2rem] bg-gradient-to-br from-rose/20 via-blush/30 to-champagne/20 border border-white/70 shadow-[0_30px_80px_rgba(139,58,74,0.12)] flex items-center justify-center overflow-hidden">
+                <div className="relative aspect-[4/5] rounded-[2rem] bg-gradient-to-br from-rose/20 via-blush/30 to-champagne/20 border border-white/70 shadow-[0_30px_80px_rgba(139,58,74,0.12)] flex items-center justify-center overflow-hidden product-lace-trim">
                   {/* Lace texture inside */}
                   <div className="product-lace absolute inset-0 opacity-40 pointer-events-none" />
                   <div className="absolute inset-0 bg-gradient-to-t from-white/40 via-transparent to-white/10" />

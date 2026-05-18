@@ -75,7 +75,7 @@ export default function JournalPage() {
               className="group block luxury-card rounded-[2rem] overflow-hidden grid lg:grid-cols-[1.1fr_1fr] gap-0"
             >
               <div
-                className={`relative aspect-[16/11] lg:aspect-auto bg-gradient-to-br ${featured.coverGradient} overflow-hidden`}
+                className={`relative aspect-[16/11] lg:aspect-auto bg-gradient-to-br ${featured.coverGradient} overflow-hidden product-lace-trim`}
               >
                 <div className="absolute inset-0 product-lace opacity-40" />
                 <div className="absolute top-5 left-5 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-charcoal/85 backdrop-blur-sm border border-gold/30">

@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getAdminActor } from "@/lib/admin-auth";
 
 export async function POST(req: NextRequest) {
   try {
+    // Burns Anthropic tokens — admin-only.
+    const actor = await getAdminActor(req);
+    if (!actor) {
+      return NextResponse.json(
+        { error: "Not signed in." },
+        { status: 401 },
+      );
+    }
     const { prompt } = await req.json();
 
     if (!prompt) {

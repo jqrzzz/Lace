@@ -41,7 +41,7 @@ import {
 import { PLAYBOOKS } from "@/lib/agent/playbooks";
 import { useTheme } from "@/lib/theme";
 import { useToast } from "@/components/ui/Toast";
-import { fetchJSON } from "@/lib/client";
+import { adminFetchJSON } from "@/lib/admin-fetch";
 
 interface Command {
   id: string;
@@ -61,14 +61,21 @@ export default function CommandPalette() {
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
 
-  // Global shortcut
+  // Global shortcut. Opening resets query+cursor inline so the open effect
+  // below only needs to handle the imperative focus call.
   useEffect(() => {
     function handler(e: KeyboardEvent) {
       const isMac = navigator.platform.toLowerCase().includes("mac");
       const mod = isMac ? e.metaKey : e.ctrlKey;
       if (mod && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        setOpen((v) => !v);
+        setOpen((wasOpen) => {
+          if (!wasOpen) {
+            setQuery("");
+            setCursor(0);
+          }
+          return !wasOpen;
+        });
       } else if (e.key === "Escape") {
         setOpen(false);
       }
@@ -78,11 +85,9 @@ export default function CommandPalette() {
   }, []);
 
   useEffect(() => {
-    if (open) {
-      setQuery("");
-      setCursor(0);
-      setTimeout(() => inputRef.current?.focus(), 20);
-    }
+    if (!open) return;
+    const t = setTimeout(() => inputRef.current?.focus(), 20);
+    return () => clearTimeout(t);
   }, [open]);
 
   const close = useCallback(() => setOpen(false), []);
@@ -109,7 +114,7 @@ export default function CommandPalette() {
       section: "Playbooks" as const,
       run: async () => {
         try {
-          await fetchJSON<{ session_id: string }>("/api/agent/playbooks/run", {
+          await adminFetchJSON<{ session_id: string }>("/api/agent/playbooks/run", {
             method: "POST",
             headers: { "content-type": "application/json" },
             body: JSON.stringify({ id: p.id }),
@@ -150,9 +155,11 @@ export default function CommandPalette() {
     });
   }, [commands, query]);
 
-  useEffect(() => {
-    if (cursor > filtered.length - 1) setCursor(0);
-  }, [filtered.length, cursor]);
+  // Clamp the cursor to the visible range at render time so a shrinking
+  // filter list never points off the end. We keep `cursor` in storage as the
+  // user pressed it; reads use `safeCursor`.
+  const safeCursor =
+    filtered.length === 0 ? 0 : Math.min(cursor, filtered.length - 1);
 
   const grouped = useMemo(() => {
     const map = new Map<string, Command[]>();
@@ -180,7 +187,7 @@ export default function CommandPalette() {
       setCursor((c) => Math.max(0, c - 1));
     } else if (e.key === "Enter") {
       e.preventDefault();
-      void runAt(cursor);
+      void runAt(safeCursor);
     }
   }
 
@@ -229,7 +236,7 @@ export default function CommandPalette() {
                 </p>
                 {items.map((cmd) => {
                   flatIndex += 1;
-                  const active = flatIndex === cursor;
+                  const active = flatIndex === safeCursor;
                   return (
                     <button
                       key={cmd.id}

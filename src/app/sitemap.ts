@@ -1,8 +1,8 @@
 import type { MetadataRoute } from "next";
-import { PRODUCTS } from "@/lib/products";
+import { listProducts } from "@/lib/lace/queries";
 import { JOURNAL_POSTS } from "@/lib/journal";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
     "https://lacebylaluz.com";
@@ -33,7 +33,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: p.change,
       priority: p.priority,
     })),
-    ...PRODUCTS.map((p) => ({
+    ...(await listProducts()).map((p) => ({
       url: `${base}/product/${p.slug}`,
       lastModified: now,
       changeFrequency: "weekly" as const,

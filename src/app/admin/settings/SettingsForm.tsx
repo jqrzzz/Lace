@@ -1,208 +1,297 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ShieldCheck, DollarSign, Zap, Save, Check } from "lucide-react";
-import type { ActorPolicy } from "@/lib/agent/router";
+import {
+  AlertCircle,
+  Check,
+  DollarSign,
+  Loader2,
+  Mail,
+  Save,
+  ShieldCheck,
+  User,
+} from "lucide-react";
+import { adminFetch } from "@/lib/admin-fetch";
+import { useAdminActor } from "../AdminContext";
 
-/**
- * Mom-mode knobs. This is the only place in the app where she can
- * dial Luz's leash up or down. Defaults ship cautious — we want her
- * first week to feel like a calm assistant, not a cowboy.
- *
- * Persists to localStorage for now (no DB column yet). When the
- * actor-policy becomes a real `lace.app_users` row, we can swap the
- * persistence layer without changing this component.
- */
+interface Toggles {
+  confirm_money_actions: boolean;
+  confirm_destructive: boolean;
+  daily_briefing_enabled: boolean;
+}
 
-const STORAGE_KEY = "lace.actor_policy.v1";
-
-const DEFAULT_POLICY: ActorPolicy = {
-  role: "owner",
-  confirm_money_actions: true,
-  confirm_destructive: true,
-  auto_approve_money_limit_cents: 2500,
-};
-
-function readPolicy(): ActorPolicy {
-  if (typeof window === "undefined") return DEFAULT_POLICY;
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return DEFAULT_POLICY;
-    return { ...DEFAULT_POLICY, ...JSON.parse(raw) } as ActorPolicy;
-  } catch {
-    return DEFAULT_POLICY;
-  }
+interface Profile {
+  name: string;
 }
 
 export default function SettingsForm() {
-  const [policy, setPolicy] = useState<ActorPolicy>(DEFAULT_POLICY);
-  const [saved, setSaved] = useState(false);
+  const { actor, applyLocalActor } = useAdminActor();
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [toggles, setToggles] = useState<Toggles | null>(null);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [savedProfile, setSavedProfile] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [savingToggles, setSavingToggles] = useState(false);
+  const [savedToggles, setSavedToggles] = useState(false);
+  const [togglesError, setTogglesError] = useState<string | null>(null);
 
   useEffect(() => {
-    setPolicy(readPolicy());
-  }, []);
+    if (actor) {
+      setProfile({ name: actor.name ?? "" });
+      setToggles({
+        confirm_money_actions: actor.confirm_money_actions,
+        confirm_destructive: actor.confirm_destructive,
+        daily_briefing_enabled: actor.daily_briefing_enabled,
+      });
+    }
+  }, [actor]);
 
-  function update<K extends keyof ActorPolicy>(key: K, value: ActorPolicy[K]) {
-    setPolicy((p) => ({ ...p, [key]: value }));
-    setSaved(false);
+  if (!actor || !profile || !toggles) {
+    return (
+      <div className="bg-white rounded-2xl border border-border-light p-10 text-center">
+        <Loader2 className="w-5 h-5 text-warm-gray animate-spin mx-auto mb-2" />
+        <p className="text-sm text-warm-gray">Loading your settings…</p>
+      </div>
+    );
   }
 
-  function save() {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(policy));
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  function toggle(key: keyof Toggles) {
+    setToggles((d) => (d ? { ...d, [key]: !d[key] } : d));
+    setSavedToggles(false);
   }
 
-  const capDollars = Math.round((policy.auto_approve_money_limit_cents ?? 0) / 100);
+  async function saveProfile() {
+    if (!profile) return;
+    setSavingProfile(true);
+    setProfileError(null);
+    try {
+      const res = await adminFetch("/api/admin/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: profile.name }),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        setProfileError(j?.error ?? "Couldn't save your name.");
+        return;
+      }
+      applyLocalActor({
+        name: profile.name.trim().length > 0 ? profile.name.trim() : null,
+      });
+      setSavedProfile(true);
+    } finally {
+      setSavingProfile(false);
+    }
+  }
+
+  async function saveToggles() {
+    if (!toggles) return;
+    setSavingToggles(true);
+    setTogglesError(null);
+    try {
+      const res = await adminFetch("/api/admin/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(toggles),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        setTogglesError(j?.error ?? "Couldn't save your settings.");
+        return;
+      }
+      applyLocalActor(toggles);
+      setSavedToggles(true);
+    } finally {
+      setSavingToggles(false);
+    }
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Destructive guard (locked) */}
-      <div className="bg-white rounded-2xl border border-border-light p-5">
-        <div className="flex items-start gap-4">
-          <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0">
-            <ShieldCheck className="w-5 h-5 text-red-600" />
+    <div className="space-y-8">
+      {/* Profile section */}
+      <section>
+        <h2 className="text-xs uppercase tracking-[0.18em] text-warm-gray mb-3">
+          Your profile
+        </h2>
+        <div className="bg-white rounded-2xl border border-border-light p-5">
+          <div className="flex items-start gap-4">
+            <span className="w-9 h-9 rounded-xl bg-gold/15 flex items-center justify-center flex-shrink-0">
+              <User className="w-4 h-4 text-gold-dark" />
+            </span>
+            <div className="flex-1 min-w-0">
+              <label className="block">
+                <span className="text-sm font-medium text-charcoal block mb-1">
+                  Your name
+                </span>
+                <span className="text-xs text-warm-gray block mb-2">
+                  Shows up in the sidebar and on every audit entry so we can
+                  see who did what.
+                </span>
+                <input
+                  type="text"
+                  value={profile.name}
+                  onChange={(e) => {
+                    setProfile({ name: e.target.value });
+                    setSavedProfile(false);
+                  }}
+                  placeholder="e.g. Luz Maria"
+                  className="w-full max-w-sm px-3 py-2 border border-border rounded-lg text-sm text-charcoal focus:outline-none focus:border-gold"
+                />
+              </label>
+              <p className="text-xs text-warm-gray mt-3">
+                Signed in as <span className="font-medium">{actor.email}</span>{" "}
+                · {actor.role}
+              </p>
+            </div>
           </div>
-          <div className="flex-1">
-            <div className="flex items-center justify-between gap-3 mb-1">
-              <h3 className="font-heading text-lg text-charcoal">
-                Destructive actions always ask
-              </h3>
-              <span className="text-[10px] uppercase tracking-wider text-warm-gray bg-cream border border-border-light px-2 py-0.5 rounded-full">
-                locked
+
+          <div className="flex items-center gap-3 mt-4 pt-4 border-t border-border-light">
+            <button
+              onClick={saveProfile}
+              disabled={savingProfile}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-burgundy text-white text-sm rounded-xl hover:bg-burgundy/90 disabled:opacity-60 transition-colors"
+            >
+              {savingProfile ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              Save name
+            </button>
+            {savedProfile && (
+              <span className="inline-flex items-center gap-1.5 text-sm text-emerald-700">
+                <Check className="w-4 h-4" /> Saved.
               </span>
-            </div>
-            <p className="text-sm text-warm-gray leading-relaxed">
-              Archiving a product, unsubscribing a customer, deleting anything
-              — these always route to you. No toggle, by design.
-            </p>
+            )}
+            {profileError && (
+              <span className="inline-flex items-center gap-1.5 text-sm text-red-700">
+                <AlertCircle className="w-4 h-4" /> {profileError}
+              </span>
+            )}
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Money confirm */}
-      <div className="bg-white rounded-2xl border border-border-light p-5">
-        <div className="flex items-start gap-4">
-          <div className="w-10 h-10 rounded-xl bg-burgundy/10 flex items-center justify-center flex-shrink-0">
-            <DollarSign className="w-5 h-5 text-burgundy" />
+      {/* Autonomy section */}
+      <section>
+        <h2 className="text-xs uppercase tracking-[0.18em] text-warm-gray mb-3">
+          How cautious should Luz be?
+        </h2>
+
+        {actor.role !== "owner" ? (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
+            <p className="text-sm text-amber-900">
+              Autonomy settings are owner-only. You&apos;re signed in as{" "}
+              <span className="font-medium">{actor.role}</span> — the owner
+              can adjust these, or promote your account.
+            </p>
           </div>
-          <div className="flex-1">
-            <div className="flex items-center justify-between gap-3 mb-1">
-              <h3 className="font-heading text-lg text-charcoal">
-                Confirm every money action
-              </h3>
-              <Toggle
-                on={policy.confirm_money_actions}
-                onChange={(v) => update("confirm_money_actions", v)}
+        ) : (
+          <>
+            <div className="space-y-3">
+              <ToggleCard
+                icon={DollarSign}
+                title="Always ask me before money goes out"
+                description="Every refund or paid action shows up in Approvals first — Luz never spends a dollar without your tap."
+                checked={toggles.confirm_money_actions}
+                onToggle={() => toggle("confirm_money_actions")}
+                cautionRecommended
+              />
+              <ToggleCard
+                icon={ShieldCheck}
+                title="Always ask me before customer-facing changes"
+                description="Edits to products, customer tags, journal posts, and inbox replies all wait for your approval. Turn down once you trust Luz with the small stuff."
+                checked={toggles.confirm_destructive}
+                onToggle={() => toggle("confirm_destructive")}
+              />
+              <ToggleCard
+                icon={Mail}
+                title="Send me a daily briefing"
+                description="A short morning email summarizing yesterday: new orders, revenue, anything that needs your attention. Sent through the configured email provider."
+                checked={toggles.daily_briefing_enabled}
+                onToggle={() => toggle("daily_briefing_enabled")}
               />
             </div>
-            <p className="text-sm text-warm-gray leading-relaxed">
-              When on, Luz asks before any refund, price change, or paid
-              broadcast. Recommended for your first month.
-            </p>
-          </div>
-        </div>
 
-        {/* Auto-approve cap (only meaningful when confirm is OFF) */}
-        <div
-          className={`mt-5 pt-5 border-t border-border-light transition-opacity ${
-            policy.confirm_money_actions ? "opacity-40" : ""
-          }`}
-        >
-          <label className="block text-sm font-medium text-charcoal mb-1">
-            Auto-approve small amounts up to{" "}
-            <span className="font-heading text-burgundy">${capDollars}</span>
-          </label>
-          <p className="text-xs text-warm-gray mb-3">
-            Only applies when confirmation is off. Refunds and price changes
-            above this still ask.
-          </p>
-          <input
-            type="range"
-            min={0}
-            max={10000}
-            step={500}
-            value={policy.auto_approve_money_limit_cents ?? 0}
-            onChange={(e) =>
-              update("auto_approve_money_limit_cents", Number(e.target.value))
-            }
-            disabled={policy.confirm_money_actions}
-            className="w-full accent-burgundy"
-          />
-          <div className="flex justify-between text-[10px] text-warm-gray mt-1">
-            <span>$0</span>
-            <span>$100</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Normal-edit caution */}
-      <div className="bg-white rounded-2xl border border-border-light p-5">
-        <div className="flex items-start gap-4">
-          <div className="w-10 h-10 rounded-xl bg-gold/15 flex items-center justify-center flex-shrink-0">
-            <Zap className="w-5 h-5 text-gold-dark" />
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center justify-between gap-3 mb-1">
-              <h3 className="font-heading text-lg text-charcoal">
-                Ask before every edit
-              </h3>
-              <Toggle
-                on={policy.confirm_destructive}
-                onChange={(v) => update("confirm_destructive", v)}
-              />
+            <div className="flex items-center gap-3 mt-4">
+              <button
+                onClick={saveToggles}
+                disabled={savingToggles}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-burgundy text-white text-sm rounded-xl hover:bg-burgundy/90 disabled:opacity-60 transition-colors"
+              >
+                {savingToggles ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                Save changes
+              </button>
+              {savedToggles && (
+                <span className="inline-flex items-center gap-1.5 text-sm text-emerald-700">
+                  <Check className="w-4 h-4" /> Saved.
+                </span>
+              )}
+              {togglesError && (
+                <span className="inline-flex items-center gap-1.5 text-sm text-red-700">
+                  <AlertCircle className="w-4 h-4" /> {togglesError}
+                </span>
+              )}
             </div>
-            <p className="text-sm text-warm-gray leading-relaxed">
-              Includes tagging customers, drafting replies you haven&apos;t
-              seen, and journal posts. Turn off once you trust Luz&apos;s
-              voice — she still shows everything in the log.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Save */}
-      <div className="flex items-center justify-end gap-3">
-        {saved && (
-          <span className="inline-flex items-center gap-1.5 text-sm text-green-700">
-            <Check className="w-4 h-4" />
-            Saved
-          </span>
+          </>
         )}
-        <button
-          onClick={save}
-          className="inline-flex items-center gap-2 bg-burgundy text-white rounded-xl px-5 py-2.5 text-sm font-medium hover:bg-burgundy/90 transition-colors"
-        >
-          <Save className="w-4 h-4" />
-          Save preferences
-        </button>
-      </div>
+      </section>
     </div>
   );
 }
 
-function Toggle({
-  on,
-  onChange,
+function ToggleCard({
+  icon: Icon,
+  title,
+  description,
+  checked,
+  onToggle,
+  cautionRecommended,
 }: {
-  on: boolean;
-  onChange: (v: boolean) => void;
+  icon: typeof DollarSign;
+  title: string;
+  description: string;
+  checked: boolean;
+  onToggle: () => void;
+  cautionRecommended?: boolean;
 }) {
   return (
-    <button
-      onClick={() => onChange(!on)}
-      role="switch"
-      aria-checked={on}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ${
-        on ? "bg-burgundy" : "bg-border"
-      }`}
-    >
-      <span
-        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-          on ? "translate-x-6" : "translate-x-1"
-        }`}
-      />
-    </button>
+    <div className="bg-white rounded-2xl border border-border-light p-5">
+      <div className="flex items-start gap-4">
+        <span className="w-9 h-9 rounded-xl bg-gold/15 flex items-center justify-center flex-shrink-0">
+          <Icon className="w-4 h-4 text-gold-dark" />
+        </span>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-charcoal">{title}</p>
+          <p className="text-xs text-warm-gray mt-1 leading-relaxed">
+            {description}
+          </p>
+          {cautionRecommended && !checked && (
+            <p className="text-[11px] text-amber-700 mt-2">
+              Heads-up: leaving this off means money actions run on their own.
+            </p>
+          )}
+        </div>
+        <button
+          onClick={onToggle}
+          role="switch"
+          aria-checked={checked}
+          aria-label={title}
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ${
+            checked ? "bg-burgundy" : "bg-stone-300"
+          }`}
+        >
+          <span
+            className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+              checked ? "translate-x-5" : "translate-x-0.5"
+            }`}
+          />
+        </button>
+      </div>
+    </div>
   );
 }

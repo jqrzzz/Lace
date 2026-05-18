@@ -1,152 +1,59 @@
-"use client";
+// Server-side gate for every /admin/* page. Validates the actor
+// against lace.app_users via the Supabase auth cookie and redirects
+// when missing. Renders the client AdminShell only after.
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard,
-  ShoppingBag,
-  ClipboardList,
-  Heart,
-  Sparkles,
-  ArrowLeft,
-  ShieldCheck,
-  MessageSquare,
-  Inbox,
-  Zap,
-  Settings,
-  ScrollText,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import CommandPalette from "@/components/ui/CommandPalette";
+import { redirect } from "next/navigation";
+import { getAdminActorFromCookies } from "@/lib/admin-auth";
+import { isLaceDbConfigured } from "@/lib/db";
+import AdminShell from "./AdminShell";
 
-const NAV = [
-  { href: "/admin", label: "Overview", icon: LayoutDashboard },
-  { href: "/admin/approvals", label: "Approvals", icon: ShieldCheck },
-  { href: "/admin/chat", label: "Agent Chat", icon: MessageSquare },
-  { href: "/admin/playbooks", label: "Playbooks", icon: Zap },
-  { href: "/admin/inbox", label: "Inbox", icon: Inbox },
-  { href: "/admin/orders", label: "Orders", icon: ClipboardList },
-  { href: "/admin/products", label: "Products", icon: ShoppingBag },
-  { href: "/admin/mission", label: "Mission", icon: Heart },
-  { href: "/admin/audit", label: "Audit", icon: ScrollText },
-  { href: "/admin/settings", label: "Settings", icon: Settings },
-];
+export const dynamic = "force-dynamic";
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
+  // In zero-config dev the DB isn't wired — fall back to a non-blocking
+  // demo actor so the admin still renders. Production has the DB so this
+  // branch never runs there.
+  if (!isLaceDbConfigured()) {
+    return (
+      <AdminShell
+        initialActor={{
+          id: "demo",
+          auth_user_id: null,
+          email: "demo@local",
+          name: "Demo Owner",
+          role: "owner",
+          confirm_money_actions: true,
+          confirm_destructive: true,
+          daily_briefing_enabled: false,
+        }}
+        isPrelaunch={true}
+      >
+        {children}
+      </AdminShell>
+    );
+  }
+
+  const actor = await getAdminActorFromCookies();
+  if (!actor) {
+    redirect("/login?next=/admin");
+  }
+  if (actor.role === "viewer") {
+    redirect("/?notice=admin-access-needed");
+  }
+
+  // Banner shows in zero-config + when payment is unwired. Once both
+  // Stripe and Supabase env are present, the loop is closed → banner
+  // hides automatically. Client can also dismiss it.
+  const isPrelaunch =
+    !isLaceDbConfigured() || !process.env.STRIPE_SECRET_KEY;
 
   return (
-    <div className="min-h-screen bg-cream flex">
-      {/* Sidebar */}
-      <aside className="w-64 bg-charcoal text-pearl flex-shrink-0 hidden lg:flex flex-col">
-        <div className="px-6 py-6 border-b border-white/10">
-          <div className="flex flex-col">
-            <span className="font-heading text-xl tracking-[0.15em] uppercase text-white">
-              Lace
-            </span>
-            <span className="text-[9px] tracking-[0.25em] uppercase text-rose-gold -mt-0.5">
-              Admin Console
-            </span>
-          </div>
-        </div>
-
-        <div className="px-3 pt-3 pb-1">
-          <div className="flex items-center justify-between gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10">
-            <span className="text-[10px] uppercase tracking-[0.2em] text-soft-gray">
-              Quick switch
-            </span>
-            <kbd className="text-[10px] bg-white/10 text-pearl border border-white/15 rounded px-1.5 py-0.5">
-              ⌘K
-            </kbd>
-          </div>
-        </div>
-
-        <nav className="flex-1 px-3 py-3 space-y-1">
-          {NAV.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-colors",
-                pathname === item.href
-                  ? "bg-white/10 text-white"
-                  : "text-soft-gray hover:text-white hover:bg-white/5"
-              )}
-            >
-              <item.icon className="w-4 h-4" />
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-
-        <div className="px-3 pb-4">
-          <Link
-            href="/admin/chat"
-            className="block bg-gold/10 rounded-xl px-4 py-3 border border-gold/20 hover:bg-gold/15 transition-colors"
-          >
-            <div className="flex items-center gap-2 mb-1">
-              <Sparkles className="w-3.5 h-3.5 text-gold" />
-              <span className="text-xs font-medium text-gold">Ask Luz</span>
-            </div>
-            <p className="text-[10px] text-soft-gray">
-              Your AI assistant — ask anything about the store, customers, or write something for you.
-            </p>
-          </Link>
-        </div>
-
-        <Link
-          href="/"
-          className="flex items-center gap-2 px-6 py-4 text-sm text-soft-gray hover:text-white border-t border-white/10 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Store
-        </Link>
-      </aside>
-
-      {/* Main */}
-      <div className="flex-1 flex flex-col min-h-screen">
-        {/* Mobile header */}
-        <div className="lg:hidden bg-charcoal text-white px-4 py-3 flex items-center justify-between">
-          <span className="font-heading text-lg tracking-wide">Admin</span>
-          <Link href="/" className="text-sm text-soft-gray">
-            Back to Store
-          </Link>
-        </div>
-
-        {/* Mobile nav */}
-        <div className="lg:hidden bg-white border-b border-border flex overflow-x-auto">
-          {NAV.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-2 px-4 py-3 text-sm whitespace-nowrap border-b-2 transition-colors",
-                pathname === item.href
-                  ? "border-burgundy text-burgundy"
-                  : "border-transparent text-warm-gray"
-              )}
-            >
-              <item.icon className="w-4 h-4" />
-              {item.label}
-            </Link>
-          ))}
-        </div>
-
-        {/* Pre-launch banner */}
-        <div className="bg-gold/10 border-b border-gold/20 px-4 py-2.5 text-center">
-          <p className="text-xs text-gold-dark">
-            <span className="font-medium">Pre-launch mode</span> — Connect Stripe and Supabase in your Vercel environment to go live.
-          </p>
-        </div>
-
-        <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
-      </div>
-
-      <CommandPalette />
-    </div>
+    <AdminShell initialActor={actor} isPrelaunch={isPrelaunch}>
+      {children}
+    </AdminShell>
   );
 }

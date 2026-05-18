@@ -1,10 +1,27 @@
 import type { Metadata } from "next";
+import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import ShellWrapper from "@/components/layout/ShellWrapper";
 import CursorGlow from "@/components/ui/CursorGlow";
 import { AuthProvider } from "@/lib/auth";
 import { ThemeProvider } from "@/lib/theme";
 import { ToastProvider } from "@/components/ui/Toast";
+import Analytics from "@/components/layout/Analytics";
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  style: ["normal", "italic"],
+  variable: "--font-playfair",
+  display: "swap",
+});
 
 // Runs synchronously in <head> before paint — prevents a flash of the wrong
 // theme. Reads the saved preference from localStorage, falling back to the
@@ -61,20 +78,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      {/* Google Fonts loaded via link tags — works on Vercel, fallback to system fonts locally */}
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${inter.variable} ${playfair.variable}`}
+    >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap"
-          rel="stylesheet"
-        />
       </head>
       <body className="min-h-screen flex flex-col bg-ivory text-charcoal antialiased">
         {/* Skip-to-content link for keyboard / screen-reader users */}
@@ -93,19 +103,9 @@ export default function RootLayout({
           </ToastProvider>
         </ThemeProvider>
 
-        {/* Analytics — replace with your tracking script */}
+        {/* Analytics — skips /admin/* so mom's daily console use stays out. */}
         {process.env.NEXT_PUBLIC_GA_ID && (
-          <>
-            <script
-              async
-              src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
-            />
-            <script
-              dangerouslySetInnerHTML={{
-                __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${process.env.NEXT_PUBLIC_GA_ID}');`,
-              }}
-            />
-          </>
+          <Analytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
         )}
       </body>
     </html>

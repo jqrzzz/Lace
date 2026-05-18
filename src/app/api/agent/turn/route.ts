@@ -31,6 +31,11 @@ import {
   listMessagesStore,
 } from "@/lib/agent/store";
 import {
+  actorLabel as buildActorLabel,
+  getAdminActor,
+} from "@/lib/admin-auth";
+import type { AgentMessage } from "@/lib/lace/types";
+import {
   getOrder,
   getTodayBriefing,
   listCustomers,
@@ -58,16 +63,19 @@ const MAX_TOOL_HOPS = 4;
 
 export async function POST(req: NextRequest) {
   try {
+    const actor = await getAdminActor(req);
+    if (!actor) return fail("Not signed in.", { status: 401 });
     const body = await req.json();
     const sessionId: string = body.sessionId;
     const userText: string = body.userText;
-    const actorLabel: string = body.actor ?? "Luz Maria (owner)";
+    const actorLabel: string = buildActorLabel(actor);
     if (!sessionId || !userText) {
       return fail("sessionId and userText are required.", { status: 400 });
     }
 
-    const turn = (listMessagesStore(sessionId).at(-1)?.turn ?? 0) + 1;
-    appendMessage({
+    const priorMessages = await listMessagesStore(sessionId);
+    const turn = (priorMessages.at(-1)?.turn ?? 0) + 1;
+    await appendMessage({
       session_id: sessionId,
       turn,
       role: "user",
@@ -80,7 +88,7 @@ export async function POST(req: NextRequest) {
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
-      const msg = appendMessage({
+      const msg = await appendMessage({
         session_id: sessionId,
         turn: turn + 1,
         role: "assistant",
@@ -101,10 +109,11 @@ export async function POST(req: NextRequest) {
     });
 
     // Build the Claude message history from our stored turns.
-    const history: Array<{ role: "user" | "assistant"; content: unknown }> =
-      listMessagesStore(sessionId).map(claudeMessageFromTurn);
+    const history: Array<{ role: "user" | "assistant"; content: unknown }> = (
+      await listMessagesStore(sessionId)
+    ).map(claudeMessageFromTurn);
 
-    const newMessages: ReturnType<typeof appendMessage>[] = [];
+    const newMessages: AgentMessage[] = [];
     let nextTurn = turn + 1;
 
     // Tool-use loop. We hop up to MAX_TOOL_HOPS times to let Claude
@@ -130,7 +139,7 @@ export async function POST(req: NextRequest) {
         // Pure text reply — append and exit.
         if (textContent) {
           newMessages.push(
-            appendMessage({
+            await appendMessage({
               session_id: sessionId,
               turn: nextTurn++,
               role: "assistant",
@@ -189,7 +198,7 @@ export async function POST(req: NextRequest) {
             content: JSON.stringify(result).slice(0, 4000),
           });
           newMessages.push(
-            appendMessage({
+            await appendMessage({
               session_id: sessionId,
               turn: nextTurn++,
               role: "tool",
@@ -205,7 +214,7 @@ export async function POST(req: NextRequest) {
 
         // require_approval → write pending row, stop the loop.
         const summary = humanSummary(tool, input);
-        const approval = createApproval({
+        const approval = await createApproval({
           session_id: sessionId,
           action_type: name,
           action_payload: input,
@@ -215,7 +224,7 @@ export async function POST(req: NextRequest) {
         });
 
         newMessages.push(
-          appendMessage({
+          await appendMessage({
             session_id: sessionId,
             turn: nextTurn++,
             role: "assistant",
@@ -278,7 +287,7 @@ async function callClaude(
 }
 
 /** Translate one of our stored AgentMessage rows into a Claude message. */
-function claudeMessageFromTurn(m: ReturnType<typeof listMessagesStore>[number]) {
+function claudeMessageFromTurn(m: AgentMessage) {
   if (m.role === "user") {
     return { role: "user" as const, content: m.content ?? "" };
   }

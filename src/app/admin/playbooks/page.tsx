@@ -1,5 +1,5 @@
 import { Zap, Clock, Radio, Hand } from "lucide-react";
-import { PLAYBOOKS, playbooksByCategory } from "@/lib/agent/playbooks";
+import { playbooksByCategory } from "@/lib/agent/playbooks";
 import PlaybookRunButton from "./PlaybookRunButton";
 
 const CATEGORY_LABELS: Record<string, string> = {

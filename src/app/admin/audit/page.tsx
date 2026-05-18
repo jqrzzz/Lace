@@ -5,7 +5,7 @@ import AuditView from "./AuditView";
 export const dynamic = "force-dynamic";
 
 export default async function AuditPage() {
-  const entries = listAudit(200);
+  const entries = await listAudit(200);
 
   const rows = entries.map((e) => ({
     id: e.id,

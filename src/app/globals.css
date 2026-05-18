@@ -21,8 +21,8 @@
   --color-border-light: #F0EAE5;
   --color-paper: #FFFFFF;
 
-  --font-heading: 'Playfair Display', Georgia, serif;
-  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-heading: var(--font-playfair), 'Playfair Display', Georgia, serif;
+  --font-body: var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif;
 
   --animate-fade-in: fade-in 0.7s ease-out both;
   --animate-fade-up: fade-up 0.7s ease-out both;
@@ -114,6 +114,57 @@
 .dark .bg-blush\/30 { background-color: rgba(74,45,55,0.55); }
 .dark .bg-blush\/20 { background-color: rgba(74,45,55,0.45); }
 .dark .bg-champagne\/40 { background-color: rgba(54,34,44,0.55); }
+
+/* ── Dark-mode overrides for state palette utilities ──
+   Admin chips, toasts, banners use Tailwind's emerald/red/amber/stone
+   palettes directly. Without these overrides they'd render as bright
+   pastel islands on the plum background. Each pair drops the bg to a
+   low-alpha tint and lifts the text to a bright shade so contrast
+   stays AA. Only the shades actually used in src/app/admin are listed
+   so the CSS doesn't grow unbounded. */
+
+/* Emerald — success / delivered / replied */
+.dark .bg-emerald-50  { background-color: rgba(16, 185, 129, 0.10); }
+.dark .bg-emerald-100 { background-color: rgba(16, 185, 129, 0.18); }
+.dark .bg-emerald-600 { background-color: #047857; }
+.dark .bg-emerald-700 { background-color: #065F46; }
+.dark .hover\:bg-emerald-700:hover { background-color: #065F46; }
+.dark .text-emerald-700 { color: #6EE7B7; }
+.dark .text-emerald-800 { color: #34D399; }
+.dark .border-emerald-200 { border-color: rgba(16, 185, 129, 0.30); }
+.dark .border-emerald-300 { border-color: rgba(16, 185, 129, 0.45); }
+
+/* Red — error / refund cautions */
+.dark .bg-red-50  { background-color: rgba(239, 68, 68, 0.10); }
+.dark .bg-red-100 { background-color: rgba(239, 68, 68, 0.18); }
+.dark .bg-red-600 { background-color: #B91C1C; }
+.dark .text-red-600 { color: #FCA5A5; }
+.dark .text-red-700 { color: #F87171; }
+.dark .text-red-800 { color: #FCA5A5; }
+.dark .border-red-200 { border-color: rgba(239, 68, 68, 0.30); }
+
+/* Amber — warning / refund button / refunded chip */
+.dark .bg-amber-50  { background-color: rgba(245, 158, 11, 0.10); }
+.dark .bg-amber-100 { background-color: rgba(245, 158, 11, 0.18); }
+.dark .bg-amber-600 { background-color: #B45309; }
+.dark .hover\:bg-amber-700:hover { background-color: #92400E; }
+.dark .text-amber-700 { color: #FCD34D; }
+.dark .text-amber-800 { color: #FBBF24; }
+.dark .text-amber-900 { color: #FBBF24; }
+.dark .border-amber-200 { border-color: rgba(245, 158, 11, 0.30); }
+.dark .border-amber-300 { border-color: rgba(245, 158, 11, 0.45); }
+
+/* Stone — neutral muted (cancelled chip, toggle inactive) */
+.dark .bg-stone-100 { background-color: rgba(168, 162, 158, 0.10); }
+.dark .bg-stone-300 { background-color: rgba(168, 162, 158, 0.30); }
+.dark .text-stone-700 { color: #D6D3D1; }
+.dark .border-stone-300 { border-color: rgba(168, 162, 158, 0.40); }
+
+/* Green — small accents not under emerald */
+.dark .bg-green-50  { background-color: rgba(22, 163, 74, 0.10); }
+.dark .bg-green-100 { background-color: rgba(22, 163, 74, 0.18); }
+.dark .text-green-600 { color: #86EFAC; }
+.dark .text-green-700 { color: #4ADE80; }
 
 /* Luxury card in dark mode: soft plum card with rose hover halo. */
 
@@ -401,15 +452,92 @@ h1, h2, h3, h4, h5, h6 {
   background-clip: text;
 }
 
-/* ── Product Lace Texture ── */
+/* ── Veil drape texture for placeholder cards ──
+   Used on product photo / founder photo cards before real
+   photography lands. Three layered ideas:
+     1. A single warm radial pooling at the upper-third — light
+        catching the high point of hanging fabric.
+     2. Vertical low-alpha stripes — long folds in the drape.
+     3. (Optional, via .product-lace-trim) scalloped lace borders
+        anchored to the top + bottom edges of the card.
+   No tiled dots. Spans the full card so scaling never reveals a
+   repeating grid. */
 .product-lace {
   background-image:
-    radial-gradient(circle at 25% 25%, rgba(255,255,255,0.6) 0%, transparent 30%),
-    radial-gradient(circle at 75% 75%, rgba(255,255,255,0.4) 0%, transparent 30%),
-    radial-gradient(circle at 50% 50%, rgba(255,255,255,0.5) 0%, transparent 25%),
-    radial-gradient(circle at 25% 75%, rgba(255,255,255,0.3) 0%, transparent 20%),
-    radial-gradient(circle at 75% 25%, rgba(255,255,255,0.3) 0%, transparent 20%);
-  background-size: 50px 50px;
+    radial-gradient(
+      ellipse 70% 90% at 50% 30%,
+      rgba(255, 250, 240, 0.32) 0%,
+      transparent 70%
+    ),
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.05) 14%,
+      transparent 28%,
+      rgba(255, 255, 255, 0.035) 42%,
+      transparent 54%,
+      rgba(255, 255, 255, 0.06) 66%,
+      transparent 78%,
+      rgba(255, 255, 255, 0.03) 90%,
+      transparent 100%
+    );
+  background-size: 100% 100%, 100% 100%;
+  background-position: center, center;
+  background-repeat: no-repeat;
+}
+
+.dark .product-lace {
+  background-image:
+    radial-gradient(
+      ellipse 70% 90% at 50% 30%,
+      rgba(245, 176, 185, 0.10) 0%,
+      transparent 70%
+    ),
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(245, 176, 185, 0.05) 14%,
+      transparent 28%,
+      rgba(231, 179, 187, 0.04) 42%,
+      transparent 54%,
+      rgba(245, 176, 185, 0.06) 66%,
+      transparent 78%,
+      rgba(208, 162, 94, 0.04) 90%,
+      transparent 100%
+    );
+}
+
+/* Scalloped lace trim — paired pseudo-elements at the top + bottom
+   edges of the card. Add to large placeholders only; the SVG is
+   16px tall so it'd dominate a 72px thumbnail. Mirrors the existing
+   .lace-border-top / .lace-border-bottom motifs so trim is visually
+   continuous across sections. */
+.product-lace-trim::before,
+.product-lace-trim::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 16px;
+  background-repeat: repeat-x;
+  background-size: 120px 16px;
+  pointer-events: none;
+  opacity: 0.55;
+}
+.product-lace-trim::before {
+  top: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='120' height='16' viewBox='0 0 120 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 16 Q15 0 30 16 Q45 0 60 16 Q75 0 90 16 Q105 0 120 16' fill='none' stroke='%23E8C4CE' stroke-width='1' opacity='0.85'/%3E%3C/svg%3E");
+}
+.product-lace-trim::after {
+  bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='120' height='16' viewBox='0 0 120 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0 Q15 16 30 0 Q45 16 60 0 Q75 16 90 0 Q105 16 120 0' fill='none' stroke='%23E8C4CE' stroke-width='1' opacity='0.85'/%3E%3C/svg%3E");
+}
+
+.dark .product-lace-trim::before {
+  background-image: url("data:image/svg+xml,%3Csvg width='120' height='16' viewBox='0 0 120 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 16 Q15 0 30 16 Q45 0 60 16 Q75 0 90 16 Q105 0 120 16' fill='none' stroke='%23E7B3BB' stroke-width='1' opacity='0.7'/%3E%3C/svg%3E");
+}
+.dark .product-lace-trim::after {
+  background-image: url("data:image/svg+xml,%3Csvg width='120' height='16' viewBox='0 0 120 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0 Q15 16 30 0 Q45 16 60 0 Q75 16 90 0 Q105 16 120 0' fill='none' stroke='%23E7B3BB' stroke-width='1' opacity='0.7'/%3E%3C/svg%3E");
 }
 
 /* ── Staggered Animations ── */
