@@ -72,6 +72,23 @@ export async function POST(req: NextRequest) {
       if (error) {
         console.error("[contact] insert failed:", error);
       }
+
+      // Drop a lightweight customer row so the inbox detail page can
+      // link to a profile. ignoreDuplicates → existing customer
+      // records (with tags, lifetime spend, etc) are left untouched.
+      const [firstName, ...rest] = name.split(/\s+/);
+      const lastName = rest.join(" ") || null;
+      const { error: customerErr } = await db.from("customers").upsert(
+        {
+          email: email.toLowerCase(),
+          first_name: firstName || null,
+          last_name: lastName,
+        },
+        { onConflict: "email", ignoreDuplicates: true },
+      );
+      if (customerErr) {
+        console.error("[contact] customer upsert failed:", customerErr);
+      }
     }
 
     // Forward to the support inbox if email is configured. All user

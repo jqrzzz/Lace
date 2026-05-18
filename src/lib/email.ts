@@ -101,6 +101,67 @@ export async function sendEmail(
   }
 }
 
+/**
+ * Customer-facing refund confirmation. Sent after a successful
+ * Stripe refund so the buyer hears it from us before they spot the
+ * charge reversal on their statement. Honors simulated mode — when
+ * RESEND_API_KEY is missing we still return a result so the caller
+ * can audit the intent.
+ */
+export async function sendRefundEmail(opts: {
+  to: string;
+  firstName: string | null;
+  orderNumber: string;
+  amountCents: number;
+  isFull: boolean;
+}): Promise<SendEmailResult> {
+  const amount = `$${(opts.amountCents / 100).toFixed(2)}`;
+  const greeting = opts.firstName ? `Hi ${opts.firstName},` : "Hi,";
+  const text = [
+    greeting,
+    "",
+    `We've issued a refund of ${amount} on order ${opts.orderNumber}.`,
+    "",
+    "It will appear in your account in 5–10 business days, depending on your bank.",
+    "",
+    opts.isFull
+      ? "If this was a mistake or you'd like to talk through what happened, just reply to this email — we read every one."
+      : "If you have any questions about the partial refund, just reply to this email.",
+    "",
+    "Thank you for being part of our story,",
+    "Lace by La Luz",
+  ].join("\n");
+  const html = `
+    <div style="font-family: Georgia, serif; max-width: 560px; margin: 0 auto; padding: 32px 20px; color: #2C2527;">
+      <p style="font-size: 15px; line-height: 1.8;">${escapeHtml(greeting)}</p>
+      <p style="font-size: 15px; line-height: 1.8;">
+        We&rsquo;ve issued a refund of <strong>${escapeHtml(amount)}</strong> on order
+        <strong>${escapeHtml(opts.orderNumber)}</strong>.
+      </p>
+      <p style="font-size: 15px; line-height: 1.8;">
+        It will appear in your account in 5&ndash;10 business days, depending on your bank.
+      </p>
+      <p style="font-size: 14px; line-height: 1.8; color: #8B7A7E;">
+        ${
+          opts.isFull
+            ? "If this was a mistake or you&rsquo;d like to talk through what happened, just reply to this email &mdash; we read every one."
+            : "If you have any questions about the partial refund, just reply to this email."
+        }
+      </p>
+      <p style="font-size: 13px; color: #8B7A7E; margin-top: 28px;">
+        Thank you for being part of our story,<br/>
+        <span style="color: #C9A96E;">Lace by La Luz</span>
+      </p>
+    </div>
+  `;
+  return sendEmail({
+    to: opts.to,
+    subject: `Refund processed for order ${opts.orderNumber}`,
+    text,
+    html,
+  });
+}
+
 /** Wrap a plain-text reply in our standard email styling. */
 export function wrapReplyHtml(body: string, signedBy: string | null): string {
   return `

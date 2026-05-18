@@ -18,6 +18,7 @@
 
 import Stripe from "stripe";
 import type { LaceServiceClient } from "@/lib/db";
+import { sendRefundEmail } from "@/lib/email";
 import { writeAudit } from "./store";
 
 export interface ActionResult {
@@ -166,7 +167,7 @@ export async function refundOrder(
   const { data: order, error: readErr } = await db
     .from("orders")
     .select(
-      "id, order_number, total_cents, stripe_payment_intent, status",
+      "id, order_number, total_cents, stripe_payment_intent, status, customer_email, customer_name",
     )
     .eq("order_number", payload.order_number)
     .maybeSingle();
@@ -231,6 +232,23 @@ export async function refundOrder(
     }
   }
 
+  // Customer notice — only when the refund actually happened (skip
+  // in the simulated/no-Stripe-key path so we don't email people
+  // about money that didn't move).
+  let emailNoticed: { id: string | null; simulated: boolean } | null = null;
+  if (!simulated && order.customer_email) {
+    emailNoticed = await sendRefundEmail({
+      to: order.customer_email,
+      firstName:
+        (typeof order.customer_name === "string"
+          ? order.customer_name.split(" ")[0]
+          : null) ?? null,
+      orderNumber: order.order_number ?? "",
+      amountCents: amount,
+      isFull,
+    });
+  }
+
   const human = simulated
     ? `Refund recorded: $${(amount / 100).toFixed(2)} on ${order.order_number} (no Stripe key set — audit only).`
     : `Refunded $${(amount / 100).toFixed(2)} on ${order.order_number} via Stripe.`;
@@ -248,6 +266,9 @@ export async function refundOrder(
       reason: payload.reason,
       stripe_refund_id: stripeRefundId,
       simulated,
+      customer_email_sent: emailNoticed
+        ? { resend_id: emailNoticed.id, simulated: emailNoticed.simulated }
+        : null,
       approval_id: ctx.approvalId ?? null,
     },
   });
