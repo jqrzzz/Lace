@@ -1,29 +1,32 @@
-"use client";
-
-import { PRODUCTS } from "@/lib/products";
-import { formatPrice } from "@/lib/utils";
-import { Plus, Edit, Eye } from "lucide-react";
 import Link from "next/link";
+import { Eye } from "lucide-react";
+import { listProducts } from "@/lib/lace/queries";
+import { isLaceDbConfigured } from "@/lib/db";
+import { formatPrice } from "@/lib/utils";
 
-export default function AdminProductsPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AdminProductsPage() {
+  const products = await listProducts({ activeOnly: false });
+  const live = isLaceDbConfigured();
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-8 flex-wrap gap-3">
         <div>
           <h1 className="font-heading text-3xl text-charcoal mb-1">
             Products
           </h1>
           <p className="text-sm text-warm-gray">
-            {PRODUCTS.length} veils in catalog
+            {products.length} veil{products.length === 1 ? "" : "s"} in your
+            catalog.
           </p>
         </div>
-        <button
-          onClick={() => alert("Product management will be available once Supabase is connected.")}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-burgundy text-white text-sm rounded-full hover:bg-burgundy/90 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Add Product
-        </button>
+        {!live && (
+          <span className="text-[10px] uppercase tracking-[0.18em] text-warm-gray bg-cream border border-border rounded-full px-3 py-1.5">
+            Demo mode · no DB connected
+          </span>
+        )}
       </div>
 
       <div className="bg-white rounded-2xl border border-border-light overflow-hidden">
@@ -52,7 +55,7 @@ export default function AdminProductsPage() {
               </tr>
             </thead>
             <tbody>
-              {PRODUCTS.map((product) => (
+              {products.map((product) => (
                 <tr
                   key={product.id}
                   className="border-b border-border-light last:border-0 hover:bg-cream/30 transition-colors"
@@ -100,17 +103,10 @@ export default function AdminProductsPage() {
                       <Link
                         href={`/product/${product.slug}`}
                         className="p-2 text-warm-gray hover:text-charcoal transition-colors"
-                        title="View"
+                        title="View on storefront"
                       >
                         <Eye className="w-4 h-4" />
                       </Link>
-                      <button
-                        onClick={() => alert("Product editing will be available once Supabase is connected.")}
-                        className="p-2 text-warm-gray hover:text-charcoal transition-colors"
-                        title="Edit"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
                     </div>
                   </td>
                 </tr>
@@ -119,6 +115,11 @@ export default function AdminProductsPage() {
           </table>
         </div>
       </div>
+
+      <p className="text-xs text-warm-gray mt-4 text-center">
+        Catalog edits land via Supabase Studio for now — admin add/edit/archive
+        UI is on the roadmap.
+      </p>
     </div>
   );
 }

@@ -44,7 +44,8 @@ import type {
   OrderSummary,
 } from "./types";
 import { GIFTED_COMMUNITIES } from "@/lib/gifted";
-import { PRODUCTS, type Product } from "@/lib/products";
+import { PRODUCTS, type Product, type ProductVariant } from "@/lib/products";
+import { colorHexFor } from "@/lib/product-colors";
 
 /** Is the live DB backing the queries? Useful for UI hints ("demo mode"). */
 export function isLiveData(): boolean {
@@ -53,10 +54,132 @@ export function isLiveData(): boolean {
 
 // ── Catalog ────────────────────────────────────────────────────
 
-// Catalog migration (lace.products as source of truth) is Phase 1.B.
-// For now we keep the hardcoded PRODUCTS so storefront SSG keeps working.
-export async function listProducts(): Promise<Product[]> {
-  return PRODUCTS;
+interface ProductDbRow {
+  id: string;
+  slug: string;
+  name: string;
+  subtitle: string | null;
+  description: string | null;
+  category: string;
+  price_cents: number;
+  active: boolean;
+  featured: boolean;
+  sort: number;
+  accent_gradient: string | null;
+  hero_copy: string | null;
+  metadata: Record<string, unknown> | null;
+  product_variants:
+    | Array<{
+        id: string;
+        sku: string;
+        variant_name: string;
+        stock: number;
+        is_default: boolean;
+        sort: number;
+      }>
+    | null;
+}
+
+const PRODUCT_COLS = `
+  id, slug, name, subtitle, description, category, price_cents,
+  active, featured, sort, accent_gradient, hero_copy, metadata,
+  product_variants ( id, sku, variant_name, stock, is_default, sort )
+`;
+
+const CATEGORY_LABEL: Record<string, string> = {
+  signature: "Signature",
+  essentials: "Essentials",
+  limited: "Limited",
+  centennial: "Centennial",
+  accessories: "Accessories",
+};
+
+const GRADIENT_TO_ACCENT: Record<string, string> = {
+  "from-amber-50 via-orange-50 to-yellow-50": "bg-amber-100",
+  "from-pink-50 via-rose-50 to-pink-100": "bg-pink-100",
+  "from-stone-50 via-amber-50 to-stone-100": "bg-stone-100",
+  "from-gray-50 via-white to-gray-50": "bg-gray-100",
+  "from-yellow-50 via-amber-50 to-orange-50": "bg-yellow-100",
+  "from-rose-50 via-pink-50 to-amber-50": "bg-rose-100",
+};
+
+function toProduct(row: ProductDbRow): Product {
+  const meta = (row.metadata ?? {}) as {
+    style?: string;
+    preOrder?: boolean;
+    features?: string[];
+    care?: string[];
+  };
+  const variants: ProductVariant[] = (row.product_variants ?? [])
+    .slice()
+    .sort((a, b) => a.sort - b.sort)
+    .map((v) => ({
+      color: v.variant_name,
+      colorHex: colorHexFor(v.variant_name),
+      inStock: v.stock > 0,
+    }));
+  return {
+    // Storefront treats slug as the public identifier (cart items
+    // reference it, the URL uses it). Keep id===slug for compat with
+    // the existing checkout / cart flow.
+    id: row.slug,
+    slug: row.slug,
+    name: row.name,
+    tagline: row.subtitle ?? row.hero_copy ?? "",
+    description: row.description ?? "",
+    price: row.price_cents / 100,
+    collection: CATEGORY_LABEL[row.category] ?? row.category,
+    style: meta.style ?? "",
+    preOrder: meta.preOrder ?? true,
+    variants,
+    features: Array.isArray(meta.features) ? meta.features : [],
+    care: Array.isArray(meta.care) ? meta.care : [],
+    placeholder: {
+      gradient:
+        row.accent_gradient ??
+        "from-stone-50 via-amber-50 to-stone-100",
+      accent: row.accent_gradient
+        ? (GRADIENT_TO_ACCENT[row.accent_gradient] ?? "bg-stone-100")
+        : "bg-stone-100",
+    },
+  };
+}
+
+export async function listProducts(opts?: {
+  activeOnly?: boolean;
+}): Promise<Product[]> {
+  const db = getLaceDb();
+  if (!db) return PRODUCTS;
+  const activeOnly = opts?.activeOnly ?? true;
+  let q = db
+    .from("products")
+    .select(PRODUCT_COLS)
+    .order("sort", { ascending: true });
+  if (activeOnly) q = q.eq("active", true);
+  const { data, error } = await q;
+  if (error) {
+    console.error("[queries] listProducts failed:", error);
+    return PRODUCTS;
+  }
+  return ((data ?? []) as unknown as ProductDbRow[]).map(toProduct);
+}
+
+export async function getProductBySlug(
+  slug: string,
+): Promise<Product | null> {
+  const db = getLaceDb();
+  if (!db) return PRODUCTS.find((p) => p.slug === slug) ?? null;
+  const { data, error } = await db
+    .from("products")
+    .select(PRODUCT_COLS)
+    .eq("slug", slug)
+    .eq("active", true)
+    .maybeSingle();
+  if (error) {
+    console.error("[queries] getProductBySlug failed:", error);
+    return null;
+  }
+  return data ? toProduct(data as unknown as ProductDbRow) : null;
 }
 
 // ── Orders ─────────────────────────────────────────────────────

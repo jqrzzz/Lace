@@ -1,15 +1,14 @@
-"use client";
-
 import Link from "next/link";
 import { ArrowRight, Heart, Gift, Package, Sparkles } from "lucide-react";
 import ProductCard from "@/components/shop/ProductCard";
-import { PRODUCTS } from "@/lib/products";
+import { listProducts } from "@/lib/lace/queries";
 import Reveal from "@/components/ui/Reveal";
 import GoldShimmer from "@/components/ui/GoldShimmer";
 
-const FEATURED = PRODUCTS.slice(0, 3);
+export const revalidate = 300;
 
-export default function HomePage() {
+export default async function HomePage() {
+  const FEATURED = (await listProducts()).slice(0, 3);
   return (
     <>
       {/* ── Hero ── */}

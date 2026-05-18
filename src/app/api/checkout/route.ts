@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { PRODUCTS } from "@/lib/products";
+import { listProducts } from "@/lib/lace/queries";
 
 function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -59,6 +59,10 @@ export async function POST(req: NextRequest) {
       quantity: number;
       unit_amount_cents: number;
     }
+    // Resolve once — checkout typically has 1-3 lines so the in-memory
+    // filter is fine. listProducts() returns from lace.products when
+    // configured, mock catalog otherwise.
+    const catalog = await listProducts();
     const resolved: ResolvedLine[] = [];
     for (const item of items) {
       if (!item || typeof item.productId !== "string") {
@@ -67,7 +71,7 @@ export async function POST(req: NextRequest) {
           { status: 400 },
         );
       }
-      const product = PRODUCTS.find(
+      const product = catalog.find(
         (p) => p.id === item.productId || p.slug === item.productId,
       );
       if (!product) {

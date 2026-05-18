@@ -40,47 +40,29 @@ launch-blocker.
 
 ## P0 — Critical
 
-### 1. Server-side admin pages leak data to anonymous visitors
+### 1. Server-side admin pages leak data to anonymous visitors — **CLOSED (commit `174fbc8`, Phase 2.K.2)**
 
-Every `/admin/*` page is a server component with `export const dynamic =
-"force-dynamic"` that fetches data via the service-role client (which bypasses
-RLS). The data is rendered into the HTML response **before** the client-side
-`AdminProvider` runs its `/api/admin/me` check and decides to redirect to
-`/login`.
+Was: every `/admin/*` page rendered data into HTML before the client-side
+auth check ran, so anonymous `curl` returned customer emails and order
+totals.
 
-Result: an unauthenticated `curl https://yoursite/admin/orders` returns a
-fully-rendered HTML page containing order numbers, customer emails, totals,
-addresses, etc.
+Closed by:
 
-**Affected pages** (11):
+1. Installed `@supabase/ssr`.
+2. `src/lib/db.ts:getAuthClient()` switched to `createBrowserClient` — the
+   Supabase session is now persisted to cookies the server can read.
+3. `src/lib/admin-auth.ts` grew `getAdminActorFromCookies()` and a shared
+   `provisionOrFetchAppUser()` helper used by both JWT and cookie flows.
+4. `src/app/admin/layout.tsx` is now a server component that validates the
+   actor up front and `redirect("/login?next=...")` when missing or
+   `redirect("/?notice=admin-access-needed")` for viewers. The client
+   chrome moved into `src/app/admin/AdminShell.tsx` and receives the
+   validated actor as `initialActor` — no first-load round-trip, no
+   client-side loading flash.
+5. `src/middleware.ts` adds an edge-level second gate on `/admin/:path*`.
 
-- `/admin` (briefing aggregates)
-- `/admin/orders` and `/admin/orders/[orderNumber]`
-- `/admin/customers` and `/admin/customers/[id]`
-- `/admin/inbox` and `/admin/inbox/[id]`
-- `/admin/audit`
-- `/admin/mission`
-- `/admin/approvals`
-- `/admin/chat`
-
-**Root cause**: client-side `AdminProvider` checks auth, but server-side
-rendering happens first and has no auth context. The Supabase auth session
-lives in browser localStorage (default) so the server has nothing to read.
-
-**Remediation (Phase 2.K.2)**:
-
-1. Install `@supabase/ssr` (official Supabase Next.js helper).
-2. Switch `src/lib/auth.tsx` to `createBrowserClient` (writes the session to
-   cookies the server can read).
-3. Convert `src/app/admin/layout.tsx` into a server component that calls
-   `createServerClient`, validates the session against `lace.app_users`, and
-   `redirect("/login?next=...")` when there's no actor or the role is
-   `viewer`. The existing client `AdminShell` can receive the actor as a prop
-   so `AdminProvider` no longer needs the `/api/admin/me` round-trip on first
-   load.
-4. Optional: Next.js middleware on `/admin/*` for a defensive second layer.
-
-Estimated effort: half a day. This is the single highest-priority follow-up.
+Net: `curl -i https://yoursite/admin/orders` without a session gets a 307
+to `/login`. No HTML, no data, no exposure.
 
 ---
 
@@ -108,27 +90,28 @@ helpers. Nothing covers:
 the same mock-Supabase pattern from `webhook/route.test.ts`. Target ~30
 additional tests covering the happy path + the 401 / 403 / 400 branches.
 
-### 3. Hardcoded `PRODUCTS` catalog (Phase 1.B)
+### 3. Hardcoded `PRODUCTS` catalog (Phase 1.B) — **CLOSED (commit pending, Phase 1.B)**
 
-`src/lib/products.ts` still owns prices, variants, and copy. `/api/checkout`
-now resolves products from this list server-side (price tampering fixed), but
-admin product editing is a placeholder and the storefront/shop/product/sitemap
-read the constant directly. Until 1.B lands, every catalog change is a code
-deploy.
+Was: `src/lib/products.ts` owned prices and variants; the storefront and
+sitemap read the constant directly.
 
-**Remediation**: ship Phase 1.B — `lace.products` reads in `/shop`,
-`/product/[slug]`, home featured row, `/admin/products`, sitemap, checkout
-resolver, plus admin add/edit/archive UI.
+Closed by:
 
-### 4. No global error / not-found boundaries
+- `src/lib/lace/queries.ts` grew `listProducts()` and `getProductBySlug()`
+  that read from `lace.products` (with embedded `product_variants`) when
+  configured, fall back to the in-code MOCK fallback otherwise. A small
+  `src/lib/product-colors.ts` keeps the color-name → hex lookup.
+- `/shop`, `/`, `/product/[slug]`, `/admin/products`, `/sitemap.xml`, and
+  `/api/checkout` all read through the new query. Shop and product detail
+  pages now follow a server-page + client-view split so the data fetch
+  happens server-side and the interactive bits stay client.
+- Admin add/edit/archive UI for products is still outstanding — separate
+  follow-up.
 
-`src/app/` has no `error.tsx` or `not-found.tsx`. Uncaught server-component
-errors fall back to Next's default error page; `notFound()` calls from order
-and customer detail pages render Next's default 404. Both look out-of-brand.
+### 4. No global error / not-found boundaries — **CLOSED (commit `b7858b8`, Phase 2.L)**
 
-**Remediation**: add `src/app/error.tsx` (calm "something went wrong" with a
-"go home" link) and `src/app/not-found.tsx` (similarly warm). Optional:
-`src/app/admin/error.tsx` for admin-scoped errors.
+`src/app/error.tsx` and `src/app/not-found.tsx` ship with on-brand copy and
+recovery CTAs. `src/app/admin/error.tsx` scoped to the console.
 
 ### 5. `/api/concierge/turn` is unauthenticated and unbounded per-session
 
@@ -142,39 +125,27 @@ costs.
 sliding window on a single-instance deploy). Bound: 20 concierge turns per
 visitor per hour.
 
-### 6. Sign-in flow doesn't auto-redirect after magic link
+### 6. Sign-in flow doesn't auto-redirect after magic link — **CLOSED (commit `b7858b8`, Phase 2.L)**
 
-When mom clicks the magic link, Supabase redirects to `?next` or `/account`.
-But the `LoginPage`'s "already signed in" branch shows a button rather than
-automatically navigating. For someone re-clicking an old magic link or already
-having a session, this is one extra tap.
-
-**Remediation**: in `LoginPage`'s `user` branch, `router.replace(destination)`
-in a `useEffect` so the redirect is automatic.
+`LoginPage`'s `user` branch now `router.replace(safeNext ?? "/account")` in
+a `useEffect` and shows a "Welcoming you in…" line while routing.
 
 ---
 
 ## P2 — Polish that affects daily use
 
-### 7. Mobile admin lacks a real navigation drawer
+### 7. Mobile admin lacks a real navigation drawer — **CLOSED (commit `b7858b8`, Phase 2.L)**
 
-The mobile header is a strip with horizontal-scrolling tabs and a sign-out
-button. The desktop sidebar (with avatar, "Ask Luz" card, quick switch hint)
-isn't reachable on phone. Mom likely uses an iPad sometimes.
+Mobile header now has a hamburger button that opens a 72-wide slide-in
+drawer with the same nav, avatar, and footer actions as the desktop
+sidebar. Backdrop closes it; pathname change auto-closes it.
 
-**Remediation**: a `lg:hidden` slide-in drawer that mirrors the desktop
-sidebar contents, opened by a hamburger button. Existing `lg:flex` sidebar
-stays as-is.
+### 8. Audit page renders raw action strings — **CLOSED (commit `b7858b8`, Phase 2.L)**
 
-### 8. Audit page renders raw action strings
-
-`/admin/audit` shows entries like `order.mark_shipped` and
-`approval.executed`. The metadata is available but unused for readability.
-
-**Remediation**: a small mapper in `src/lib/audit-format.ts` that turns
-`{action: "order.mark_shipped", entity_id: "...", metadata: { order_number,
-tracking_number }}` into "You marked LL-2026-1042 shipped with tracking
-9405511899223456789001". Same surface, far more glanceable.
+`AuditView`'s row now renders a humanized sentence per row ("Marked
+LL-2026-1042 shipped with USPS tracking 9405511…") with a short action
+chip ("Shipped") and a clear actor line. Every action type the audit_log
+currently emits has a template; new ones fall through to a kv summary.
 
 ### 9. Dashboard sparkline proxies
 
@@ -313,29 +284,33 @@ These came up in the audit and held up.
 
 ## Recommended next phases (in order)
 
-1. **Phase 2.K.2 — Server-side admin auth.** Close finding #1. Half a day.
-2. **Phase 2.L — Admin polish.** Findings #4, #6, #7, #8 (#6 quick win,
-   others a couple hours each).
-3. **Phase 1.B — Catalog migration.** Closes the storefront read loop and
-   unblocks the admin products page. Mechanical, ~7 files.
-4. **Phase 2.M — Test backfill.** Adds tests for actions, admin-auth, email,
-   and one happy-path test per admin write route. Half a day.
-5. **Phase 2.N — Concierge rate limit + audit log readability.** Findings
-   #5 and #8. Couple hours.
+Phases 2.K.2, 2.L, and 1.B from the original audit list have shipped. What
+remains:
 
-After (2.K.2 + 2.L + 1.B), the store is launch-ready for real customers and
-mom can run it on her own.
+1. **Phase 2.M — Test backfill.** Adds tests for `actions.ts`, `admin-auth.ts`,
+   `email.ts`, and one happy-path test per admin write route. Half a day.
+2. **Phase 2.N — Concierge rate limit.** Finding #5. Couple hours
+   (Upstash Redis sliding window per IP).
+3. **Phase 2.O — Admin product CRUD.** Add/edit/archive UI on
+   `/admin/products` now that catalog reads from `lace.products`. Half to
+   a full day depending on image upload scope.
+4. **Phase 3 — End-to-end against a real Supabase test branch.** Stripe
+   test event → row → admin sees it.
+
+Beyond that, the structural roadmap stays: WhatsApp inbound (#6 of original
+P3), Resend drip worker, real product photography (Supabase Storage).
 
 ---
 
-## Audit-driven fixes already in this branch
-
-Commits since the audit started:
+## Audit-driven fixes shipped on this branch
 
 | Commit | What |
 |---|---|
 | `b2bc4c6` | Gate every `/api/agent/*` + `/api/ai` route behind admin auth |
 | `4246f07` | Checkout price tampering, login open-redirect, `/api/contact` HTML escaping, newsletter validation, env example refresh |
+| `174fbc8` | Phase 2.K.2: server-side admin auth — closes the P0 SSR data leak (#1) |
+| `b7858b8` | Phase 2.L: error pages, auto-redirect after sign-in, mobile drawer, readable audit (#4, #6, #7, #8) |
+| (pending) | Phase 1.B: catalog migration — `lace.products` reads across storefront + admin (#3) |
 
-These are listed against P0 / P1 in the relevant sections above so the audit
-reflects the true *current* state, not the pre-audit state.
+These are reflected in the per-finding entries above so the audit shows the
+true *current* state, not the pre-audit state.
