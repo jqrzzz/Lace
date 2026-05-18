@@ -6,6 +6,7 @@ import CursorGlow from "@/components/ui/CursorGlow";
 import { AuthProvider } from "@/lib/auth";
 import { ThemeProvider } from "@/lib/theme";
 import { ToastProvider } from "@/components/ui/Toast";
+import Analytics from "@/components/layout/Analytics";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -102,19 +103,9 @@ export default function RootLayout({
           </ToastProvider>
         </ThemeProvider>
 
-        {/* Analytics — replace with your tracking script */}
+        {/* Analytics — skips /admin/* so mom's daily console use stays out. */}
         {process.env.NEXT_PUBLIC_GA_ID && (
-          <>
-            <script
-              async
-              src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
-            />
-            <script
-              dangerouslySetInnerHTML={{
-                __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${process.env.NEXT_PUBLIC_GA_ID}');`,
-              }}
-            />
-          </>
+          <Analytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
         )}
       </body>
     </html>

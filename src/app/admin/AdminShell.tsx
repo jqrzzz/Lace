@@ -75,31 +75,59 @@ const NAV: NavItem[] = [
 
 export default function AdminShell({
   initialActor,
+  isPrelaunch,
   children,
 }: {
   initialActor: AdminActor;
+  isPrelaunch: boolean;
   children: React.ReactNode;
 }) {
   return (
     <AdminProvider initialActor={initialActor}>
-      <Chrome>{children}</Chrome>
+      <Chrome isPrelaunch={isPrelaunch}>{children}</Chrome>
     </AdminProvider>
   );
 }
 
-function Chrome({ children }: { children: React.ReactNode }) {
+const PRELAUNCH_DISMISS_KEY = "lace.prelaunch_banner_dismissed.v1";
+
+function Chrome({
+  isPrelaunch,
+  children,
+}: {
+  isPrelaunch: boolean;
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const { actor, counts } = useAdminActor();
   const { signOut } = useAuth();
   const [signingOut, setSigningOut] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(true);
+
+  // Read the dismissal preference after mount so SSR markup matches.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setBannerDismissed(
+      window.localStorage.getItem(PRELAUNCH_DISMISS_KEY) === "1",
+    );
+  }, []);
 
   // Close the mobile drawer whenever the route changes so navigation
   // feels natural.
   useEffect(() => {
     setDrawerOpen(false);
   }, [pathname]);
+
+  function dismissBanner() {
+    setBannerDismissed(true);
+    try {
+      window.localStorage.setItem(PRELAUNCH_DISMISS_KEY, "1");
+    } catch {
+      /* ignore — banner will show again next session, no harm */
+    }
+  }
 
   // The server layout guarantees actor is present by the time this
   // mounts. If it ever isn't (e.g. an in-flight sign-out), keep the
@@ -371,13 +399,24 @@ function Chrome({ children }: { children: React.ReactNode }) {
           </button>
         </div>
 
-        {/* Pre-launch banner */}
-        <div className="bg-gold/10 border-b border-gold/20 px-4 py-2.5 text-center">
-          <p className="text-xs text-gold-dark">
-            <span className="font-medium">Pre-launch mode</span> — Connect
-            Stripe and Supabase in your Vercel environment to go live.
-          </p>
-        </div>
+        {/* Pre-launch banner — only when env is missing AND not yet
+            dismissed this browser. Auto-hides as soon as Stripe +
+            Supabase are wired in production. */}
+        {isPrelaunch && !bannerDismissed && (
+          <div className="bg-gold/10 border-b border-gold/20 px-4 py-2.5 flex items-center justify-center gap-4">
+            <p className="text-xs text-gold-dark text-center">
+              <span className="font-medium">Pre-launch mode</span> — Connect
+              Stripe and Supabase in your Vercel environment to go live.
+            </p>
+            <button
+              onClick={dismissBanner}
+              aria-label="Dismiss banner"
+              className="text-gold-dark/70 hover:text-gold-dark"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
       </div>

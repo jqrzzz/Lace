@@ -30,6 +30,7 @@ export default async function AdminLayout({
           confirm_destructive: true,
           daily_briefing_enabled: false,
         }}
+        isPrelaunch={true}
       >
         {children}
       </AdminShell>
@@ -44,5 +45,15 @@ export default async function AdminLayout({
     redirect("/?notice=admin-access-needed");
   }
 
-  return <AdminShell initialActor={actor}>{children}</AdminShell>;
+  // Banner shows in zero-config + when payment is unwired. Once both
+  // Stripe and Supabase env are present, the loop is closed → banner
+  // hides automatically. Client can also dismiss it.
+  const isPrelaunch =
+    !isLaceDbConfigured() || !process.env.STRIPE_SECRET_KEY;
+
+  return (
+    <AdminShell initialActor={actor} isPrelaunch={isPrelaunch}>
+      {children}
+    </AdminShell>
+  );
 }
