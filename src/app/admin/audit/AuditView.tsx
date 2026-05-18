@@ -121,30 +121,19 @@ export default function AuditView({ rows }: { rows: AuditRow[] }) {
                   <span
                     className={cn(
                       "inline-flex items-center text-[10px] uppercase tracking-[0.16em] px-2 py-1 rounded-full font-medium whitespace-nowrap mt-0.5",
-                      tone
+                      tone,
                     )}
                   >
-                    {row.action}
+                    {actionLabel(row.action)}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 text-sm text-charcoal">
-                      <User className="w-3.5 h-3.5 text-warm-gray flex-shrink-0" />
+                    <p className="text-sm text-charcoal break-words">
+                      {humanizeRow(row)}
+                    </p>
+                    <div className="flex items-center gap-2 mt-1 text-xs text-warm-gray">
+                      <User className="w-3 h-3 flex-shrink-0" />
                       <span>{row.actor_label}</span>
-                      {row.entity_type && (
-                        <>
-                          <span className="text-warm-gray">·</span>
-                          <span className="text-warm-gray">
-                            {row.entity_type}
-                            {row.entity_id ? ` ${row.entity_id.slice(0, 10)}…` : ""}
-                          </span>
-                        </>
-                      )}
                     </div>
-                    {Object.keys(row.metadata).length > 0 && (
-                      <p className="text-xs text-warm-gray mt-1 break-words">
-                        {formatMeta(row.metadata)}
-                      </p>
-                    )}
                   </div>
                   <span className="text-xs text-warm-gray whitespace-nowrap mt-0.5">
                     {row.relative}
@@ -159,11 +148,135 @@ export default function AuditView({ rows }: { rows: AuditRow[] }) {
   );
 }
 
+// Short label for the action chip. Keeps the structure readable
+// without the dot-separated machine name dominating the row.
+function actionLabel(action: string): string {
+  switch (action) {
+    case "approval.created":
+      return "Proposed";
+    case "approval.approved":
+      return "Approved";
+    case "approval.denied":
+      return "Denied";
+    case "approval.executed":
+      return "Executed";
+    case "order.created":
+      return "Order";
+    case "order.mark_shipped":
+      return "Shipped";
+    case "order.add_tracking":
+      return "Tracking";
+    case "order.refund":
+    case "order.refund_requested":
+      return "Refund";
+    case "mission_gift.assign":
+      return "Allocated";
+    case "mission_gift.deliver":
+      return "Delivered";
+    case "customer.tag":
+      return "Tag";
+    case "inbox.draft_saved":
+      return "Drafted";
+    case "inbox.replied":
+      return "Replied";
+    case "inbox.archived":
+      return "Archived";
+    case "playbook.started":
+      return "Playbook";
+    case "settings.update":
+      return "Settings";
+    default:
+      return action;
+  }
+}
+
+// Convert (action + metadata) into a single mom-readable sentence.
+// Falls back to a kv summary when there's no specific template.
+function humanizeRow(row: AuditRow): string {
+  const m = row.metadata ?? {};
+  const get = (k: string) => (m as Record<string, unknown>)[k];
+  const str = (k: string) => {
+    const v = get(k);
+    return typeof v === "string" ? v : null;
+  };
+  const num = (k: string) => {
+    const v = get(k);
+    return typeof v === "number" ? v : null;
+  };
+  const dollars = (cents: number | null) =>
+    cents == null ? "" : `$${(cents / 100).toFixed(2)}`;
+  const orderNo = str("order_number") ?? row.entity_id?.slice(0, 8);
+  const simulated = get("simulated") === true ? " (simulated)" : "";
+
+  switch (row.action) {
+    case "order.created":
+      return `Order ${orderNo} created${dollars(num("total_cents")) ? ` · ${dollars(num("total_cents"))}` : ""}.`;
+    case "order.mark_shipped": {
+      const tracking = str("tracking_number");
+      const carrier = str("carrier");
+      const tail = tracking
+        ? ` with ${carrier ? `${carrier} ` : ""}tracking ${tracking}`
+        : "";
+      return `Marked ${orderNo} shipped${tail}.`;
+    }
+    case "order.add_tracking": {
+      const tracking = str("tracking_number");
+      const carrier = str("carrier");
+      return `Added ${carrier ? `${carrier} ` : ""}tracking ${tracking ?? ""} to ${orderNo}.`;
+    }
+    case "order.refund":
+    case "order.refund_requested": {
+      const amt = dollars(num("amount_cents"));
+      const isFull = get("full_refund") === true;
+      const reason = str("reason");
+      const refundType = isFull ? "Full refund" : `Refund ${amt}`;
+      return `${refundType} on ${orderNo}${reason ? ` — "${reason}"` : ""}${simulated}.`;
+    }
+    case "mission_gift.assign":
+      return `Allocated gift to a recipient community.`;
+    case "mission_gift.deliver":
+      return `Gift marked delivered.`;
+    case "customer.tag":
+      return `Tagged customer with "${str("tag") ?? ""}".`;
+    case "inbox.draft_saved": {
+      const len = num("length");
+      return `Saved draft reply${len ? ` (${len} chars)` : ""}.`;
+    }
+    case "inbox.replied": {
+      const to = str("recipient_email");
+      const len = num("length");
+      return `Replied${to ? ` to ${to}` : ""}${len ? ` (${len} chars)` : ""}${simulated}.`;
+    }
+    case "inbox.archived":
+      return `Archived the message.`;
+    case "approval.created":
+      return `Proposed: ${str("action_type") ?? "an action"}.`;
+    case "approval.approved":
+      return `Approved.${str("comment") ? ` "${str("comment")}"` : ""}`;
+    case "approval.denied":
+      return `Denied.${str("comment") ? ` "${str("comment")}"` : ""}`;
+    case "approval.executed": {
+      const at = str("action_type");
+      const path = str("executed");
+      return `Executed${at ? ` ${at}` : ""}${path === "real" ? " (real)" : path === "simulated" ? " (simulated)" : ""}.`;
+    }
+    case "playbook.started":
+      return `Playbook "${str("name") ?? row.entity_id?.slice(0, 8)}" started.`;
+    case "settings.update": {
+      const keys = Object.keys(m).filter((k) => k !== "approval_id");
+      return `Updated ${keys.join(", ") || "settings"}.`;
+    }
+    default:
+      return formatMeta(m) || `${row.action} on ${row.entity_type ?? "—"}`;
+  }
+}
+
 function formatMeta(meta: Record<string, unknown>): string {
   return Object.entries(meta)
     .map(([k, v]) => {
       if (Array.isArray(v)) return `${k}: ${v.join(" · ")}`;
-      if (typeof v === "object" && v !== null) return `${k}: ${JSON.stringify(v)}`;
+      if (typeof v === "object" && v !== null)
+        return `${k}: ${JSON.stringify(v)}`;
       return `${k}: ${String(v)}`;
     })
     .join(" · ");

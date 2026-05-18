@@ -1,9 +1,9 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { Mail, ArrowLeft, Check, Loader2 } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Mail, ArrowLeft, Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 
 export default function LoginPage() {
@@ -15,6 +15,7 @@ export default function LoginPage() {
 }
 
 function LoginInner() {
+  const router = useRouter();
   const { signInWithMagicLink, configured, user } = useAuth();
   const params = useSearchParams();
   const next = params?.get("next") || null;
@@ -27,28 +28,21 @@ function LoginInner() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  if (user) {
+  // Already signed in? Route them to where they were trying to go (or
+  // /account by default) without making them tap a button.
+  useEffect(() => {
+    if (!user) return;
     const destination = safeNext ?? "/account";
-    const destinationLabel = safeNext?.startsWith("/admin")
-      ? "Go to Admin Console"
-      : "Go to Your Account";
+    router.replace(destination);
+  }, [user, safeNext, router]);
+
+  if (user) {
     return (
       <section className="py-32 relative">
         <div className="absolute inset-0 lace-pattern opacity-15 pointer-events-none" />
-        <div className="relative max-w-md mx-auto px-4 text-center animate-fade-up">
-          <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-5">
-            <Check className="w-7 h-7 text-green-600" strokeWidth={1.5} />
-          </div>
-          <h1 className="font-heading text-3xl text-charcoal mb-3">
-            You&apos;re Signed In
-          </h1>
-          <p className="text-warm-gray mb-6">{user.email}</p>
-          <Link
-            href={destination}
-            className="btn-luxe inline-flex items-center gap-2 px-8 py-3.5 bg-burgundy text-white text-sm tracking-[0.04em] rounded-full"
-          >
-            {destinationLabel}
-          </Link>
+        <div className="relative max-w-md mx-auto px-4 text-center animate-fade-up flex items-center justify-center gap-3 text-warm-gray">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          <span className="text-sm">Welcoming you in…</span>
         </div>
       </section>
     );

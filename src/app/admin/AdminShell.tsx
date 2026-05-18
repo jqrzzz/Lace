@@ -23,7 +23,10 @@ import {
   ScrollText,
   Loader2,
   LogOut,
+  Menu,
+  X,
 } from "lucide-react";
+import { useEffect } from "react";
 import { cn } from "@/lib/utils";
 import CommandPalette from "@/components/ui/CommandPalette";
 import { useAuth } from "@/lib/auth";
@@ -90,6 +93,13 @@ function Chrome({ children }: { children: React.ReactNode }) {
   const { actor, counts } = useAdminActor();
   const { signOut } = useAuth();
   const [signingOut, setSigningOut] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // Close the mobile drawer whenever the route changes so navigation
+  // feels natural.
+  useEffect(() => {
+    setDrawerOpen(false);
+  }, [pathname]);
 
   // The server layout guarantees actor is present by the time this
   // mounts. If it ever isn't (e.g. an in-flight sign-out), keep the
@@ -227,13 +237,121 @@ function Chrome({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
+      {/* Mobile drawer + backdrop */}
+      <div
+        className={cn(
+          "lg:hidden fixed inset-0 z-40 transition-opacity",
+          drawerOpen ? "opacity-100" : "opacity-0 pointer-events-none",
+        )}
+        aria-hidden={!drawerOpen}
+      >
+        <button
+          onClick={() => setDrawerOpen(false)}
+          aria-label="Close menu"
+          className="absolute inset-0 bg-charcoal/60"
+        />
+        <aside
+          className={cn(
+            "absolute top-0 left-0 bottom-0 w-72 max-w-[85vw] bg-charcoal text-pearl flex flex-col shadow-2xl transition-transform",
+            drawerOpen ? "translate-x-0" : "-translate-x-full",
+          )}
+        >
+          <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+            <span className="font-heading text-lg tracking-[0.15em] uppercase text-white">
+              Lace
+            </span>
+            <button
+              onClick={() => setDrawerOpen(false)}
+              aria-label="Close menu"
+              className="p-1.5 text-soft-gray hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="px-3 pt-3 pb-1">
+            <div className="flex items-center gap-3 px-3 py-3 rounded-xl bg-white/5 border border-white/10">
+              <span className="w-9 h-9 rounded-full bg-gold/20 text-gold flex items-center justify-center text-xs font-medium flex-shrink-0">
+                {initials || "•"}
+              </span>
+              <div className="min-w-0">
+                <p className="text-sm text-white truncate">{displayName}</p>
+                <p className="text-[10px] uppercase tracking-[0.18em] text-rose-gold">
+                  {actor.role}
+                </p>
+              </div>
+            </div>
+          </div>
+          <nav className="flex-1 px-3 py-3 space-y-1 overflow-y-auto">
+            {NAV.map((item) => {
+              const badge = item.badgeKey ? counts[item.badgeKey] : 0;
+              const active = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-colors",
+                    active
+                      ? "bg-white/10 text-white"
+                      : "text-soft-gray hover:text-white hover:bg-white/5",
+                  )}
+                >
+                  <item.icon className="w-4 h-4" />
+                  <span className="flex-1">{item.label}</span>
+                  {badge > 0 && (
+                    <span
+                      className={cn(
+                        "text-[10px] font-medium rounded-full px-1.5 py-0.5 min-w-[18px] text-center",
+                        active
+                          ? "bg-gold text-charcoal"
+                          : "bg-burgundy/80 text-pearl",
+                      )}
+                    >
+                      {badge}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
+          <div className="border-t border-white/10 grid grid-cols-2 divide-x divide-white/10">
+            <Link
+              href="/"
+              className="flex items-center justify-center gap-2 py-3 text-xs text-soft-gray hover:text-white transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              Store
+            </Link>
+            <button
+              onClick={handleSignOut}
+              disabled={signingOut}
+              className="flex items-center justify-center gap-2 py-3 text-xs text-soft-gray hover:text-white transition-colors disabled:opacity-60"
+            >
+              {signingOut ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <LogOut className="w-3.5 h-3.5" />
+              )}
+              Sign out
+            </button>
+          </div>
+        </aside>
+      </div>
+
       {/* Main */}
       <div className="flex-1 flex flex-col min-h-screen">
         {/* Mobile header */}
-        <div className="lg:hidden bg-charcoal text-white px-4 py-3 flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <span className="font-heading text-lg tracking-wide block">
-              Admin
+        <div className="lg:hidden bg-charcoal text-white px-4 py-3 flex items-center justify-between gap-3 sticky top-0 z-30">
+          <button
+            onClick={() => setDrawerOpen(true)}
+            aria-label="Open menu"
+            className="p-1.5 -ml-1.5 text-soft-gray hover:text-white"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+          <div className="min-w-0 text-center flex-1">
+            <span className="font-heading text-lg tracking-wide block leading-none">
+              {pageLabel(pathname)}
             </span>
             <span className="text-[10px] text-rose-gold uppercase tracking-[0.2em] truncate block">
               {displayName}
@@ -243,50 +361,14 @@ function Chrome({ children }: { children: React.ReactNode }) {
             onClick={handleSignOut}
             disabled={signingOut}
             aria-label="Sign out"
-            className="inline-flex items-center gap-1.5 text-xs text-soft-gray hover:text-white disabled:opacity-60"
+            className="p-1.5 -mr-1.5 text-soft-gray hover:text-white disabled:opacity-60"
           >
             {signingOut ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <LogOut className="w-3.5 h-3.5" />
+              <LogOut className="w-4 h-4" />
             )}
-            Sign out
           </button>
-        </div>
-
-        {/* Mobile nav */}
-        <div className="lg:hidden bg-white border-b border-border flex overflow-x-auto">
-          {NAV.map((item) => {
-            const badge = item.badgeKey ? counts[item.badgeKey] : 0;
-            const active = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-2 px-4 py-3 text-sm whitespace-nowrap border-b-2 transition-colors",
-                  active
-                    ? "border-burgundy text-burgundy"
-                    : "border-transparent text-warm-gray",
-                )}
-              >
-                <item.icon className="w-4 h-4" />
-                {item.label}
-                {badge > 0 && (
-                  <span
-                    className={cn(
-                      "text-[10px] font-medium rounded-full px-1.5 py-0.5",
-                      active
-                        ? "bg-burgundy text-pearl"
-                        : "bg-cream text-warm-gray border border-border",
-                    )}
-                  >
-                    {badge}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
         </div>
 
         {/* Pre-launch banner */}
@@ -303,4 +385,14 @@ function Chrome({ children }: { children: React.ReactNode }) {
       <CommandPalette />
     </div>
   );
+}
+
+function pageLabel(pathname: string | null): string {
+  if (!pathname) return "Admin";
+  const item = NAV.find(
+    (n) =>
+      pathname === n.href ||
+      (n.href !== "/admin" && pathname.startsWith(n.href + "/")),
+  );
+  return item?.label ?? "Admin";
 }
