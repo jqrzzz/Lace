@@ -68,29 +68,30 @@ to `/login`. No HTML, no data, no exposure.
 
 ## P1 — Important
 
-### 2. Test coverage is thin against new surface area
+### 2. Test coverage is thin against new surface area — **CLOSED (commit pending, Phase 2.M)**
 
-`vitest` runs 31 tests across four files. Coverage is essentially the agent
-router, the in-memory store dispatch, the webhook handler, and formatting
-helpers. Nothing covers:
+Was: 31 tests across four files; the agent's `actions.ts`, `admin-auth.ts`,
+`email.ts`, and the 8 admin write routes were unverified.
 
-- `src/lib/agent/actions.ts` (markOrderShipped, addTrackingNumber,
-  refundOrder, assignMissionGift, markGiftDelivered, tagCustomer) — these now
-  call Stripe and write real audit rows; a mocked test pinned to the response
-  shape would catch refactor breakage immediately.
-- `src/lib/admin-auth.ts` (JWT validation + first-owner bootstrap + RLS-bound
-  app_user lookup) — the most security-sensitive code in the repo.
-- `src/lib/email.ts` (Resend fetch, escape behavior, simulated fallback).
-- `src/lib/lace/queries.ts` (PostgREST joins, mock fallbacks) — there are 7
-  `as unknown as` casts here that hide real shape mismatches if the schema
-  drifts.
-- Any of the 11 admin API routes (validation, role enforcement, audit shape).
+Closed by Phase 2.M. A shared `src/test/supabase-mock.ts` records every
+operation and returns canned responses, and four new test files use it:
 
-**Remediation**: add a `route.test.ts` next to each admin write route using
-the same mock-Supabase pattern from `webhook/route.test.ts`. Target ~30
-additional tests covering the happy path + the 401 / 403 / 400 branches.
+- `src/lib/agent/actions.test.ts` — 13 tests covering the happy path
+  plus error/edge cases for every state-mutation handler.
+- `src/lib/admin-auth.test.ts` — 12 tests for JWT validation, role
+  enforcement, first-owner bootstrap (by env, by empty-table fallback,
+  viewer assignment), and the cookie path.
+- `src/lib/email.test.ts` — 12 tests for the Resend send path: simulated
+  fallback, real success, non-200 error, fetch throw, replyTo override,
+  HTML escaping in `wrapReplyHtml`.
+- `src/app/api/admin/admin-routes.test.ts` — 12 tests, one happy path per
+  admin write route plus a 401/403/400 sweep.
 
-### 3. Hardcoded `PRODUCTS` catalog (Phase 1.B) — **CLOSED (commit pending, Phase 1.B)**
+Total: 80 tests across 8 files. Still room to grow (queries.ts, the
+webhook's full flow, agent turn) but the critical mutation surface is
+now covered.
+
+### 3. Hardcoded `PRODUCTS` catalog (Phase 1.B) — **CLOSED (commit `dcc78ec`, Phase 1.B)**
 
 Was: `src/lib/products.ts` owned prices and variants; the storefront and
 sitemap read the constant directly.
@@ -284,17 +285,15 @@ These came up in the audit and held up.
 
 ## Recommended next phases (in order)
 
-Phases 2.K.2, 2.L, and 1.B from the original audit list have shipped. What
-remains:
+Phases 2.K.2, 2.L, 1.B, and 2.M from the original audit list have shipped.
+What remains:
 
-1. **Phase 2.M — Test backfill.** Adds tests for `actions.ts`, `admin-auth.ts`,
-   `email.ts`, and one happy-path test per admin write route. Half a day.
-2. **Phase 2.N — Concierge rate limit.** Finding #5. Couple hours
+1. **Phase 2.N — Concierge rate limit.** Finding #5. Couple hours
    (Upstash Redis sliding window per IP).
-3. **Phase 2.O — Admin product CRUD.** Add/edit/archive UI on
+2. **Phase 2.O — Admin product CRUD.** Add/edit/archive UI on
    `/admin/products` now that catalog reads from `lace.products`. Half to
    a full day depending on image upload scope.
-4. **Phase 3 — End-to-end against a real Supabase test branch.** Stripe
+3. **Phase 3 — End-to-end against a real Supabase test branch.** Stripe
    test event → row → admin sees it.
 
 Beyond that, the structural roadmap stays: WhatsApp inbound (#6 of original
@@ -310,7 +309,8 @@ P3), Resend drip worker, real product photography (Supabase Storage).
 | `4246f07` | Checkout price tampering, login open-redirect, `/api/contact` HTML escaping, newsletter validation, env example refresh |
 | `174fbc8` | Phase 2.K.2: server-side admin auth — closes the P0 SSR data leak (#1) |
 | `b7858b8` | Phase 2.L: error pages, auto-redirect after sign-in, mobile drawer, readable audit (#4, #6, #7, #8) |
-| (pending) | Phase 1.B: catalog migration — `lace.products` reads across storefront + admin (#3) |
+| `dcc78ec` | Phase 1.B: catalog migration — `lace.products` reads across storefront + admin (#3) |
+| (pending) | Phase 2.M: test backfill — 49 new tests across actions, admin-auth, email, admin routes (#2) |
 
 These are reflected in the per-finding entries above so the audit shows the
 true *current* state, not the pre-audit state.
