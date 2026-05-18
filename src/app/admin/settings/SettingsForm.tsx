@@ -280,6 +280,7 @@ function ToggleCard({
           onClick={onToggle}
           role="switch"
           aria-checked={checked}
+          aria-label={title}
           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ${
             checked ? "bg-burgundy" : "bg-stone-300"
           }`}
