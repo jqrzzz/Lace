@@ -25,7 +25,7 @@ interface Profile {
 }
 
 export default function SettingsForm() {
-  const { actor, loading, applyLocalActor } = useAdminActor();
+  const { actor, applyLocalActor } = useAdminActor();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [toggles, setToggles] = useState<Toggles | null>(null);
   const [savingProfile, setSavingProfile] = useState(false);
@@ -46,7 +46,7 @@ export default function SettingsForm() {
     }
   }, [actor]);
 
-  if (loading || !actor || !profile || !toggles) {
+  if (!actor || !profile || !toggles) {
     return (
       <div className="bg-white rounded-2xl border border-border-light p-10 text-center">
         <Loader2 className="w-5 h-5 text-warm-gray animate-spin mx-auto mb-2" />

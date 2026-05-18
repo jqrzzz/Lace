@@ -10,16 +10,20 @@
 //                        browser. Subject to RLS — only the rows
 //                        the policies in 0005/0007 permit.
 //
-//   getAuthClient()    — anon key, no schema pin. Used by the
-//                        AuthProvider for Supabase Auth (magic links,
-//                        sessions). Auth tables live in the `auth`
-//                        schema, so this one must not pin to `lace`.
+//   getAuthClient()    — anon key, no schema pin, cookie-backed
+//                        session. Used by the AuthProvider for
+//                        Supabase Auth (magic links, sessions). The
+//                        session lives in cookies so the server can
+//                        read it for SSR auth gating. Auth tables
+//                        live in the `auth` schema, so this one
+//                        must not pin to `lace`.
 //
 // When Lace moves to its own Supabase project later we only have
 // to change the env vars — nothing in the callers needs to change.
 // ─────────────────────────────────────────────────────────────
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
 
 /** Concrete type of the service-role client returned by getLaceDb (never null). */
 export type LaceServiceClient = NonNullable<ReturnType<typeof getLaceDb>>;
@@ -67,15 +71,18 @@ export function getLacePublicDb() {
 let cachedAuthClient: SupabaseClient | null | undefined;
 
 /**
- * Anon client without a schema pin, for Supabase Auth flows
- * (magic links, sessions). Same key as getLacePublicDb but does
- * not constrain queries to `lace`, so `auth.*` works as expected.
+ * Anon client for Supabase Auth flows (magic links, sessions). Uses
+ * @supabase/ssr's createBrowserClient so the session is persisted to
+ * cookies — server components and middleware can then validate it.
+ *
+ * Returns null when env is missing so the AuthProvider can render
+ * the "not configured" state without crashing.
  */
 export function getAuthClient(): SupabaseClient | null {
   if (cachedAuthClient !== undefined) return cachedAuthClient;
   const u = url();
   const k = anonKey();
-  cachedAuthClient = u && k ? createClient(u, k) : null;
+  cachedAuthClient = u && k ? createBrowserClient(u, k) : null;
   return cachedAuthClient;
 }
 
@@ -88,3 +95,4 @@ export function isLaceDbConfigured(): boolean {
 export function isSupabaseConfigured(): boolean {
   return Boolean(url() && anonKey());
 }
+

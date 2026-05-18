@@ -1,21 +1,34 @@
 // ─────────────────────────────────────────────────────────────
 // Lace — Admin authentication helpers (server-only).
 //
-// Every admin write route should require an authenticated actor.
-// The client attaches the Supabase JWT in an Authorization header
-// (see src/lib/admin-fetch.ts); these helpers validate it against
-// Supabase auth and return the mapped lace.app_users row.
+// Two server entry points, one shared bootstrap:
+//
+//   getAdminActor(req)         — for API routes. Reads the Supabase
+//                                 JWT from the Authorization header,
+//                                 validates, returns the app_users
+//                                 row (or null).
+//
+//   getAdminActorFromCookies() — for server components. Reads the
+//                                 Supabase auth cookie via
+//                                 next/headers, validates, returns
+//                                 the app_users row (or null).
+//
+// Both eventually call provisionOrFetchAppUser() which is the single
+// source of truth for first-owner bootstrap and app_users lookup.
 //
 // First-owner bootstrap:
 //   - LACE_OWNER_EMAIL env var marks the owner's email. The first
 //     authenticated visit by that email upserts an app_users row
 //     with role='owner'. Everyone else lands as 'viewer' until
-//     promoted from the console (Phase 2.L).
-//   - If LACE_OWNER_EMAIL is unset, the very first sign-in becomes
-//     owner. Defensible default for solo stores.
+//     promoted from the console.
+//   - If LACE_OWNER_EMAIL is unset, the very first sign-in takes
+//     the chair. Defensible default for solo stores.
 // ─────────────────────────────────────────────────────────────
 
 import { NextRequest } from "next/server";
+import { cookies } from "next/headers";
+import { createServerClient } from "@supabase/ssr";
+import type { User } from "@supabase/supabase-js";
 import { getLaceDb, type LaceServiceClient } from "./db";
 
 export type ActorRole = "owner" | "staff" | "viewer";
@@ -72,23 +85,15 @@ const ACTOR_COLS =
   "id, auth_user_id, email, name, role, confirm_money_actions, confirm_destructive, daily_briefing_enabled";
 
 /**
- * Validate a Supabase JWT, return (and lazily provision) the
- * matching lace.app_users row. Returns null when the JWT is
- * missing or invalid, or when the DB is not configured.
+ * Given a validated Supabase auth user, find or provision the
+ * matching lace.app_users row. Shared by every entry point so the
+ * first-owner rules apply once.
  */
-export async function getAdminActor(
-  req: NextRequest,
+async function provisionOrFetchAppUser(
+  db: LaceServiceClient,
+  user: User,
 ): Promise<AdminActor | null> {
-  const jwt = extractJwt(req);
-  if (!jwt) return null;
-  const db = getLaceDb();
-  if (!db) return null;
-
-  const {
-    data: { user },
-    error,
-  } = await db.auth.getUser(jwt);
-  if (error || !user || !user.email) return null;
+  if (!user.email) return null;
   const email = user.email.toLowerCase();
 
   // Find existing app_user by auth_user_id (preferred) or email.
@@ -107,8 +112,8 @@ export async function getAdminActor(
     .maybeSingle();
   if (existingByEmail.data) {
     const row = existingByEmail.data as AppUserRow;
-    // Backfill auth_user_id on the email row so subsequent lookups
-    // hit the auth_user_id branch (faster, more stable).
+    // Backfill auth_user_id so subsequent lookups hit the
+    // auth_user_id branch (faster, more stable).
     if (row.auth_user_id !== user.id) {
       await db
         .from("app_users")
@@ -149,6 +154,63 @@ export async function getAdminActor(
     return null;
   }
   return insert.data as AppUserRow;
+}
+
+/**
+ * Validate a Supabase JWT pulled from the request's Authorization
+ * header (API-route flavor). Returns the app_users row or null.
+ */
+export async function getAdminActor(
+  req: NextRequest,
+): Promise<AdminActor | null> {
+  const jwt = extractJwt(req);
+  if (!jwt) return null;
+  const db = getLaceDb();
+  if (!db) return null;
+
+  const {
+    data: { user },
+    error,
+  } = await db.auth.getUser(jwt);
+  if (error || !user) return null;
+  return provisionOrFetchAppUser(db, user);
+}
+
+/**
+ * Server-component flavor: reads the Supabase auth cookie via
+ * next/headers, validates it, returns the app_users row or null.
+ * Use this from `/admin/*` server components and the admin layout.
+ */
+export async function getAdminActorFromCookies(): Promise<AdminActor | null> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anon) return null;
+  const db = getLaceDb();
+  if (!db) return null;
+
+  const cookieStore = await cookies();
+  const supabase = createServerClient(url, anon, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll().map((c) => ({
+          name: c.name,
+          value: c.value,
+        }));
+      },
+      // Server components can't write cookies. Anything that needs
+      // to write (e.g. token refresh) happens in middleware.
+      setAll() {
+        /* no-op in server components */
+      },
+    },
+  });
+
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+  if (error || !user) return null;
+  return provisionOrFetchAppUser(db, user);
 }
 
 /**
