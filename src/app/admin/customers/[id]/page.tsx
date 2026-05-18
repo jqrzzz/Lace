@@ -13,27 +13,9 @@ import {
 import { getCustomerFull } from "@/lib/lace/queries";
 import { listAuditForEntity } from "@/lib/agent/store";
 import { formatCents, timeAgo } from "@/lib/format";
-import type { OrderStatus } from "@/lib/lace/types";
+import StatusBadge from "@/components/ui/StatusBadge";
 
 export const dynamic = "force-dynamic";
-
-const STATUS_TONE: Record<OrderStatus, string> = {
-  pending: "bg-cream text-warm-gray border-border",
-  paid: "bg-blush/30 text-burgundy border-burgundy/20",
-  processing: "bg-gold/15 text-gold-dark border-gold/30",
-  shipped: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  delivered: "bg-emerald-100 text-emerald-800 border-emerald-300",
-  cancelled: "bg-stone-100 text-stone-700 border-stone-300",
-  refunded: "bg-amber-100 text-amber-800 border-amber-300",
-  failed: "bg-red-50 text-red-700 border-red-200",
-};
-
-const INBOX_TONE: Record<string, string> = {
-  new: "bg-blush/30 text-burgundy",
-  drafted: "bg-gold/20 text-gold-dark",
-  replied: "bg-emerald-100 text-emerald-800",
-  archived: "bg-stone-100 text-stone-700",
-};
 
 function formatDate(iso: string): string {
   try {
@@ -148,11 +130,7 @@ export default async function CustomerDetailPage({ params }: PageProps) {
                         {o.item_count} item{o.item_count === 1 ? "" : "s"}
                       </td>
                       <td className="px-5 py-3">
-                        <span
-                          className={`text-[11px] px-2 py-1 rounded-full border capitalize ${STATUS_TONE[o.status]}`}
-                        >
-                          {o.status}
-                        </span>
+                        <StatusBadge kind="order" status={o.status} />
                       </td>
                       <td className="px-5 py-3 text-right text-warm-gray">
                         {timeAgo(o.created_at)}
@@ -201,11 +179,7 @@ export default async function CustomerDetailPage({ params }: PageProps) {
                         {m.subject || "(no subject)"}
                       </p>
                       <div className="flex items-center gap-2 whitespace-nowrap">
-                        <span
-                          className={`text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full ${INBOX_TONE[m.status] ?? INBOX_TONE.new}`}
-                        >
-                          {m.status}
-                        </span>
+                        <StatusBadge kind="inbox" status={m.status} />
                         <span className="text-xs text-warm-gray">
                           {timeAgo(m.created_at)}
                         </span>

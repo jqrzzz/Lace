@@ -3,6 +3,8 @@ import { ClipboardList, ArrowUpRight } from "lucide-react";
 import { isLiveData, listOrders } from "@/lib/lace/queries";
 import { formatCents, timeAgo } from "@/lib/format";
 import type { OrderStatus } from "@/lib/lace/types";
+import StatusBadge from "@/components/ui/StatusBadge";
+import EmptyState from "@/components/ui/EmptyState";
 
 export const dynamic = "force-dynamic";
 
@@ -16,17 +18,6 @@ const STATUS_OPTIONS: { value: OrderStatus | "all"; label: string }[] = [
   { value: "cancelled", label: "Cancelled" },
   { value: "refunded", label: "Refunded" },
 ];
-
-const STATUS_TONE: Record<OrderStatus, string> = {
-  pending: "bg-cream text-warm-gray border-border",
-  paid: "bg-blush/30 text-burgundy border-burgundy/20",
-  processing: "bg-gold/15 text-gold-dark border-gold/30",
-  shipped: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  delivered: "bg-emerald-100 text-emerald-800 border-emerald-300",
-  cancelled: "bg-stone-100 text-stone-700 border-stone-300",
-  refunded: "bg-amber-100 text-amber-800 border-amber-300",
-  failed: "bg-red-50 text-red-700 border-red-200",
-};
 
 function isOrderStatus(s: string | undefined): s is OrderStatus {
   return (
@@ -95,17 +86,15 @@ export default async function AdminOrdersPage({
       </div>
 
       {orders.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-border-light p-16 text-center">
-          <ClipboardList className="w-12 h-12 text-soft-gray mx-auto mb-4" />
-          <h2 className="font-heading text-xl text-charcoal mb-2">
-            No orders {statusFilter ? `with status ${statusFilter}` : "yet"}
-          </h2>
-          <p className="text-sm text-warm-gray max-w-sm mx-auto">
-            {statusFilter
+        <EmptyState
+          icon={ClipboardList}
+          title={`No orders ${statusFilter ? `with status ${statusFilter}` : "yet"}`}
+          description={
+            statusFilter
               ? "Try a different filter."
-              : "When customers place orders, they'll appear here."}
-          </p>
-        </div>
+              : "When customers place orders, they'll appear here."
+          }
+        />
       ) : (
         <div className="bg-white rounded-2xl border border-border-light overflow-hidden">
           <table className="w-full text-sm">
@@ -144,11 +133,7 @@ export default async function AdminOrdersPage({
                   </td>
                   <td className="px-4 py-3 text-warm-gray">{o.item_count}</td>
                   <td className="px-4 py-3">
-                    <span
-                      className={`text-[11px] px-2 py-1 rounded-full border capitalize ${STATUS_TONE[o.status]}`}
-                    >
-                      {o.status}
-                    </span>
+                    <StatusBadge kind="order" status={o.status} />
                   </td>
                   <td className="px-4 py-3 text-right text-charcoal font-medium">
                     {formatCents(o.total_cents)}

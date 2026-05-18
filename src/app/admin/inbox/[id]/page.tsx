@@ -4,35 +4,11 @@ import { ArrowLeft, Mail, ScrollText, User } from "lucide-react";
 import { getInboxMessageWithContext } from "@/lib/lace/queries";
 import { listAuditForEntity } from "@/lib/agent/store";
 import { formatCents, timeAgo } from "@/lib/format";
-import type { InboxStatus, OrderStatus } from "@/lib/lace/types";
 import ReplyPane from "./ReplyPane";
+import StatusBadge from "@/components/ui/StatusBadge";
+import { INBOX_STATUS_LABEL } from "@/lib/status-styles";
 
 export const dynamic = "force-dynamic";
-
-const STATUS_TONE: Record<InboxStatus, string> = {
-  new: "bg-blush/30 text-burgundy border-burgundy/20",
-  drafted: "bg-gold/20 text-gold-dark border-gold/40",
-  replied: "bg-emerald-100 text-emerald-800 border-emerald-300",
-  archived: "bg-stone-100 text-stone-700 border-stone-300",
-};
-
-const STATUS_LABEL: Record<InboxStatus, string> = {
-  new: "Needs a reply",
-  drafted: "Draft saved",
-  replied: "Replied",
-  archived: "Archived",
-};
-
-const ORDER_TONE: Record<OrderStatus, string> = {
-  pending: "bg-cream text-warm-gray border-border",
-  paid: "bg-blush/30 text-burgundy border-burgundy/20",
-  processing: "bg-gold/15 text-gold-dark border-gold/30",
-  shipped: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  delivered: "bg-emerald-100 text-emerald-800 border-emerald-300",
-  cancelled: "bg-stone-100 text-stone-700 border-stone-300",
-  refunded: "bg-amber-100 text-amber-800 border-amber-300",
-  failed: "bg-red-50 text-red-700 border-red-200",
-};
 
 function formatDateTime(iso: string): string {
   try {
@@ -79,11 +55,11 @@ export default async function InboxDetailPage({ params }: PageProps) {
               From {m.name} · {formatDateTime(m.created_at)}
             </p>
           </div>
-          <span
-            className={`text-xs px-3 py-1.5 rounded-full border capitalize ${STATUS_TONE[m.status]}`}
-          >
-            {STATUS_LABEL[m.status]}
-          </span>
+          <StatusBadge
+            kind="inbox"
+            status={m.status}
+            label={INBOX_STATUS_LABEL[m.status]}
+          />
         </div>
       </div>
 
@@ -217,11 +193,7 @@ export default async function InboxDetailPage({ params }: PageProps) {
                         >
                           {o.order_number}
                         </Link>
-                        <span
-                          className={`text-[10px] px-2 py-0.5 rounded-full border capitalize ${ORDER_TONE[o.status]}`}
-                        >
-                          {o.status}
-                        </span>
+                        <StatusBadge kind="order" status={o.status} />
                       </li>
                     ))}
                   </ul>

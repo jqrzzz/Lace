@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Users, ArrowUpRight, Search } from "lucide-react";
 import { isLiveData, listCustomers } from "@/lib/lace/queries";
 import { formatCents, timeAgo } from "@/lib/format";
+import EmptyState from "@/components/ui/EmptyState";
 
 export const dynamic = "force-dynamic";
 
@@ -49,17 +50,15 @@ export default async function AdminCustomersPage({
       </form>
 
       {customers.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-border-light p-16 text-center">
-          <Users className="w-12 h-12 text-soft-gray mx-auto mb-4" />
-          <h2 className="font-heading text-xl text-charcoal mb-2">
-            {search ? `No matches for "${search}"` : "No customers yet"}
-          </h2>
-          <p className="text-sm text-warm-gray max-w-sm mx-auto">
-            {search
+        <EmptyState
+          icon={Users}
+          title={search ? `No matches for "${search}"` : "No customers yet"}
+          description={
+            search
               ? "Try a different search."
-              : "Customer records are created automatically when orders come in."}
-          </p>
-        </div>
+              : "Customer records are created automatically when orders come in."
+          }
+        />
       ) : (
         <div className="bg-white rounded-2xl border border-border-light overflow-hidden">
           <table className="w-full text-sm">

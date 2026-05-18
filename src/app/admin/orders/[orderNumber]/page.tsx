@@ -13,21 +13,11 @@ import {
 import { getOrderFull } from "@/lib/lace/queries";
 import { listAuditForEntity } from "@/lib/agent/store";
 import { formatCents, formatCentsExact, timeAgo } from "@/lib/format";
-import type { OrderStatus, OrderShippingAddress } from "@/lib/lace/types";
+import type { OrderShippingAddress } from "@/lib/lace/types";
 import OrderActions from "./OrderActions";
+import StatusBadge from "@/components/ui/StatusBadge";
 
 export const dynamic = "force-dynamic";
-
-const STATUS_TONE: Record<OrderStatus, string> = {
-  pending: "bg-cream text-warm-gray border-border",
-  paid: "bg-blush/30 text-burgundy border-burgundy/20",
-  processing: "bg-gold/15 text-gold-dark border-gold/30",
-  shipped: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  delivered: "bg-emerald-100 text-emerald-800 border-emerald-300",
-  cancelled: "bg-stone-100 text-stone-700 border-stone-300",
-  refunded: "bg-amber-100 text-amber-800 border-amber-300",
-  failed: "bg-red-50 text-red-700 border-red-200",
-};
 
 function formatAddress(a: OrderShippingAddress | null): string | null {
   if (!a) return null;
@@ -89,11 +79,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <span
-              className={`text-xs px-3 py-1.5 rounded-full border capitalize ${STATUS_TONE[order.status]}`}
-            >
-              {order.status}
-            </span>
+            <StatusBadge kind="order" status={order.status} />
             <span className="font-heading text-2xl text-charcoal">
               {formatCentsExact(order.total_cents)}
             </span>

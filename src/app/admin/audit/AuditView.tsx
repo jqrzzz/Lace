@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { ScrollText, User, Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
+import EmptyState from "@/components/ui/EmptyState";
 
 export interface AuditRow {
   id: string;
@@ -53,16 +54,11 @@ export default function AuditView({ rows }: { rows: AuditRow[] }) {
 
   if (rows.length === 0) {
     return (
-      <div className="bg-white rounded-2xl border border-border-light p-16 text-center">
-        <ScrollText className="w-10 h-10 text-soft-gray mx-auto mb-3" />
-        <h3 className="font-heading text-xl text-charcoal mb-1">
-          Nothing audited yet
-        </h3>
-        <p className="text-sm text-warm-gray max-w-sm mx-auto">
-          As soon as the agent proposes an action or you approve one, a trail
-          will appear here.
-        </p>
-      </div>
+      <EmptyState
+        icon={ScrollText}
+        title="Nothing audited yet"
+        description="As soon as the agent proposes an action or you approve one, a trail will appear here."
+      />
     );
   }
 
