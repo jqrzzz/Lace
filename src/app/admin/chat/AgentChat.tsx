@@ -50,11 +50,8 @@ export default function AgentChat({
         {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            sessionId: activeId,
-            userText: text,
-            actor: "Luz Maria (owner)",
-          }),
+          // actor label comes from the JWT server-side; no need to send it.
+          body: JSON.stringify({ sessionId: activeId, userText: text }),
         }
       );
       setDemoMode(mode === "demo");

@@ -289,7 +289,33 @@ export async function POST(req: NextRequest) {
     }
   } else if (event.type === "payment_intent.payment_failed") {
     const intent = event.data.object as Stripe.PaymentIntent;
-    console.log("[webhook] Payment failed:", intent.id);
+    // Record failed charges in audit_log so a missed payment is visible
+    // to mom without going to the Stripe dashboard. Best-effort: if the
+    // DB isn't configured we silently drop (matches the rest of the
+    // webhook's tolerance for zero-config dev).
+    const db = getLaceDb();
+    if (db) {
+      const lastErr = intent.last_payment_error;
+      await db.from("audit_log").insert({
+        actor_type: "webhook",
+        actor_id: "stripe",
+        actor_label: "Stripe webhook",
+        action: "payment.failed",
+        entity_type: "payment_intent",
+        entity_id: intent.id,
+        metadata: {
+          amount_cents: intent.amount,
+          currency: intent.currency,
+          customer_email:
+            typeof intent.receipt_email === "string"
+              ? intent.receipt_email
+              : null,
+          decline_code: lastErr?.decline_code ?? null,
+          error_code: lastErr?.code ?? null,
+          error_message: lastErr?.message ?? null,
+        },
+      });
+    }
   }
 
   return NextResponse.json({ received: true });
