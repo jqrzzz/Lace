@@ -114,17 +114,17 @@ Closed by:
 `src/app/error.tsx` and `src/app/not-found.tsx` ship with on-brand copy and
 recovery CTAs. `src/app/admin/error.tsx` scoped to the console.
 
-### 5. `/api/concierge/turn` is unauthenticated and unbounded per-session
+### 5. `/api/concierge/turn` rate limit — **CLOSED (commit pending, Phase 2.N)**
 
-The storefront concierge widget is designed as a public surface (no tools, no
-PII access), which is the right call. But there's no rate limit — anyone can
-hit `/api/concierge/turn` in a loop and burn Anthropic tokens. The
-`max_tokens: 400` cap helps, but a determined script could still rack up
-costs.
+In-memory sliding-window limiter in `src/lib/rate-limit.ts` applied to the
+concierge route. Two-tier guard per IP — 8/minute burst, 30/hour total —
+returns 429 with a `Retry-After` header on either trigger.
 
-**Remediation**: add a simple per-IP rate limit (Upstash Redis or an in-memory
-sliding window on a single-instance deploy). Bound: 20 concierge turns per
-visitor per hour.
+Limit is per-serverless-instance (Map keyed by client IP from
+`x-forwarded-for`). On Vercel that means a sustained attack across cold
+starts could exceed the cap; promote to Upstash Redis when traffic warrants
+it (function signature stays the same). For pre-launch traffic this is
+sufficient and adds no dependency.
 
 ### 6. Sign-in flow doesn't auto-redirect after magic link — **CLOSED (commit `b7858b8`, Phase 2.L)**
 
@@ -285,19 +285,18 @@ These came up in the audit and held up.
 
 ## Recommended next phases (in order)
 
-Phases 2.K.2, 2.L, 1.B, and 2.M from the original audit list have shipped.
-What remains:
+Phases 2.K.2, 2.L, 1.B, 2.M, and 2.N from the original audit list have
+shipped. What remains:
 
-1. **Phase 2.N — Concierge rate limit.** Finding #5. Couple hours
-   (Upstash Redis sliding window per IP).
-2. **Phase 2.O — Admin product CRUD.** Add/edit/archive UI on
+1. **Phase 2.O — Admin product CRUD.** Add/edit/archive UI on
    `/admin/products` now that catalog reads from `lace.products`. Half to
    a full day depending on image upload scope.
-3. **Phase 3 — End-to-end against a real Supabase test branch.** Stripe
+2. **Phase 3 — End-to-end against a real Supabase test branch.** Stripe
    test event → row → admin sees it.
 
 Beyond that, the structural roadmap stays: WhatsApp inbound (#6 of original
-P3), Resend drip worker, real product photography (Supabase Storage).
+P3), Resend drip worker (welcome series + mission update emails), real
+product photography (Supabase Storage), `audit_log` retention policy.
 
 ---
 
@@ -310,7 +309,11 @@ P3), Resend drip worker, real product photography (Supabase Storage).
 | `174fbc8` | Phase 2.K.2: server-side admin auth — closes the P0 SSR data leak (#1) |
 | `b7858b8` | Phase 2.L: error pages, auto-redirect after sign-in, mobile drawer, readable audit (#4, #6, #7, #8) |
 | `dcc78ec` | Phase 1.B: catalog migration — `lace.products` reads across storefront + admin (#3) |
-| (pending) | Phase 2.M: test backfill — 49 new tests across actions, admin-auth, email, admin routes (#2) |
+| `bd5bf29` | Phase 2.M: test backfill — 49 new tests across actions, admin-auth, email, admin routes (#2) |
+| `72f008a` | Drape treatment on placeholder cards — closes the "Lego" look in dark mode |
+| `69be61d` | Dismissible pre-launch banner + GA exclusion for `/admin/*` |
+| `f50983e` | Customer-facing refund email + customer upsert from contact form |
+| (pending) | Phase 2.N: concierge rate limit (#5) — in-memory sliding window per IP |
 
 These are reflected in the per-finding entries above so the audit shows the
 true *current* state, not the pre-audit state.

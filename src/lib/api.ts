@@ -33,12 +33,23 @@ export function ok<T>(data: T, opts?: { mode?: ResponseMode }): NextResponse {
   return NextResponse.json(body);
 }
 
-/** Non-2xx with a user-safe error message. */
+/**
+ * Non-2xx with a user-safe error message. `retryAfter` (in seconds)
+ * sets the standard Retry-After header — used by 429 responses so
+ * well-behaved clients back off correctly.
+ */
 export function fail(
   error: string,
-  opts?: { status?: number; code?: string }
+  opts?: { status?: number; code?: string; retryAfter?: number },
 ): NextResponse {
   const body: ApiFailure = { ok: false, error };
   if (opts?.code) body.code = opts.code;
-  return NextResponse.json(body, { status: opts?.status ?? 500 });
+  const headers: Record<string, string> = {};
+  if (typeof opts?.retryAfter === "number" && opts.retryAfter > 0) {
+    headers["Retry-After"] = String(Math.max(1, Math.ceil(opts.retryAfter)));
+  }
+  return NextResponse.json(body, {
+    status: opts?.status ?? 500,
+    headers,
+  });
 }
