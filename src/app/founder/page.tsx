@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { ArrowRight, Heart, Quote } from "lucide-react";
 import Reveal from "@/components/ui/Reveal";
@@ -29,6 +30,22 @@ export default function FounderLetterPage() {
             A personal note on faith, family, and the love that lives inside
             every veil we make.
           </p>
+
+          {/* Founders Image */}
+          <div className="mt-12">
+            <div className="relative mx-auto w-64 h-64 sm:w-80 sm:h-80 rounded-2xl overflow-hidden shadow-lg ring-1 ring-gold/10">
+              <Image
+                src="/images/founders.jpeg"
+                alt="Our founder and her sister at La Luz del Mundo"
+                fill
+                className="object-cover object-top"
+                priority
+              />
+            </div>
+            <p className="mt-4 text-sm text-warm-gray italic">
+              Our founder and her sister at La Luz del Mundo
+            </p>
+          </div>
         </div>
       </section>
 
