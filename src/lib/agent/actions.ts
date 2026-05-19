@@ -412,6 +412,265 @@ export async function tagCustomer(
   return { ok: true, effects: [human], sessionNote: human };
 }
 
+// ── Catalog ────────────────────────────────────────────────────
+
+const PRODUCT_CATEGORIES = [
+  "signature",
+  "essentials",
+  "limited",
+  "centennial",
+  "accessories",
+] as const;
+export type ProductCategory = (typeof PRODUCT_CATEGORIES)[number];
+
+const SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
+
+export interface ProductMetadataPatch {
+  style?: string;
+  preOrder?: boolean;
+  features?: string[];
+  care?: string[];
+}
+
+export interface CreateProductPayload {
+  slug: string;
+  name: string;
+  subtitle?: string;
+  description?: string;
+  category: ProductCategory;
+  price_cents: number;
+  compare_at_cents?: number | null;
+  featured?: boolean;
+  sort?: number;
+  accent_gradient?: string;
+  hero_copy?: string;
+  metadata?: ProductMetadataPatch;
+}
+
+function validateProductCore(
+  p: Partial<CreateProductPayload>,
+): string | null {
+  if (!p.name?.trim()) return "Name is required.";
+  if (!p.slug?.trim()) return "Slug is required.";
+  if (!SLUG_PATTERN.test(p.slug))
+    return "Slug must be lowercase letters, numbers, and dashes only.";
+  if (!p.category || !PRODUCT_CATEGORIES.includes(p.category))
+    return "Pick a valid collection.";
+  if (typeof p.price_cents !== "number" || p.price_cents < 0)
+    return "Price must be 0 or more.";
+  if (
+    p.compare_at_cents != null &&
+    (typeof p.compare_at_cents !== "number" ||
+      p.compare_at_cents < p.price_cents)
+  ) {
+    return "Compare-at price must be at or above the price.";
+  }
+  return null;
+}
+
+export async function createProduct(
+  db: LaceServiceClient,
+  payload: CreateProductPayload,
+  ctx: ActionContext,
+): Promise<ActionResult> {
+  const err = validateProductCore(payload);
+  if (err) return notOk(err);
+
+  const slug = payload.slug.trim().toLowerCase();
+  // Make sure the slug isn't already taken — surfacing a friendly
+  // message beats the bare unique-constraint error from Postgres.
+  const existing = await db
+    .from("products")
+    .select("id")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (existing.data) {
+    return notOk(`A product with slug "${slug}" already exists.`);
+  }
+
+  const insertRow: Record<string, unknown> = {
+    slug,
+    name: payload.name.trim(),
+    subtitle: payload.subtitle?.trim() || null,
+    description: payload.description?.trim() || null,
+    category: payload.category,
+    price_cents: payload.price_cents,
+    compare_at_cents: payload.compare_at_cents ?? null,
+    featured: payload.featured ?? false,
+    sort: payload.sort ?? 0,
+    accent_gradient: payload.accent_gradient?.trim() || null,
+    hero_copy: payload.hero_copy?.trim() || null,
+    metadata: payload.metadata ?? {},
+  };
+
+  const { data, error } = await db
+    .from("products")
+    .insert(insertRow)
+    .select("id, slug, name")
+    .single();
+  if (error || !data) {
+    return notOk(`Couldn't create product: ${error?.message ?? "unknown"}.`);
+  }
+  await writeAudit({
+    actor_type: ctx.actorType ?? "user",
+    actor_label: ctx.actorLabel,
+    action: "product.create",
+    entity_type: "product",
+    entity_id: data.id,
+    metadata: { slug, name: payload.name, approval_id: ctx.approvalId ?? null },
+  });
+  return {
+    ok: true,
+    effects: [`Created product "${payload.name}".`],
+    sessionNote: `Created product "${payload.name}".`,
+  };
+}
+
+export interface UpdateProductPayload {
+  name?: string;
+  subtitle?: string | null;
+  description?: string | null;
+  category?: ProductCategory;
+  price_cents?: number;
+  compare_at_cents?: number | null;
+  featured?: boolean;
+  sort?: number;
+  accent_gradient?: string | null;
+  hero_copy?: string | null;
+  metadata?: ProductMetadataPatch;
+}
+
+export async function updateProduct(
+  db: LaceServiceClient,
+  slug: string,
+  payload: UpdateProductPayload,
+  ctx: ActionContext,
+): Promise<ActionResult> {
+  if (!slug) return notOk("Slug is required.");
+
+  const patch: Record<string, unknown> = {};
+  if (payload.name !== undefined) {
+    if (!payload.name.trim()) return notOk("Name can't be empty.");
+    patch.name = payload.name.trim();
+  }
+  if (payload.subtitle !== undefined)
+    patch.subtitle = payload.subtitle?.trim() || null;
+  if (payload.description !== undefined)
+    patch.description = payload.description?.trim() || null;
+  if (payload.category !== undefined) {
+    if (!PRODUCT_CATEGORIES.includes(payload.category))
+      return notOk("Pick a valid collection.");
+    patch.category = payload.category;
+  }
+  if (payload.price_cents !== undefined) {
+    if (typeof payload.price_cents !== "number" || payload.price_cents < 0)
+      return notOk("Price must be 0 or more.");
+    patch.price_cents = payload.price_cents;
+  }
+  if (payload.compare_at_cents !== undefined) {
+    const c = payload.compare_at_cents;
+    if (c != null && (typeof c !== "number" || c < 0))
+      return notOk("Compare-at must be 0 or more.");
+    if (
+      c != null &&
+      patch.price_cents != null &&
+      c < (patch.price_cents as number)
+    )
+      return notOk("Compare-at must be at or above the price.");
+    patch.compare_at_cents = c;
+  }
+  if (payload.featured !== undefined) patch.featured = payload.featured;
+  if (payload.sort !== undefined) patch.sort = payload.sort;
+  if (payload.accent_gradient !== undefined)
+    patch.accent_gradient = payload.accent_gradient?.trim() || null;
+  if (payload.hero_copy !== undefined)
+    patch.hero_copy = payload.hero_copy?.trim() || null;
+  if (payload.metadata !== undefined) patch.metadata = payload.metadata;
+
+  if (Object.keys(patch).length === 0) {
+    return notOk("Nothing to update.");
+  }
+
+  const { data, error } = await db
+    .from("products")
+    .update(patch)
+    .eq("slug", slug)
+    .select("id, slug, name")
+    .maybeSingle();
+  if (error || !data) {
+    return notOk(
+      `Couldn't update product${error ? `: ${error.message}` : " — not found"}.`,
+    );
+  }
+  await writeAudit({
+    actor_type: ctx.actorType ?? "user",
+    actor_label: ctx.actorLabel,
+    action: "product.update",
+    entity_type: "product",
+    entity_id: data.id,
+    metadata: {
+      slug: data.slug,
+      changed_fields: Object.keys(patch),
+      approval_id: ctx.approvalId ?? null,
+    },
+  });
+  return {
+    ok: true,
+    effects: [`Updated "${data.name}".`],
+    sessionNote: `Updated "${data.name}".`,
+  };
+}
+
+async function setProductActive(
+  db: LaceServiceClient,
+  slug: string,
+  active: boolean,
+  ctx: ActionContext,
+): Promise<ActionResult> {
+  if (!slug) return notOk("Slug is required.");
+  const { data, error } = await db
+    .from("products")
+    .update({ active })
+    .eq("slug", slug)
+    .select("id, slug, name")
+    .maybeSingle();
+  if (error || !data) {
+    return notOk(
+      `Couldn't ${active ? "restore" : "archive"} product${error ? `: ${error.message}` : " — not found"}.`,
+    );
+  }
+  const verb = active ? "restored" : "archived";
+  await writeAudit({
+    actor_type: ctx.actorType ?? "user",
+    actor_label: ctx.actorLabel,
+    action: active ? "product.restore" : "product.archive",
+    entity_type: "product",
+    entity_id: data.id,
+    metadata: { slug: data.slug, approval_id: ctx.approvalId ?? null },
+  });
+  return {
+    ok: true,
+    effects: [`${data.name} ${verb}.`],
+    sessionNote: `${data.name} ${verb}.`,
+  };
+}
+
+export async function archiveProductBySlug(
+  db: LaceServiceClient,
+  slug: string,
+  ctx: ActionContext,
+): Promise<ActionResult> {
+  return setProductActive(db, slug, false, ctx);
+}
+
+export async function restoreProductBySlug(
+  db: LaceServiceClient,
+  slug: string,
+  ctx: ActionContext,
+): Promise<ActionResult> {
+  return setProductActive(db, slug, true, ctx);
+}
+
 function notOk(message: string): ActionResult {
   return {
     ok: false,
