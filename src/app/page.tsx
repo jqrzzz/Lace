@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, Heart, Gift, Package, Sparkles } from "lucide-react";
 import ProductCard from "@/components/shop/ProductCard";
 import { listProducts } from "@/lib/lace/queries";
@@ -89,10 +90,13 @@ export default async function HomePage() {
                     <div className="w-20 h-20 rounded-full bg-white/50 backdrop-blur-sm flex items-center justify-center mx-auto mb-4 border border-white/60">
                       <Sparkles className="w-8 h-8 text-gold/60" />
                     </div>
-                    <p className="text-[11px] text-warm-gray/50 tracking-[0.2em] uppercase font-medium">
-                      Product Photography
+                    <p className="text-[11px] text-warm-gray/60 tracking-[0.25em] uppercase font-medium">
+                      Bali lace
                     </p>
-                    <p className="text-[10px] text-warm-gray/30 mt-1">Coming soon</p>
+                    <div className="w-8 h-px bg-gold/40 mx-auto my-2" />
+                    <p className="text-[11px] text-warm-gray/60 tracking-[0.25em] uppercase font-medium">
+                      Hand-finished in Guadalajara
+                    </p>
                   </div>
                 </div>
               </div>
@@ -234,15 +238,15 @@ export default async function HomePage() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-14 items-center">
             <Reveal direction="left">
-              <div className="aspect-[4/5] rounded-[2rem] bg-gradient-to-br from-rose/15 via-blush/25 to-champagne/15 border border-border-light/60 flex items-center justify-center shadow-[0_20px_60px_rgba(44,37,39,0.06)] overflow-hidden relative product-lace-trim">
-                <div className="absolute inset-0 product-lace opacity-30" />
-                <div className="text-center relative">
-                  <Heart className="w-10 h-10 text-rose-gold/30 mx-auto mb-3" />
-                  <p className="text-[11px] text-warm-gray/50 tracking-[0.2em] uppercase">
-                    Founder photo
-                  </p>
-                  <p className="text-[10px] text-warm-gray/30 mt-1">Coming soon</p>
-                </div>
+              <div className="relative aspect-[4/5] rounded-[2rem] border border-border-light/60 shadow-[0_20px_60px_rgba(44,37,39,0.06)] overflow-hidden product-lace-trim">
+                <Image
+                  src="/images/founders.jpeg"
+                  alt="Our founder and her sister at La Luz del Mundo"
+                  fill
+                  className="object-cover object-top"
+                  sizes="(min-width: 1024px) 50vw, 100vw"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-charcoal/15 via-transparent to-transparent pointer-events-none" />
               </div>
             </Reveal>
 

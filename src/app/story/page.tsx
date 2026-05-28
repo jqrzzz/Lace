@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, Heart, Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 import Reveal from "@/components/ui/Reveal";
@@ -65,20 +66,16 @@ export default function StoryPage() {
                 {/* Frame accent */}
                 <div className="absolute -inset-1.5 rounded-[2rem] bg-gradient-to-br from-rose/10 to-champagne/20 border border-border-light/50" />
 
-                <div className="relative aspect-[4/5] rounded-[2rem] bg-gradient-to-br from-rose/20 via-blush/30 to-champagne/20 border border-white/70 shadow-[0_30px_80px_rgba(139,58,74,0.12)] flex items-center justify-center overflow-hidden product-lace-trim">
-                  {/* Lace texture inside */}
-                  <div className="product-lace absolute inset-0 opacity-40 pointer-events-none" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-white/40 via-transparent to-white/10" />
-
-                  <div className="relative text-center z-10">
-                    <div className="w-20 h-20 rounded-full bg-white/50 backdrop-blur-sm border border-white/60 flex items-center justify-center mx-auto mb-4">
-                      <Heart className="w-8 h-8 text-rose-gold/60" strokeWidth={1.5} />
-                    </div>
-                    <p className="text-[11px] text-warm-gray/50 tracking-[0.2em] uppercase font-medium">
-                      Founder photo
-                    </p>
-                    <p className="text-[10px] text-warm-gray/30 mt-1">Coming soon</p>
-                  </div>
+                <div className="relative aspect-[4/5] rounded-[2rem] border border-white/70 shadow-[0_30px_80px_rgba(139,58,74,0.12)] overflow-hidden product-lace-trim">
+                  <Image
+                    src="/images/founders.jpeg"
+                    alt="Our founder and her sister at La Luz del Mundo"
+                    fill
+                    className="object-cover object-top"
+                    sizes="(min-width: 1024px) 40vw, 90vw"
+                    priority
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-charcoal/20 via-transparent to-transparent pointer-events-none" />
                 </div>
 
                 {/* Floating accent card */}

@@ -223,10 +223,13 @@ export default function CentennialPage() {
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="text-center">
                       <Crown className="w-10 h-10 text-gold/50 mx-auto mb-3" strokeWidth={1.3} />
-                      <p className="text-[11px] tracking-[0.25em] uppercase text-warm-gray/60">
-                        Commemorative photo
+                      <p className="font-heading text-3xl text-charcoal/70">
+                        N<span className="text-gold">°</span> 001
                       </p>
-                      <p className="text-[10px] text-warm-gray/40 mt-1">Coming soon</p>
+                      <div className="w-10 h-px bg-gold/40 mx-auto my-3" />
+                      <p className="text-[11px] tracking-[0.25em] uppercase text-warm-gray/60">
+                        of one hundred
+                      </p>
                     </div>
                   </div>
                 </div>
