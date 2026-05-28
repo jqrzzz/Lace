@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Mail } from "lucide-react";
+import { AlertCircle, Check, Mail } from "lucide-react";
 import VelaAvatar from "@/components/ui/VelaAvatar";
 
 interface InlineNewsletterProps {
@@ -24,22 +24,30 @@ export default function InlineNewsletter({
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!email) return;
     setLoading(true);
+    setErrorMsg(null);
     try {
-      await fetch("/api/newsletter", {
+      const res = await fetch("/api/newsletter", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, source }),
       });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        setErrorMsg(body.error ?? "Couldn't add you — try again in a moment.");
+        setLoading(false);
+        return;
+      }
+      setSubscribed(true);
     } catch {
-      // Feedback matters more than backend confirmation for this surface.
+      setErrorMsg("We couldn't reach the server. Please try again.");
     }
     setLoading(false);
-    setSubscribed(true);
   }
 
   const isBurgundy = variant === "burgundy";
@@ -110,6 +118,7 @@ export default function InlineNewsletter({
             <form
               onSubmit={handleSubmit}
               className="flex flex-col sm:flex-row gap-2 max-w-md"
+              aria-describedby={errorMsg ? "newsletter-error" : undefined}
             >
               <label className="flex-1 relative">
                 <span className="sr-only">Email address</span>
@@ -146,6 +155,20 @@ export default function InlineNewsletter({
                 {loading ? "…" : "Join the letter"}
               </button>
             </form>
+          )}
+          {errorMsg && !subscribed && (
+            <p
+              id="newsletter-error"
+              role="alert"
+              className={
+                isBurgundy
+                  ? "mt-3 inline-flex items-center gap-2 text-xs text-rose-gold"
+                  : "mt-3 inline-flex items-center gap-2 text-xs text-burgundy"
+              }
+            >
+              <AlertCircle className="w-3.5 h-3.5" strokeWidth={1.5} />
+              {errorMsg}
+            </p>
           )}
         </div>
       </div>

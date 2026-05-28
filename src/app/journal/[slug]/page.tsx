@@ -327,7 +327,10 @@ function SectionRenderer({ section }: { section: JournalSection }) {
             <div className="absolute inset-0 product-lace opacity-40 pointer-events-none" />
             <div className="absolute inset-0 bg-gradient-to-t from-white/30 via-transparent to-white/10 pointer-events-none" />
             {section.caption && (
-              <div className="relative z-10 px-10 sm:px-16 max-w-xl text-center">
+              <div
+                aria-hidden="true"
+                className="relative z-10 px-10 sm:px-16 max-w-xl text-center"
+              >
                 <div className="w-10 h-px bg-charcoal/30 mx-auto mb-5" />
                 <p className="font-heading text-xl sm:text-2xl text-charcoal/75 italic leading-snug">
                   {section.caption}
@@ -336,6 +339,9 @@ function SectionRenderer({ section }: { section: JournalSection }) {
               </div>
             )}
           </div>
+          {section.caption && (
+            <figcaption className="sr-only">{section.caption}</figcaption>
+          )}
         </figure>
       );
     }

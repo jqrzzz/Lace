@@ -15,6 +15,7 @@ export default function ProductCard({ product }: { product: Product }) {
     e.preventDefault();
     e.stopPropagation();
     const variant = product.variants[0];
+    if (!variant) return;
     cart.addItem({
       productId: product.id,
       name: product.name,

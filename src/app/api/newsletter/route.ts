@@ -9,7 +9,18 @@ const ALLOWED_SOURCES = new Set([
   "whatsapp",
   "shop",
   "home",
+  "inline",
+  "journal",
 ]);
+// Journal post placements pass a namespaced source like "journal:<slug>" so we
+// can attribute signups to the post that converted them. Match conservatively.
+const NAMESPACED_SOURCE_RE = /^[a-z]+:[a-z0-9-]{1,80}$/;
+
+export function normalizeSource(raw: string): string {
+  if (ALLOWED_SOURCES.has(raw)) return raw;
+  if (NAMESPACED_SOURCE_RE.test(raw)) return raw;
+  return "footer";
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -28,7 +39,7 @@ export async function POST(req: NextRequest) {
         { status: 400 },
       );
     }
-    const source = ALLOWED_SOURCES.has(sourceRaw) ? sourceRaw : "footer";
+    const source = normalizeSource(sourceRaw);
 
     const db = getLaceDb();
     if (db) {

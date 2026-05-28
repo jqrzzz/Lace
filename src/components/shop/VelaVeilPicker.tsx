@@ -131,8 +131,7 @@ export default function VelaVeilPicker({ products }: VelaVeilPickerProps) {
 
   function close() {
     setOpen(false);
-    // Defer reset so the closing animation doesn't reveal step 0 mid-fade.
-    setTimeout(reset, 200);
+    reset();
   }
 
   function answer(opt: AnswerOption) {

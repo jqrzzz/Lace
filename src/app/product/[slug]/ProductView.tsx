@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -45,6 +45,13 @@ export default function ProductView({ product, related }: ProductViewProps) {
 
   const variant = product.variants[selectedColor] ?? product.variants[0];
   const gradient = heroGradient(product, selectedColor);
+  const addedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (addedTimerRef.current) clearTimeout(addedTimerRef.current);
+    };
+  }, []);
 
   const handleAddToCart = () => {
     if (!variant) return;
@@ -63,7 +70,8 @@ export default function ProductView({ product, related }: ProductViewProps) {
       `${product.name} in ${variant.color} added to your bag — and one will be gifted.`,
       "success"
     );
-    setTimeout(() => setAdded(false), 2000);
+    if (addedTimerRef.current) clearTimeout(addedTimerRef.current);
+    addedTimerRef.current = setTimeout(() => setAdded(false), 2000);
   };
 
   // Product JSON-LD for rich results.
