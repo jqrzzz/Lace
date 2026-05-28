@@ -1,4 +1,4 @@
-/* eslint-disable @next/next/no-head-element, @next/next/no-page-custom-font */
+/* eslint-disable @next/next/no-head-element, @next/next/no-page-custom-font, @next/next/no-img-element */
 // ^ These templates render standalone HTML for email clients (Resend /
 //   Postmark), not Next.js pages — the Next Head component is not applicable
 //   and web fonts must be loaded via the <link> the email client can parse.
@@ -143,7 +143,20 @@ export default function BaseLayout({
 
                     {/* Logo */}
                     <tr>
-                      <td align="center" style={{ padding: "36px 40px 8px" }}>
+                      <td align="center" style={{ padding: "32px 40px 8px" }}>
+                        <img
+                          src={`${SITE}/images/vela-ai-avatar.png`}
+                          alt=""
+                          width={72}
+                          height={72}
+                          style={{
+                            display: "block",
+                            margin: "0 auto 12px",
+                            borderRadius: "50%",
+                            border: `1px solid ${EMAIL_COLORS.border}`,
+                            backgroundColor: EMAIL_COLORS.cream,
+                          }}
+                        />
                         <p
                           style={{
                             margin: 0,
