@@ -1,57 +1,25 @@
 "use client";
 
 import { Star } from "lucide-react";
+import {
+  getProductReviews,
+  reviewAggregate,
+  REVIEWS_SOURCE,
+} from "@/lib/reviews";
 
-// Placeholder reviews. Swap for a real backend (Yotpo, Okendo, Loox,
-// or a Supabase table) once collected. Kept here so the UI looks
-// populated from day one.
-const REVIEWS = [
-  {
-    id: 1,
-    name: "Sister María",
-    location: "Guadalajara, MX",
-    rating: 5,
-    date: "March 2026",
-    title: "A heirloom in the making",
-    body: "The lace is even softer in person than in the photos. My daughter will inherit this one day. Thank you for the care you put into every detail.",
-    verified: true,
-  },
-  {
-    id: 2,
-    name: "Elena R.",
-    location: "San Antonio, TX",
-    rating: 5,
-    date: "February 2026",
-    title: "Beautiful, sacred, worth it",
-    body: "I cried when I unboxed mine. The packaging alone felt like a blessing. Knowing another sister received one because of my purchase made it feel even more meaningful.",
-    verified: true,
-  },
-  {
-    id: 3,
-    name: "Lupita G.",
-    location: "Los Angeles, CA",
-    rating: 5,
-    date: "February 2026",
-    title: "Reverent and refined",
-    body: "I have worn veils my whole life and this is the most beautiful I have owned. The drape is perfect. I have already recommended it to every sister in my congregation.",
-    verified: true,
-  },
-  {
-    id: 4,
-    name: "Ana P.",
-    location: "Houston, TX",
-    rating: 4,
-    date: "January 2026",
-    title: "Lovely — size was generous",
-    body: "The lace is stunning. The drape is more generous than I expected — wonderful for coverage. I had to fold mine but that is a small thing.",
-    verified: true,
-  },
-];
+export default function Reviews({
+  productName,
+  productSlug,
+}: {
+  productName: string;
+  productSlug: string;
+}) {
+  const reviews = getProductReviews(productSlug);
+  const agg = reviewAggregate(reviews);
+  const isLive = REVIEWS_SOURCE === "live";
 
-const AVG =
-  REVIEWS.reduce((s, r) => s + r.rating, 0) / REVIEWS.length;
+  if (!agg) return null;
 
-export default function Reviews({ productName }: { productName: string }) {
   return (
     <section className="relative py-20 bg-cream overflow-hidden">
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
@@ -74,7 +42,7 @@ export default function Reviews({ productName }: { productName: string }) {
                 <Star
                   key={i}
                   className={`w-4 h-4 ${
-                    i <= Math.round(AVG)
+                    i <= Math.round(agg.average)
                       ? "fill-gold text-gold"
                       : "text-border"
                   }`}
@@ -83,17 +51,25 @@ export default function Reviews({ productName }: { productName: string }) {
               ))}
             </div>
             <span className="text-sm text-charcoal font-medium">
-              {AVG.toFixed(1)}
+              {agg.average.toFixed(1)}
             </span>
             <span className="text-sm text-warm-gray">
-              · {REVIEWS.length} reviews
+              · {agg.count} review{agg.count === 1 ? "" : "s"}
             </span>
           </div>
+
+          {/* Honesty marker — sample reviews are clearly labeled. */}
+          {!isLive && (
+            <span className="inline-flex items-center gap-1.5 mt-1 px-3 py-1 rounded-full bg-pearl/70 border border-border-light text-[10px] tracking-[0.18em] uppercase text-warm-gray">
+              Sample reviews
+            </span>
+          )}
+
           <div className="gold-line mx-auto mt-4 opacity-40" />
         </div>
 
         <div className="grid md:grid-cols-2 gap-5">
-          {REVIEWS.map((r) => (
+          {reviews.map((r) => (
             <article key={r.id} className="luxury-card rounded-2xl p-6">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center">
@@ -109,7 +85,8 @@ export default function Reviews({ productName }: { productName: string }) {
                     />
                   ))}
                 </div>
-                {r.verified && (
+                {/* "Verified" only asserted for genuine verified purchases. */}
+                {isLive && r.verified && (
                   <span className="text-[9px] tracking-[0.2em] uppercase text-gold font-semibold">
                     Verified
                   </span>
@@ -134,7 +111,9 @@ export default function Reviews({ productName }: { productName: string }) {
         </div>
 
         <p className="text-center text-[11px] text-warm-gray/70 italic mt-10">
-          Reviews shown are from sisters who purchased the {productName}.
+          {isLive
+            ? `Reviews shown are from sisters who purchased the ${productName}.`
+            : "Sample reviews — a preview of the stories we'll share here as sisters receive their veils."}
         </p>
       </div>
     </section>

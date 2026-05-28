@@ -17,6 +17,11 @@ import ProductCard from "@/components/shop/ProductCard";
 import Reveal from "@/components/ui/Reveal";
 import { useToast } from "@/components/ui/Toast";
 import Reviews from "@/components/shop/Reviews";
+import {
+  getProductReviews,
+  reviewAggregate,
+  REVIEWS_SOURCE,
+} from "@/lib/reviews";
 import { variantGradient, type Product } from "@/lib/products";
 
 interface ProductViewProps {
@@ -62,7 +67,13 @@ export default function ProductView({ product, related }: ProductViewProps) {
     addedTimerRef.current = setTimeout(() => setAdded(false), 2000);
   };
 
-  // Product JSON-LD for rich results.
+  // Product JSON-LD for rich results. aggregateRating is only emitted when
+  // reviews are real (REVIEWS_SOURCE === "live") — we never feed search
+  // engines a rating derived from sample data.
+  const reviewAgg =
+    REVIEWS_SOURCE === "live"
+      ? reviewAggregate(getProductReviews(product.slug))
+      : null;
   const productJsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -81,11 +92,15 @@ export default function ProductView({ product, related }: ProductViewProps) {
         : "https://schema.org/InStock",
       url: `/product/${product.slug}`,
     },
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "4.8",
-      reviewCount: "4",
-    },
+    ...(reviewAgg && reviewAgg.count > 0
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: reviewAgg.average.toFixed(1),
+            reviewCount: reviewAgg.count.toString(),
+          },
+        }
+      : {}),
   };
 
   return (
@@ -389,7 +404,7 @@ export default function ProductView({ product, related }: ProductViewProps) {
       </section>
 
       {/* Reviews */}
-      <Reviews productName={product.name} />
+      <Reviews productName={product.name} productSlug={product.slug} />
 
       {/* Related Products */}
       {related.length > 0 && (
