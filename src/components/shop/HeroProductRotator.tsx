@@ -21,14 +21,24 @@ export default function HeroProductRotator({
 }: HeroProductRotatorProps) {
   const [index, setIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
 
   useEffect(() => {
-    if (products.length <= 1 || isPaused) return;
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const onChange = () => setReduceMotion(mq.matches);
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  useEffect(() => {
+    if (products.length <= 1 || isPaused || reduceMotion) return;
     const timer = setInterval(() => {
       setIndex((i) => (i + 1) % products.length);
     }, intervalMs);
     return () => clearInterval(timer);
-  }, [products.length, intervalMs, isPaused]);
+  }, [products.length, intervalMs, isPaused, reduceMotion]);
 
   if (products.length === 0) return null;
 

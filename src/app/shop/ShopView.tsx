@@ -9,12 +9,18 @@ import { cn } from "@/lib/utils";
 import Reveal from "@/components/ui/Reveal";
 import type { Product } from "@/lib/products";
 
-type FilterType = "all" | "collection" | "style";
+type FilterType = "all" | "collection" | "style" | "color";
+
+interface ColorOption {
+  color: string;
+  colorHex: string;
+}
 
 interface ShopViewProps {
   products: Product[];
   collections: string[];
   styles: string[];
+  colors: ColorOption[];
 }
 
 export default function ShopView(props: ShopViewProps) {
@@ -25,10 +31,15 @@ export default function ShopView(props: ShopViewProps) {
   );
 }
 
-function ShopContent({ products, collections, styles }: ShopViewProps) {
+function ShopContent({
+  products,
+  collections,
+  styles,
+  colors,
+}: ShopViewProps) {
   const searchParams = useSearchParams();
   const [filter, setFilter] = useState(() =>
-    initialFilter(searchParams, collections, styles),
+    initialFilter(searchParams, collections, styles, colors),
   );
   const { type: filterType, value: filterValue } = filter;
   const [sortBy, setSortBy] = useState<string>("featured");
@@ -36,11 +47,13 @@ function ShopContent({ products, collections, styles }: ShopViewProps) {
   const filtered =
     filterType === "all"
       ? products
-      : products.filter((p) =>
-          filterType === "collection"
-            ? p.collection === filterValue
-            : p.style === filterValue,
-        );
+      : products.filter((p) => {
+          if (filterType === "collection") return p.collection === filterValue;
+          if (filterType === "style") return p.style === filterValue;
+          if (filterType === "color")
+            return p.variants.some((v) => v.color === filterValue);
+          return true;
+        });
 
   const sorted = [...filtered].sort((a, b) => {
     if (sortBy === "price-low") return a.price - b.price;
@@ -128,6 +141,41 @@ function ShopContent({ products, collections, styles }: ShopViewProps) {
             </select>
           </div>
 
+          {/* Color filter row */}
+          <div className="flex items-center gap-3 mb-10 overflow-x-auto pb-2 scrollbar-hide">
+            <span className="text-[11px] tracking-[0.22em] uppercase text-warm-gray font-medium flex-shrink-0">
+              By color
+            </span>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {colors.map(({ color, colorHex }) => (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() =>
+                    filterType === "color" && filterValue === color
+                      ? setFilter({ type: "all", value: "" })
+                      : setFilter({ type: "color", value: color })
+                  }
+                  title={color}
+                  aria-label={`Filter by ${color}`}
+                  aria-pressed={filterType === "color" && filterValue === color}
+                  className={cn(
+                    "w-7 h-7 rounded-full border-2 transition-all duration-300 flex-shrink-0 shadow-[inset_0_1px_2px_rgba(0,0,0,0.06)]",
+                    filterType === "color" && filterValue === color
+                      ? "border-charcoal scale-110 ring-2 ring-charcoal/15"
+                      : "border-border hover:border-rose-gold hover:scale-105",
+                  )}
+                  style={{ backgroundColor: colorHex }}
+                />
+              ))}
+            </div>
+            {filterType === "color" && (
+              <span className="text-[12px] text-warm-gray italic flex-shrink-0 ml-1">
+                Showing {filterValue}
+              </span>
+            )}
+          </div>
+
           {/* Product Grid */}
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-7">
             {sorted.map((product, i) => (
@@ -198,6 +246,7 @@ function initialFilter(
   params: URLSearchParams,
   collections: string[],
   styles: string[],
+  colors: ColorOption[],
 ): { type: FilterType; value: string } {
   const collection = params.get("collection");
   if (collection && collections.includes(collection)) {
@@ -206,6 +255,10 @@ function initialFilter(
   const style = params.get("style");
   if (style && styles.includes(style)) {
     return { type: "style", value: style };
+  }
+  const color = params.get("color");
+  if (color && colors.some((c) => c.color === color)) {
+    return { type: "color", value: color };
   }
   return { type: "all", value: "" };
 }

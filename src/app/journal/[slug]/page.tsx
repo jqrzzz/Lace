@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ArrowLeft, ArrowRight, Clock, Share2 } from "lucide-react";
 import Reveal from "@/components/ui/Reveal";
+import InlineNewsletter from "@/components/ui/InlineNewsletter";
 import {
   getPostBySlug,
   getRelatedPosts,
@@ -183,6 +184,13 @@ export default async function JournalPostPage({ params }: PageProps) {
               </p>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* ── Inline newsletter — Vela's "stay close" moment ── */}
+      <section className="relative py-12 bg-ivory">
+        <div className="max-w-[680px] mx-auto px-4">
+          <InlineNewsletter source={`journal:${post.slug}`} />
         </div>
       </section>
 

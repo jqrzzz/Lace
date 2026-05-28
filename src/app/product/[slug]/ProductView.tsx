@@ -9,7 +9,6 @@ import {
   Minus,
   Plus,
   Check,
-  Sparkles,
   Share2,
 } from "lucide-react";
 import { useCart } from "@/lib/cart";
@@ -25,6 +24,18 @@ interface ProductViewProps {
   related: Product[];
 }
 
+/** Build a 3-stop hero gradient where the selected variant leads. */
+function heroGradient(product: Product, selectedColor: number): string {
+  const order = [
+    product.variants[selectedColor],
+    product.variants[(selectedColor + 1) % product.variants.length],
+    product.variants[(selectedColor + 2) % product.variants.length],
+  ];
+  const palette = ["#FFF8F1", "#F4DDD0", "#F0E6DB"];
+  const stops = order.map((v, i) => v?.colorHex ?? palette[i]);
+  return `linear-gradient(135deg, ${stops[0]} 0%, ${stops[1]} 55%, ${stops[2]} 100%)`;
+}
+
 export default function ProductView({ product, related }: ProductViewProps) {
   const cart = useCart();
   const { toast } = useToast();
@@ -33,6 +44,7 @@ export default function ProductView({ product, related }: ProductViewProps) {
   const [added, setAdded] = useState(false);
 
   const variant = product.variants[selectedColor] ?? product.variants[0];
+  const gradient = heroGradient(product, selectedColor);
 
   const handleAddToCart = () => {
     if (!variant) return;
@@ -47,6 +59,10 @@ export default function ProductView({ product, related }: ProductViewProps) {
       });
     }
     setAdded(true);
+    toast(
+      `${product.name} in ${variant.color} added to your bag — and one will be gifted.`,
+      "success"
+    );
     setTimeout(() => setAdded(false), 2000);
   };
 
@@ -120,21 +136,15 @@ export default function ProductView({ product, related }: ProductViewProps) {
             <Reveal direction="left">
               <div>
                 <div
-                  className={`aspect-[3/4] rounded-[2rem] bg-gradient-to-br ${product.placeholder.gradient} border border-border-light/50 overflow-hidden relative shadow-[0_20px_60px_rgba(44,37,39,0.06)] product-lace-trim`}
+                  className="aspect-[3/4] rounded-[2rem] border border-border-light/50 overflow-hidden relative shadow-[0_20px_60px_rgba(44,37,39,0.06)] product-lace-trim transition-[background-image] duration-700"
+                  style={{ backgroundImage: gradient }}
+                  aria-label={`${product.name} in ${variant?.color ?? "default"}`}
                 >
-                  <div className="absolute inset-0 product-lace opacity-30" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-white/30 via-transparent to-white/10" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="w-16 h-16 rounded-full bg-white/40 backdrop-blur-sm flex items-center justify-center mx-auto mb-3 border border-white/50">
-                        <Sparkles
-                          className="w-6 h-6 text-charcoal/20"
-                          strokeWidth={1.5}
-                        />
-                      </div>
-                      <p className="text-[11px] text-warm-gray/50 tracking-[0.2em] uppercase">
-                        Photo coming soon
-                      </p>
+                  <div className="absolute inset-0 product-lace opacity-35 pointer-events-none" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-white/35 via-transparent to-white/15 pointer-events-none" />
+                  <div className="absolute inset-x-0 bottom-6 flex justify-center pointer-events-none">
+                    <div className="px-4 py-1.5 rounded-full bg-white/55 backdrop-blur-sm border border-white/60 text-[10px] tracking-[0.28em] uppercase text-charcoal/70 font-medium">
+                      Shown · {variant?.color ?? ""}
                     </div>
                   </div>
                   <div className="absolute top-5 left-5 flex flex-col gap-2">
@@ -152,13 +162,27 @@ export default function ProductView({ product, related }: ProductViewProps) {
                 </div>
 
                 <div className="grid grid-cols-3 gap-3 mt-4">
-                  {[0, 1, 2].map((i) => (
-                    <div
-                      key={i}
-                      className={`aspect-square rounded-xl bg-gradient-to-br ${product.placeholder.gradient} border border-border-light/50 opacity-60 hover:opacity-100 transition-opacity duration-300 cursor-pointer overflow-hidden relative`}
+                  {product.variants.slice(0, 3).map((v, i) => (
+                    <button
+                      key={v.color}
+                      type="button"
+                      onClick={() => setSelectedColor(i)}
+                      aria-label={`Preview ${v.color}`}
+                      aria-pressed={selectedColor === i}
+                      className={cn(
+                        "aspect-square rounded-xl border overflow-hidden relative transition-all duration-300",
+                        selectedColor === i
+                          ? "border-burgundy/60 ring-2 ring-burgundy/20 opacity-100"
+                          : "border-border-light/50 opacity-60 hover:opacity-100 hover:border-rose-gold"
+                      )}
+                      style={{
+                        backgroundImage: `linear-gradient(135deg, ${v.colorHex} 0%, ${
+                          product.variants[(i + 1) % product.variants.length]?.colorHex ?? "#F4DDD0"
+                        } 100%)`,
+                      }}
                     >
-                      <div className="absolute inset-0 product-lace opacity-20" />
-                    </div>
+                      <span className="absolute inset-0 product-lace opacity-25 pointer-events-none" />
+                    </button>
                   ))}
                 </div>
               </div>

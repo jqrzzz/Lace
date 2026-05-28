@@ -4,22 +4,29 @@ import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
 import type { Product } from "@/lib/products";
 import { useCart } from "@/lib/cart";
+import { useToast } from "@/components/ui/Toast";
 import { formatPrice } from "@/lib/utils";
 
 export default function ProductCard({ product }: { product: Product }) {
   const cart = useCart();
+  const { toast } = useToast();
 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    const variant = product.variants[0];
     cart.addItem({
       productId: product.id,
       name: product.name,
       price: product.price,
-      color: product.variants[0].color,
+      color: variant.color,
       slug: product.slug,
       gradient: product.placeholder.gradient,
     });
+    toast(
+      `${product.name} in ${variant.color} added to your bag — and one will be gifted.`,
+      "success"
+    );
   };
 
   return (

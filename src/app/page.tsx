@@ -3,7 +3,14 @@ import Image from "next/image";
 import { ArrowRight, Heart, Gift, Package, Sparkles } from "lucide-react";
 import ProductCard from "@/components/shop/ProductCard";
 import HeroProductRotator from "@/components/shop/HeroProductRotator";
+import GiftedCounter from "@/components/journey/GiftedCounter";
 import { listProducts } from "@/lib/lace/queries";
+import {
+  TOTAL_GIFTED,
+  TOTAL_COMMUNITIES,
+  TOTAL_COUNTRIES,
+  TOTAL_CONTINENTS,
+} from "@/lib/gifted";
 import Reveal from "@/components/ui/Reveal";
 import GoldShimmer from "@/components/ui/GoldShimmer";
 
@@ -98,6 +105,37 @@ export default async function HomePage() {
                 </p>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Impact strip — real numbers from /lib/gifted ── */}
+      <section className="relative bg-cream/60 border-y border-border-light py-14 overflow-hidden">
+        <div className="absolute inset-0 lace-pattern opacity-15 pointer-events-none" />
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            <p className="text-center text-[10px] tracking-[0.4em] uppercase text-gold font-medium mb-2">
+              So far · 2026
+            </p>
+            <p className="text-center text-sm text-warm-gray italic mb-10 max-w-md mx-auto">
+              The mission, in real numbers — every gift made possible by a sister
+              who bought one for herself.
+            </p>
+          </Reveal>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 sm:gap-4">
+            <GiftedCounter end={TOTAL_GIFTED} label="Veils gifted" accent="burgundy" />
+            <GiftedCounter end={TOTAL_COMMUNITIES} label="Sister communities" accent="gold" />
+            <GiftedCounter end={TOTAL_COUNTRIES} label="Countries reached" accent="rose" />
+            <GiftedCounter end={TOTAL_CONTINENTS} label="Continents touched" accent="burgundy" />
+          </div>
+          <div className="mt-10 text-center">
+            <Link
+              href="/journey"
+              className="inline-flex items-center gap-2 text-xs tracking-[0.18em] uppercase text-burgundy hover:text-charcoal transition-colors"
+            >
+              See where the veils have travelled
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
         </div>
       </section>
