@@ -2,6 +2,7 @@ import { ImageResponse } from "next/og";
 import { readFile } from "fs/promises";
 import path from "path";
 import { getProductBySlug, listProducts } from "@/lib/lace/queries";
+import type { ProductVariant } from "@/lib/products";
 
 export const alt = "A handcrafted veil from Lace by La Luz";
 export const size = { width: 1200, height: 630 };
@@ -15,6 +16,19 @@ export async function generateImageMetadata() {
     contentType,
     size,
   }));
+}
+
+/**
+ * Build a 3-stop diagonal gradient from a product's variant colors so each
+ * OG card reads as a unique color story. Pads with brand cream/champagne
+ * when a product has fewer than three variants.
+ */
+function variantGradient(variants: ProductVariant[]): string {
+  const palette = ["#FFF8F1", "#F4DDD0", "#F0E6DB"];
+  const stops = [0, 1, 2].map(
+    (i) => variants[i]?.colorHex ?? palette[i]
+  );
+  return `linear-gradient(135deg, ${stops[0]} 0%, ${stops[1]} 55%, ${stops[2]} 100%)`;
 }
 
 export default async function Image({
@@ -33,8 +47,10 @@ export default async function Image({
   const name = product?.name ?? "Veil";
   const tagline = product?.tagline ?? "Hand-finished Bali lace";
   const collection = product?.collection ?? "Lace by La Luz";
+  const style = product?.style ?? "";
   const price = product?.price ?? 49;
   const swatches = product?.variants?.slice(0, 4) ?? [];
+  const background = variantGradient(product?.variants ?? []);
 
   return new ImageResponse(
     (
@@ -44,8 +60,7 @@ export default async function Image({
           height: "100%",
           display: "flex",
           flexDirection: "row",
-          backgroundImage:
-            "linear-gradient(135deg, #FFF8F1 0%, #F4DDD0 50%, #F0E6DB 100%)",
+          backgroundImage: background,
           position: "relative",
         }}
       >
@@ -82,7 +97,7 @@ export default async function Image({
               fontWeight: 600,
             }}
           >
-            {collection} Collection
+            {collection} Collection{style ? ` · ${style}` : ""}
           </div>
           <div
             style={{
@@ -170,20 +185,34 @@ export default async function Image({
             position: "relative",
           }}
         >
-          <img
-            src={velaSrc}
-            alt=""
-            width={340}
-            height={340}
-            style={{ objectFit: "contain" }}
-          />
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 360,
+              height: 360,
+              borderRadius: "50%",
+              backgroundColor: "rgba(255, 248, 241, 0.55)",
+              border: "1px solid rgba(201, 169, 110, 0.35)",
+              boxShadow: "0 8px 32px rgba(44, 37, 39, 0.08)",
+            }}
+          >
+            <img
+              src={velaSrc}
+              alt=""
+              width={320}
+              height={320}
+              style={{ objectFit: "contain" }}
+            />
+          </div>
           <div
             style={{
               fontSize: 14,
               letterSpacing: "0.3em",
-              color: "#C9A96E",
+              color: "#8B3A4A",
               textTransform: "uppercase",
-              marginTop: 12,
+              marginTop: 18,
               display: "flex",
               fontWeight: 600,
             }}

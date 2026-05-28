@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Heart, Gift, Package, Sparkles } from "lucide-react";
 import ProductCard from "@/components/shop/ProductCard";
+import HeroProductRotator from "@/components/shop/HeroProductRotator";
 import { listProducts } from "@/lib/lace/queries";
 import Reveal from "@/components/ui/Reveal";
 import GoldShimmer from "@/components/ui/GoldShimmer";
@@ -81,25 +82,7 @@ export default async function HomePage() {
 
             {/* Hero Visual */}
             <div className="relative hidden lg:block animate-fade-up" style={{ animationDelay: "0.2s" }}>
-              <div className="aspect-[3/4] rounded-[2rem] bg-gradient-to-br from-rose/25 via-blush/40 via-60% to-champagne/30 border border-white/60 shadow-[0_30px_80px_rgba(139,58,74,0.12)] overflow-hidden relative product-lace-trim">
-                {/* Lace texture inside */}
-                <div className="absolute inset-0 product-lace opacity-40" />
-                <div className="absolute inset-0 bg-gradient-to-t from-white/60 via-transparent to-white/20" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="w-20 h-20 rounded-full bg-white/50 backdrop-blur-sm flex items-center justify-center mx-auto mb-4 border border-white/60">
-                      <Sparkles className="w-8 h-8 text-gold/60" />
-                    </div>
-                    <p className="text-[11px] text-warm-gray/60 tracking-[0.25em] uppercase font-medium">
-                      Bali lace
-                    </p>
-                    <div className="w-8 h-px bg-gold/40 mx-auto my-2" />
-                    <p className="text-[11px] text-warm-gray/60 tracking-[0.25em] uppercase font-medium">
-                      Hand-finished in Guadalajara
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <HeroProductRotator products={FEATURED} />
 
               {/* Floating badges */}
               <div className="absolute -bottom-5 -left-5 glass-card rounded-2xl px-5 py-3.5 animate-float">

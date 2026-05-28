@@ -314,15 +314,20 @@ function SectionRenderer({ section }: { section: JournalSection }) {
       return (
         <figure className="my-8">
           <div
-            className={`${aspect} rounded-2xl bg-gradient-to-br ${section.gradient} overflow-hidden relative`}
+            className={`${aspect} rounded-2xl bg-gradient-to-br ${section.gradient} overflow-hidden relative flex items-center justify-center`}
           >
-            <div className="absolute inset-0 product-lace opacity-40" />
+            <div className="absolute inset-0 product-lace opacity-40 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-t from-white/30 via-transparent to-white/10 pointer-events-none" />
+            {section.caption && (
+              <div className="relative z-10 px-10 sm:px-16 max-w-xl text-center">
+                <div className="w-10 h-px bg-charcoal/30 mx-auto mb-5" />
+                <p className="font-heading text-xl sm:text-2xl text-charcoal/75 italic leading-snug">
+                  {section.caption}
+                </p>
+                <div className="w-10 h-px bg-charcoal/30 mx-auto mt-5" />
+              </div>
+            )}
           </div>
-          {section.caption && (
-            <figcaption className="mt-3 text-center text-sm text-warm-gray italic">
-              {section.caption}
-            </figcaption>
-          )}
         </figure>
       );
     }
