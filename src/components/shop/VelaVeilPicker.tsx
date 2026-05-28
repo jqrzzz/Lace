@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight, RotateCcw, Sparkles, X } from "lucide-react";
 import VelaAvatar from "@/components/ui/VelaAvatar";
 import { cn } from "@/lib/utils";
+import { track } from "@/lib/analytics";
 import {
   DEFAULT_PERSONALITY,
   variantGradient,
@@ -129,8 +130,16 @@ export default function VelaVeilPicker({ products }: VelaVeilPickerProps) {
 
   function answer(opt: AnswerOption) {
     const nextAnswers = [...answers, ...opt.tags];
+    const nextStep = step + 1;
     setAnswers(nextAnswers);
-    setStep((s) => s + 1);
+    setStep(nextStep);
+    if (nextStep >= QUESTIONS.length) {
+      const result = pickWinner(products, nextAnswers);
+      track("veil_picker_completed", {
+        item_id: result?.slug,
+        tags: nextAnswers.join(","),
+      });
+    }
   }
 
   const total = QUESTIONS.length;

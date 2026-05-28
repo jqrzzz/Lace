@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { AlertCircle, Check, Mail } from "lucide-react";
 import VelaAvatar from "@/components/ui/VelaAvatar";
+import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
 interface InlineNewsletterProps {
@@ -45,6 +46,7 @@ export default function InlineNewsletter({
         return;
       }
       setSubscribed(true);
+      track("newsletter_signup", { source });
     } catch {
       setErrorMsg("We couldn't reach the server. Please try again.");
     }

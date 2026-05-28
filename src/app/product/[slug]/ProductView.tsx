@@ -16,6 +16,7 @@ import { formatPrice, cn } from "@/lib/utils";
 import ProductCard from "@/components/shop/ProductCard";
 import Reveal from "@/components/ui/Reveal";
 import { useToast } from "@/components/ui/Toast";
+import { track } from "@/lib/analytics";
 import Reviews from "@/components/shop/Reviews";
 import {
   getProductReviews,
@@ -63,6 +64,14 @@ export default function ProductView({ product, related }: ProductViewProps) {
       `${product.name} in ${variant.color} added to your bag — and one will be gifted.`,
       "success"
     );
+    track("add_to_cart", {
+      item_id: product.slug,
+      item_name: product.name,
+      price: product.price,
+      color: variant.color,
+      quantity,
+      source: "product_page",
+    });
     if (addedTimerRef.current) clearTimeout(addedTimerRef.current);
     addedTimerRef.current = setTimeout(() => setAdded(false), 2000);
   };

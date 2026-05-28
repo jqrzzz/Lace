@@ -13,6 +13,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useCart } from "@/lib/cart";
+import { track } from "@/lib/analytics";
 import { formatPrice } from "@/lib/utils";
 
 export default function CartPage() {
@@ -25,6 +26,7 @@ export default function CartPage() {
   const handleCheckout = async () => {
     setCheckoutLoading(true);
     setCheckoutError("");
+    track("begin_checkout", { value: total, items: itemCount });
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",

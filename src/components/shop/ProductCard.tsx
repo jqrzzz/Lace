@@ -5,6 +5,7 @@ import { ShoppingBag } from "lucide-react";
 import type { Product } from "@/lib/products";
 import { useCart } from "@/lib/cart";
 import { useToast } from "@/components/ui/Toast";
+import { track } from "@/lib/analytics";
 import { formatPrice } from "@/lib/utils";
 
 export default function ProductCard({ product }: { product: Product }) {
@@ -28,6 +29,14 @@ export default function ProductCard({ product }: { product: Product }) {
       `${product.name} in ${variant.color} added to your bag — and one will be gifted.`,
       "success"
     );
+    track("add_to_cart", {
+      item_id: product.slug,
+      item_name: product.name,
+      price: product.price,
+      color: variant.color,
+      quantity: 1,
+      source: "quick_add",
+    });
   };
 
   return (

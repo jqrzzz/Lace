@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { AlertCircle, Heart, Check } from "lucide-react";
 import ThemeToggle from "@/components/ui/ThemeToggle";
+import { track } from "@/lib/analytics";
 
 export default function Footer() {
   const [subscribed, setSubscribed] = useState(false);
@@ -32,6 +33,7 @@ export default function Footer() {
         return;
       }
       setSubscribed(true);
+      track("newsletter_signup", { source: "footer" });
     } catch {
       setSubError("We couldn't reach the server. Please try again.");
     }

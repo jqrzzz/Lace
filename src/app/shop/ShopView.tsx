@@ -7,6 +7,7 @@ import Link from "next/link";
 import ProductCard from "@/components/shop/ProductCard";
 import VelaVeilPicker from "@/components/shop/VelaVeilPicker";
 import { cn } from "@/lib/utils";
+import { track } from "@/lib/analytics";
 import Reveal from "@/components/ui/Reveal";
 import type { Product } from "@/lib/products";
 
@@ -44,6 +45,12 @@ function ShopContent({
   );
   const { type: filterType, value: filterValue } = filter;
   const [sortBy, setSortBy] = useState<string>("featured");
+
+  // Single setter so every filter change is also reported to analytics.
+  function applyFilter(type: FilterType, value: string) {
+    setFilter({ type, value });
+    track("select_filter", { filter_type: type, filter_value: value || "all" });
+  }
 
   const filtered =
     filterType === "all"
@@ -96,7 +103,7 @@ function ShopContent({
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-12">
             <div className="flex gap-2 overflow-x-auto sm:overflow-visible sm:flex-wrap pb-2 sm:pb-0 scrollbar-hide">
               <button
-                onClick={() => setFilter({ type: "all", value: "" })}
+                onClick={() => applyFilter("all", "")}
                 className={cn(
                   "px-5 py-2.5 text-[13px] rounded-full border transition-all duration-300 whitespace-nowrap flex-shrink-0",
                   filterType === "all"
@@ -109,7 +116,7 @@ function ShopContent({
               {collections.map((c) => (
                 <button
                   key={c}
-                  onClick={() => setFilter({ type: "collection", value: c })}
+                  onClick={() => applyFilter("collection", c)}
                   className={cn(
                     "px-5 py-2.5 text-[13px] rounded-full border transition-all duration-300 whitespace-nowrap flex-shrink-0",
                     filterType === "collection" && filterValue === c
@@ -123,7 +130,7 @@ function ShopContent({
               {styles.map((s) => (
                 <button
                   key={s}
-                  onClick={() => setFilter({ type: "style", value: s })}
+                  onClick={() => applyFilter("style", s)}
                   className={cn(
                     "px-5 py-2.5 text-[13px] rounded-full border transition-all duration-300 whitespace-nowrap flex-shrink-0",
                     filterType === "style" && filterValue === s
@@ -159,8 +166,8 @@ function ShopContent({
                   type="button"
                   onClick={() =>
                     filterType === "color" && filterValue === color
-                      ? setFilter({ type: "all", value: "" })
-                      : setFilter({ type: "color", value: color })
+                      ? applyFilter("all", "")
+                      : applyFilter("color", color)
                   }
                   title={color}
                   aria-label={`Filter by ${color}`}
@@ -206,7 +213,7 @@ function ShopContent({
                 Try a different filter or browse all veils.
               </p>
               <button
-                onClick={() => setFilter({ type: "all", value: "" })}
+                onClick={() => applyFilter("all", "")}
                 className="btn-luxe inline-flex items-center gap-2 px-7 py-3 bg-burgundy text-white text-sm tracking-[0.04em] rounded-full"
               >
                 View All Veils
