@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Heart, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import ProductCard from "@/components/shop/ProductCard";
+import VelaVeilPicker from "@/components/shop/VelaVeilPicker";
 import { cn } from "@/lib/utils";
 import Reveal from "@/components/ui/Reveal";
 import type { Product } from "@/lib/products";
@@ -86,6 +87,11 @@ function ShopContent({
       {/* Filters & Grid */}
       <section className="py-14">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Vela's veil picker — collapsed CTA by default */}
+          <div className="mb-12">
+            <VelaVeilPicker products={products} />
+          </div>
+
           {/* Controls */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-12">
             <div className="flex gap-2 overflow-x-auto sm:overflow-visible sm:flex-wrap pb-2 sm:pb-0 scrollbar-hide">
