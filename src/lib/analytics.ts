@@ -49,7 +49,6 @@ export function track(
   window.dataLayer = window.dataLayer ?? [];
   window.dataLayer.push({ event, ...clean });
   if (process.env.NODE_ENV !== "production") {
-    // eslint-disable-next-line no-console
     console.debug("[analytics]", event, clean);
   }
 }
