@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { MessageCircle, X, Send, Sparkles } from "lucide-react";
+import { X, Send } from "lucide-react";
 import { fetchJSON } from "@/lib/client";
 import { pickFollowups } from "@/lib/concierge-followups";
+import VelaAvatar from "@/components/ui/VelaAvatar";
 
 /**
- * Public-facing chat concierge — the shopper's Luz. Grounded in the
+ * Public-facing chat concierge — the shopper's Vela. Grounded in the
  * brand FAQ and policies; no order lookups, no personal data. Goal
  * is deflection: answer the quick questions a human would otherwise
  * have to type out, and hand off to a human for anything real.
@@ -90,13 +91,17 @@ export default function ConciergeWidget() {
       {/* Trigger */}
       <button
         onClick={() => setOpen((v) => !v)}
-        aria-label={open ? "Close concierge chat" : "Open concierge chat"}
-        className="fixed bottom-5 right-5 z-[90] w-14 h-14 rounded-full bg-burgundy text-white shadow-xl hover:bg-burgundy/90 flex items-center justify-center transition-transform hover:scale-105"
+        aria-label={open ? "Close concierge chat" : "Chat with Vela"}
+        className={
+          open
+            ? "fixed bottom-5 right-5 z-[90] w-14 h-14 rounded-full bg-burgundy text-white shadow-xl hover:bg-burgundy/90 flex items-center justify-center transition-transform hover:scale-105"
+            : "fixed bottom-5 right-5 z-[90] w-14 h-14 rounded-full bg-white shadow-xl hover:scale-105 transition-transform ring-2 ring-gold/40 overflow-hidden"
+        }
       >
         {open ? (
           <X className="w-5 h-5" />
         ) : (
-          <MessageCircle className="w-5 h-5" />
+          <VelaAvatar size={56} ring={false} className="!ring-0" />
         )}
       </button>
 
@@ -104,17 +109,19 @@ export default function ConciergeWidget() {
       {open && (
         <div className="fixed bottom-24 right-5 z-[90] w-[360px] max-w-[calc(100vw-2.5rem)] h-[520px] max-h-[calc(100vh-10rem)] bg-white rounded-2xl shadow-2xl border border-border-light flex flex-col overflow-hidden">
           {/* Header */}
-          <div className="bg-gradient-to-br from-burgundy to-charcoal text-pearl px-5 py-4">
-            <div className="flex items-center gap-2 mb-0.5 text-gold">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span className="text-[10px] uppercase tracking-[0.2em]">
-                Concierge
-              </span>
+          <div className="bg-gradient-to-br from-burgundy to-charcoal text-pearl px-5 py-4 flex items-start gap-3">
+            <VelaAvatar size={44} ring />
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-0.5 text-gold">
+                <span className="text-[10px] uppercase tracking-[0.2em]">
+                  Concierge · Vela
+                </span>
+              </div>
+              <p className="text-sm leading-snug">
+                Hola, soy Vela. Ask me about the veils, sizing, shipping, or
+                our gifting mission.
+              </p>
             </div>
-            <p className="text-sm leading-snug">
-              Hola, soy Luz. Ask me about the veils, sizing, shipping, or our
-              gifting mission.
-            </p>
           </div>
 
           {/* Transcript */}
@@ -138,31 +145,27 @@ export default function ConciergeWidget() {
                 ))}
               </div>
             ) : (
-              messages.map((m, i) => (
-                <div
-                  key={i}
-                  className={
-                    m.role === "user"
-                      ? "flex justify-end"
-                      : "flex justify-start"
-                  }
-                >
-                  <div
-                    className={
-                      m.role === "user"
-                        ? "max-w-[85%] bg-burgundy text-white rounded-2xl rounded-tr-sm px-3.5 py-2.5 text-sm whitespace-pre-wrap"
-                        : "max-w-[85%] bg-white border border-border-light text-charcoal rounded-2xl rounded-tl-sm px-3.5 py-2.5 text-sm whitespace-pre-wrap"
-                    }
-                  >
-                    {m.content}
+              messages.map((m, i) =>
+                m.role === "user" ? (
+                  <div key={i} className="flex justify-end">
+                    <div className="max-w-[85%] bg-burgundy text-white rounded-2xl rounded-tr-sm px-3.5 py-2.5 text-sm whitespace-pre-wrap">
+                      {m.content}
+                    </div>
                   </div>
-                </div>
-              ))
+                ) : (
+                  <div key={i} className="flex justify-start items-end gap-2">
+                    <VelaAvatar size={28} />
+                    <div className="max-w-[80%] bg-white border border-border-light text-charcoal rounded-2xl rounded-bl-sm px-3.5 py-2.5 text-sm whitespace-pre-wrap">
+                      {m.content}
+                    </div>
+                  </div>
+                )
+              )
             )}
             {sending && (
               <div className="flex items-center gap-2 text-xs text-warm-gray">
-                <Sparkles className="w-3.5 h-3.5 text-gold animate-pulse" />
-                Luz is typing…
+                <VelaAvatar size={20} pulse ring={false} />
+                Vela is typing…
               </div>
             )}
 
@@ -204,7 +207,7 @@ export default function ConciergeWidget() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask about veils, shipping, or the mission…"
-              aria-label="Ask Luz a question"
+              aria-label="Ask Vela a question"
               className="flex-1 px-3 py-2 text-sm border border-border rounded-xl focus:outline-none focus:border-gold"
             />
             <button

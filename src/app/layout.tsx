@@ -55,12 +55,21 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "/",
+    images: [
+      {
+        url: "/images/vela-ai-avatar.png",
+        width: 1254,
+        height: 1254,
+        alt: "Vela — your concierge at Lace by La Luz",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Lace by La Luz | Elegant Veils, Shared with Purpose",
     description:
       "Handcrafted lace veils rooted in beauty, reverence, and sisterhood. Buy one, give one.",
+    images: ["/images/vela-ai-avatar.png"],
   },
   robots: {
     index: true,

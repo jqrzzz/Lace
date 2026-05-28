@@ -24,7 +24,7 @@ export default function PlaybooksPage() {
       <div className="mb-8">
         <h1 className="font-heading text-3xl text-charcoal mb-1">Playbooks</h1>
         <p className="text-sm text-warm-gray max-w-2xl">
-          Reusable workflows Luz can run. Schedule them, trigger them on an
+          Reusable workflows Vela can run. Schedule them, trigger them on an
           event, or tap Run now. Every money or destructive step inside a
           playbook still routes through your approvals queue.
         </p>

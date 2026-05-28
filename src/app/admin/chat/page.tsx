@@ -15,7 +15,7 @@ export default async function ChatPage() {
           Agent Chat
         </h1>
         <p className="text-sm text-warm-gray">
-          Ask Luz anything — about a customer, an order, or have her draft
+          Ask Vela anything — about a customer, an order, or have her draft
           something for you. Actions that spend money or change customer state
           always come back to you for approval first.
         </p>

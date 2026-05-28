@@ -105,7 +105,7 @@ export default function ReplyPane({
     );
   }
 
-  const askLuzHref = `/admin/chat?prefill=${encodeURIComponent(
+  const askVelaHref = `/admin/chat?prefill=${encodeURIComponent(
     `Please draft a warm reply to ${customerName} about their message (id: ${messageId}). Keep it under 120 words.`,
   )}`;
 
@@ -116,11 +116,11 @@ export default function ReplyPane({
           {status === "drafted" ? "Edit the draft" : "Write a reply"}
         </h2>
         <Link
-          href={askLuzHref}
+          href={askVelaHref}
           className="inline-flex items-center gap-1.5 text-xs text-burgundy hover:underline"
         >
           <Sparkles className="w-3 h-3" />
-          Ask Luz to draft for me
+          Ask Vela to draft for me
         </Link>
       </div>
 

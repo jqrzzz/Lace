@@ -175,7 +175,7 @@ export default function SettingsForm() {
       {/* Autonomy section */}
       <section>
         <h2 className="text-xs uppercase tracking-[0.18em] text-warm-gray mb-3">
-          How cautious should Luz be?
+          How cautious should Vela be?
         </h2>
 
         {actor.role !== "owner" ? (
@@ -192,7 +192,7 @@ export default function SettingsForm() {
               <ToggleCard
                 icon={DollarSign}
                 title="Always ask me before money goes out"
-                description="Every refund or paid action shows up in Approvals first — Luz never spends a dollar without your tap."
+                description="Every refund or paid action shows up in Approvals first — Vela never spends a dollar without your tap."
                 checked={toggles.confirm_money_actions}
                 onToggle={() => toggle("confirm_money_actions")}
                 cautionRecommended
@@ -200,7 +200,7 @@ export default function SettingsForm() {
               <ToggleCard
                 icon={ShieldCheck}
                 title="Always ask me before customer-facing changes"
-                description="Edits to products, customer tags, journal posts, and inbox replies all wait for your approval. Turn down once you trust Luz with the small stuff."
+                description="Edits to products, customer tags, journal posts, and inbox replies all wait for your approval. Turn down once you trust Vela with the small stuff."
                 checked={toggles.confirm_destructive}
                 onToggle={() => toggle("confirm_destructive")}
               />
