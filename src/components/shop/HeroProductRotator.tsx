@@ -1,18 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { Product } from "@/lib/products";
+import { variantGradient, type Product } from "@/lib/products";
 
 interface HeroProductRotatorProps {
   products: Product[];
   intervalMs?: number;
-}
-
-function gradientFor(p: Product): string {
-  const c1 = p.variants[0]?.colorHex ?? "#FFF8F1";
-  const c2 = p.variants[1]?.colorHex ?? "#F4DDD0";
-  const c3 = p.variants[2]?.colorHex ?? "#F0E6DB";
-  return `linear-gradient(135deg, ${c1} 0%, ${c2} 55%, ${c3} 100%)`;
 }
 
 export default function HeroProductRotator({
@@ -56,7 +49,7 @@ export default function HeroProductRotator({
           className={`absolute inset-0 transition-opacity duration-[1200ms] ease-in-out ${
             i === index ? "opacity-100" : "opacity-0 pointer-events-none"
           }`}
-          style={{ backgroundImage: gradientFor(p) }}
+          style={{ backgroundImage: variantGradient(p.variants) }}
           aria-hidden={i !== index}
         >
           <div className="absolute inset-0 product-lace opacity-40 pointer-events-none" />

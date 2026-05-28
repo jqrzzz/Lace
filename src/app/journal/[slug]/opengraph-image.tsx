@@ -1,11 +1,15 @@
 import { ImageResponse } from "next/og";
-import { readFile } from "fs/promises";
-import path from "path";
 import { JOURNAL_POSTS, getPostBySlug } from "@/lib/journal";
+import {
+  loadVelaDataUrl,
+  OG_CONTENT_TYPE,
+  OG_SIZE,
+  OgGoldStripes,
+} from "@/lib/og";
 
 export const alt = "An essay from the Lace by La Luz journal";
-export const size = { width: 1200, height: 630 };
-export const contentType = "image/png";
+export const size = OG_SIZE;
+export const contentType = OG_CONTENT_TYPE;
 
 export async function generateImageMetadata() {
   return JOURNAL_POSTS.map((p) => ({
@@ -50,11 +54,7 @@ export default async function Image({
 }) {
   const { slug } = await params;
   const post = getPostBySlug(slug);
-
-  const velaBuffer = await readFile(
-    path.join(process.cwd(), "public/images/vela-ai-avatar.png")
-  );
-  const velaSrc = `data:image/png;base64,${velaBuffer.toString("base64")}`;
+  const velaSrc = await loadVelaDataUrl();
 
   const background = POST_BACKGROUND[slug] ?? DEFAULT_BG;
   const title = post?.title ?? "From the Journal";
@@ -75,18 +75,7 @@ export default async function Image({
           position: "relative",
         }}
       >
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 4,
-            backgroundImage:
-              "linear-gradient(90deg, transparent 0%, #C9A96E 50%, transparent 100%)",
-            display: "flex",
-          }}
-        />
+        <OgGoldStripes />
 
         <div
           style={{
@@ -214,19 +203,6 @@ export default async function Image({
             Lace by La Luz
           </div>
         </div>
-
-        <div
-          style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: 4,
-            backgroundImage:
-              "linear-gradient(90deg, transparent 0%, #C9A96E 50%, transparent 100%)",
-            display: "flex",
-          }}
-        />
       </div>
     ),
     { ...size }

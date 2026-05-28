@@ -44,7 +44,24 @@ import type {
   OrderSummary,
 } from "./types";
 import { GIFTED_COMMUNITIES } from "@/lib/gifted";
-import { PRODUCTS, type Product, type ProductVariant } from "@/lib/products";
+import {
+  PRODUCTS,
+  type PersonalityTag,
+  type Product,
+  type ProductVariant,
+} from "@/lib/products";
+
+const PERSONALITY_TAGS: PersonalityTag[] = [
+  "classic",
+  "floral",
+  "minimal",
+  "special",
+  "limited",
+  "pure",
+  "warm",
+  "soft",
+  "bold",
+];
 import { colorHexFor } from "@/lib/product-colors";
 
 /** Is the live DB backing the queries? Useful for UI hints ("demo mode"). */
@@ -109,6 +126,7 @@ function toProduct(row: ProductDbRow): Product {
     preOrder?: boolean;
     features?: string[];
     care?: string[];
+    personality?: string[];
   };
   const variants: ProductVariant[] = (row.product_variants ?? [])
     .slice()
@@ -134,6 +152,11 @@ function toProduct(row: ProductDbRow): Product {
     variants,
     features: Array.isArray(meta.features) ? meta.features : [],
     care: Array.isArray(meta.care) ? meta.care : [],
+    personality: Array.isArray(meta.personality)
+      ? (meta.personality.filter((t): t is PersonalityTag =>
+          PERSONALITY_TAGS.includes(t as PersonalityTag),
+        ))
+      : undefined,
     placeholder: {
       gradient:
         row.accent_gradient ??

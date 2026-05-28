@@ -4,6 +4,23 @@ export interface ProductVariant {
   inStock: boolean;
 }
 
+/**
+ * Personality tags describe the *character* of a veil — what shoppers feel
+ * about it, not what it physically is. Used by the Vela picker on /shop to
+ * match a product to a shopper's answers. Keep the union small and add a
+ * tag only after deciding what answer maps to it.
+ */
+export type PersonalityTag =
+  | "classic"
+  | "floral"
+  | "minimal"
+  | "special"
+  | "limited"
+  | "pure"
+  | "warm"
+  | "soft"
+  | "bold";
+
 export interface Product {
   id: string;
   slug: string;
@@ -17,10 +34,37 @@ export interface Product {
   variants: ProductVariant[];
   features: string[];
   care: string[];
+  /**
+   * Character tags. Optional so DB-sourced products that don't yet carry
+   * the column stay loadable; the picker falls back to ["classic", "warm"]
+   * if missing, so an untagged product still scores positively.
+   */
+  personality?: PersonalityTag[];
   placeholder: {
     gradient: string;
     accent: string;
   };
+}
+
+/** Brand-neutral fallback when a product hasn't been tagged. */
+export const DEFAULT_PERSONALITY: PersonalityTag[] = ["classic", "warm"];
+
+/**
+ * Build a 3-stop diagonal gradient from a product's variant colors. The
+ * `startIndex` cycles which variant leads — used by the product detail page
+ * to swap the hero gradient when a different color is selected.
+ */
+export function variantGradient(
+  variants: ProductVariant[],
+  startIndex = 0,
+): string {
+  const palette = ["#FFF8F1", "#F4DDD0", "#F0E6DB"] as const;
+  const len = variants.length;
+  const stops = [0, 1, 2].map((offset) => {
+    const v = len > 0 ? variants[(startIndex + offset) % len] : undefined;
+    return v?.colorHex ?? palette[offset];
+  });
+  return `linear-gradient(135deg, ${stops[0]} 0%, ${stops[1]} 55%, ${stops[2]} 100%)`;
 }
 
 export const PRODUCTS: Product[] = [
@@ -52,6 +96,7 @@ export const PRODUCTS: Product[] = [
       "Store folded in the included silk pouch",
       "Steam lightly if needed — do not iron directly",
     ],
+    personality: ["classic", "warm", "soft"],
     placeholder: {
       gradient: "from-amber-50 via-orange-50 to-yellow-50",
       accent: "bg-amber-100",
@@ -85,6 +130,7 @@ export const PRODUCTS: Product[] = [
       "Store folded in the included silk pouch",
       "Steam lightly if needed — do not iron directly",
     ],
+    personality: ["floral", "warm", "soft"],
     placeholder: {
       gradient: "from-pink-50 via-rose-50 to-pink-100",
       accent: "bg-pink-100",
@@ -117,6 +163,7 @@ export const PRODUCTS: Product[] = [
       "Store folded in the included silk pouch",
       "Steam lightly if needed — do not iron directly",
     ],
+    personality: ["classic", "minimal", "soft"],
     placeholder: {
       gradient: "from-stone-50 via-amber-50 to-stone-100",
       accent: "bg-stone-100",
@@ -149,6 +196,7 @@ export const PRODUCTS: Product[] = [
       "Store folded in the included silk pouch",
       "Steam lightly if needed — do not iron directly",
     ],
+    personality: ["minimal", "pure"],
     placeholder: {
       gradient: "from-gray-50 via-white to-gray-50",
       accent: "bg-gray-100",
@@ -181,6 +229,7 @@ export const PRODUCTS: Product[] = [
       "Store folded in the included silk pouch",
       "Do not wring — handle with care",
     ],
+    personality: ["special", "limited", "warm"],
     placeholder: {
       gradient: "from-yellow-50 via-amber-50 to-orange-50",
       accent: "bg-yellow-100",
@@ -214,6 +263,7 @@ export const PRODUCTS: Product[] = [
       "Store folded in the included silk pouch",
       "Steam lightly if needed — do not iron directly",
     ],
+    personality: ["floral", "classic", "warm", "soft"],
     placeholder: {
       gradient: "from-rose-50 via-pink-50 to-amber-50",
       accent: "bg-rose-100",

@@ -1,12 +1,16 @@
 import { ImageResponse } from "next/og";
-import { readFile } from "fs/promises";
-import path from "path";
 import { getProductBySlug, listProducts } from "@/lib/lace/queries";
-import type { ProductVariant } from "@/lib/products";
+import { variantGradient } from "@/lib/products";
+import {
+  loadVelaDataUrl,
+  OG_CONTENT_TYPE,
+  OG_SIZE,
+  OgGoldStripes,
+} from "@/lib/og";
 
 export const alt = "A handcrafted veil from Lace by La Luz";
-export const size = { width: 1200, height: 630 };
-export const contentType = "image/png";
+export const size = OG_SIZE;
+export const contentType = OG_CONTENT_TYPE;
 
 export async function generateImageMetadata() {
   const products = await listProducts();
@@ -18,19 +22,6 @@ export async function generateImageMetadata() {
   }));
 }
 
-/**
- * Build a 3-stop diagonal gradient from a product's variant colors so each
- * OG card reads as a unique color story. Pads with brand cream/champagne
- * when a product has fewer than three variants.
- */
-function variantGradient(variants: ProductVariant[]): string {
-  const palette = ["#FFF8F1", "#F4DDD0", "#F0E6DB"];
-  const stops = [0, 1, 2].map(
-    (i) => variants[i]?.colorHex ?? palette[i]
-  );
-  return `linear-gradient(135deg, ${stops[0]} 0%, ${stops[1]} 55%, ${stops[2]} 100%)`;
-}
-
 export default async function Image({
   params,
 }: {
@@ -38,11 +29,7 @@ export default async function Image({
 }) {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
-
-  const velaBuffer = await readFile(
-    path.join(process.cwd(), "public/images/vela-ai-avatar.png")
-  );
-  const velaSrc = `data:image/png;base64,${velaBuffer.toString("base64")}`;
+  const velaSrc = await loadVelaDataUrl();
 
   const name = product?.name ?? "Veil";
   const tagline = product?.tagline ?? "Hand-finished Bali lace";
@@ -50,7 +37,7 @@ export default async function Image({
   const style = product?.style ?? "";
   const price = product?.price ?? 49;
   const swatches = product?.variants?.slice(0, 4) ?? [];
-  const background = variantGradient(product?.variants ?? []);
+  const background = variantGradient(product?.variants ?? [], 0);
 
   return new ImageResponse(
     (
@@ -64,18 +51,7 @@ export default async function Image({
           position: "relative",
         }}
       >
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 4,
-            backgroundImage:
-              "linear-gradient(90deg, transparent 0%, #C9A96E 50%, transparent 100%)",
-            display: "flex",
-          }}
-        />
+        <OgGoldStripes />
 
         <div
           style={{
@@ -220,19 +196,6 @@ export default async function Image({
             Buy one · Give one
           </div>
         </div>
-
-        <div
-          style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: 4,
-            backgroundImage:
-              "linear-gradient(90deg, transparent 0%, #C9A96E 50%, transparent 100%)",
-            display: "flex",
-          }}
-        />
       </div>
     ),
     { ...size }

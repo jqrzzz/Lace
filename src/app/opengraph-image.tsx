@@ -1,16 +1,17 @@
 import { ImageResponse } from "next/og";
-import { readFile } from "fs/promises";
-import path from "path";
+import {
+  loadVelaDataUrl,
+  OG_CONTENT_TYPE,
+  OG_SIZE,
+  OgGoldStripes,
+} from "@/lib/og";
 
 export const alt = "Lace by La Luz — Elegant Veils, Shared with Purpose";
-export const size = { width: 1200, height: 630 };
-export const contentType = "image/png";
+export const size = OG_SIZE;
+export const contentType = OG_CONTENT_TYPE;
 
 export default async function Image() {
-  const velaBuffer = await readFile(
-    path.join(process.cwd(), "public/images/vela-ai-avatar.png")
-  );
-  const velaSrc = `data:image/png;base64,${velaBuffer.toString("base64")}`;
+  const velaSrc = await loadVelaDataUrl();
 
   return new ImageResponse(
     (
@@ -25,18 +26,7 @@ export default async function Image() {
           position: "relative",
         }}
       >
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 4,
-            backgroundImage:
-              "linear-gradient(90deg, transparent 0%, #C9A96E 50%, transparent 100%)",
-            display: "flex",
-          }}
-        />
+        <OgGoldStripes />
 
         <div
           style={{
@@ -125,19 +115,6 @@ export default async function Image() {
             style={{ objectFit: "contain" }}
           />
         </div>
-
-        <div
-          style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: 4,
-            backgroundImage:
-              "linear-gradient(90deg, transparent 0%, #C9A96E 50%, transparent 100%)",
-            display: "flex",
-          }}
-        />
       </div>
     ),
     { ...size }

@@ -17,23 +17,11 @@ import ProductCard from "@/components/shop/ProductCard";
 import Reveal from "@/components/ui/Reveal";
 import { useToast } from "@/components/ui/Toast";
 import Reviews from "@/components/shop/Reviews";
-import type { Product } from "@/lib/products";
+import { variantGradient, type Product } from "@/lib/products";
 
 interface ProductViewProps {
   product: Product;
   related: Product[];
-}
-
-/** Build a 3-stop hero gradient where the selected variant leads. */
-function heroGradient(product: Product, selectedColor: number): string {
-  const order = [
-    product.variants[selectedColor],
-    product.variants[(selectedColor + 1) % product.variants.length],
-    product.variants[(selectedColor + 2) % product.variants.length],
-  ];
-  const palette = ["#FFF8F1", "#F4DDD0", "#F0E6DB"];
-  const stops = order.map((v, i) => v?.colorHex ?? palette[i]);
-  return `linear-gradient(135deg, ${stops[0]} 0%, ${stops[1]} 55%, ${stops[2]} 100%)`;
 }
 
 export default function ProductView({ product, related }: ProductViewProps) {
@@ -44,7 +32,7 @@ export default function ProductView({ product, related }: ProductViewProps) {
   const [added, setAdded] = useState(false);
 
   const variant = product.variants[selectedColor] ?? product.variants[0];
-  const gradient = heroGradient(product, selectedColor);
+  const gradient = variantGradient(product.variants, selectedColor);
   const addedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {

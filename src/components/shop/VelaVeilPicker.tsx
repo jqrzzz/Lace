@@ -5,27 +5,21 @@ import Link from "next/link";
 import { ArrowRight, RotateCcw, Sparkles, X } from "lucide-react";
 import VelaAvatar from "@/components/ui/VelaAvatar";
 import { cn } from "@/lib/utils";
-import type { Product } from "@/lib/products";
+import {
+  DEFAULT_PERSONALITY,
+  variantGradient,
+  type PersonalityTag,
+  type Product,
+} from "@/lib/products";
 
 interface VelaVeilPickerProps {
   products: Product[];
 }
 
-type Tag =
-  | "classic"
-  | "floral"
-  | "minimal"
-  | "special"
-  | "limited"
-  | "pure"
-  | "warm"
-  | "soft"
-  | "bold";
-
 interface AnswerOption {
   value: string;
   label: string;
-  tags: Tag[];
+  tags: PersonalityTag[];
   swatch?: string;
 }
 
@@ -69,40 +63,39 @@ const QUESTIONS: Question[] = [
   },
 ];
 
-// Hand-tuned tags per product — these reflect collection/style/variant character.
-const PRODUCT_TAGS: Record<string, Tag[]> = {
-  "grace-veil": ["classic", "warm", "soft"],
-  "rosa-veil": ["floral", "warm", "soft"],
-  "serena-veil": ["classic", "minimal", "soft"],
-  "luz-veil": ["minimal", "pure"],
-  "esperanza-veil": ["special", "limited", "warm"],
-  "hermosa-veil": ["floral", "classic", "warm", "soft"],
-};
+function personalityOf(product: Product): PersonalityTag[] {
+  return product.personality && product.personality.length > 0
+    ? product.personality
+    : DEFAULT_PERSONALITY;
+}
 
-function scoreProduct(slug: string, picked: Tag[]): number {
-  const productTags = PRODUCT_TAGS[slug] ?? [];
+function scoreProduct(product: Product, picked: PersonalityTag[]): number {
+  const productTags = personalityOf(product);
   return picked.reduce(
     (sum, t) => sum + (productTags.includes(t) ? 1 : 0),
     0
   );
 }
 
-function pickWinner(products: Product[], picked: Tag[]): Product | null {
+function pickWinner(
+  products: Product[],
+  picked: PersonalityTag[]
+): Product | null {
   if (products.length === 0) return null;
-  let best = products[0];
-  let bestScore = -1;
+  let best: Product | null = null;
+  let bestScore = 0;
   for (const p of products) {
-    const score = scoreProduct(p.slug, picked);
+    const score = scoreProduct(p, picked);
     if (score > bestScore) {
       best = p;
       bestScore = score;
     }
   }
-  return best;
+  return best ?? products[0];
 }
 
-function reasonFor(product: Product, picked: Tag[]): string {
-  const productTags = PRODUCT_TAGS[product.slug] ?? [];
+function reasonFor(product: Product, picked: PersonalityTag[]): string {
+  const productTags = personalityOf(product);
   const overlap = picked.filter((t) => productTags.includes(t));
   if (overlap.includes("limited")) {
     return `If this is a once-in-a-lifetime moment, the ${product.name} was made for exactly that — only one hundred numbered pieces, each with gold thread.`;
@@ -122,7 +115,7 @@ function reasonFor(product: Product, picked: Tag[]): string {
 export default function VelaVeilPicker({ products }: VelaVeilPickerProps) {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState<Tag[]>([]);
+  const [answers, setAnswers] = useState<PersonalityTag[]>([]);
 
   function reset() {
     setStep(0);
@@ -252,13 +245,7 @@ export default function VelaVeilPicker({ products }: VelaVeilPickerProps) {
             <Link
               href={`/product/${winner.slug}`}
               className="group block aspect-[3/4] rounded-2xl border border-border-light/60 overflow-hidden relative shadow-[0_12px_36px_rgba(44,37,39,0.08)]"
-              style={{
-                backgroundImage: `linear-gradient(135deg, ${
-                  winner.variants[0]?.colorHex ?? "#FFF8F1"
-                } 0%, ${winner.variants[1]?.colorHex ?? "#F4DDD0"} 55%, ${
-                  winner.variants[2]?.colorHex ?? "#F0E6DB"
-                } 100%)`,
-              }}
+              style={{ backgroundImage: variantGradient(winner.variants) }}
               aria-label={`See the ${winner.name}`}
             >
               <div className="absolute inset-0 product-lace opacity-35 pointer-events-none" />
