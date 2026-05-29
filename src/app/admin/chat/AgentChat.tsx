@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Send, Wrench, ShieldCheck, User } from "lucide-react";
 import type { AgentMessage, AgentSession } from "@/lib/lace/types";
 import { cn } from "@/lib/utils";
+import { humanizeToolName } from "@/lib/format";
 import { adminFetchJSON } from "@/lib/admin-fetch";
 import VelaAvatar from "@/components/ui/VelaAvatar";
 
@@ -232,8 +233,8 @@ function MessageBubble({ message }: { message: AgentMessage }) {
           {message.tool_name && (
             <div className="mt-2 inline-flex items-center gap-2 text-xs bg-white border border-border rounded-full px-3 py-1.5">
               <Wrench className="w-3 h-3 text-gold" />
-              <span className="text-warm-gray">
-                Called <code className="text-charcoal">{message.tool_name}</code>
+              <span className="text-charcoal">
+                {humanizeToolName(message.tool_name)}
               </span>
               {message.approval_id && (
                 <Link

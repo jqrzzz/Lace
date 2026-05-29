@@ -21,11 +21,11 @@ export default async function AuditPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="font-heading text-3xl text-charcoal mb-1">Audit log</h1>
+        <h1 className="font-heading text-3xl text-charcoal mb-1">Activity log</h1>
         <p className="text-sm text-warm-gray max-w-2xl">
-          Every approval the agent creates, every decision you make, every
-          executed action — all in one scrollable trail. This is the trust
-          surface: if something happened in the console, you can find it here.
+          Everything Vela proposes, every decision you make, and every action
+          that runs — all in one place. If something happened in your store,
+          you can find it here.
         </p>
       </div>
 

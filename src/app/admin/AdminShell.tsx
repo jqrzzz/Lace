@@ -69,7 +69,7 @@ const NAV: NavItem[] = [
     icon: Heart,
     badgeKey: "mission_pending",
   },
-  { href: "/admin/audit", label: "Audit", icon: ScrollText },
+  { href: "/admin/audit", label: "Activity", icon: ScrollText },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
