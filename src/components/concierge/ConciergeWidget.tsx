@@ -109,7 +109,7 @@ export default function ConciergeWidget() {
       {open && (
         <div className="fixed bottom-24 right-5 z-[90] w-[360px] max-w-[calc(100vw-2.5rem)] h-[520px] max-h-[calc(100vh-10rem)] bg-white rounded-2xl shadow-2xl border border-border-light flex flex-col overflow-hidden">
           {/* Header */}
-          <div className="bg-gradient-to-br from-burgundy to-charcoal text-pearl px-5 py-4 flex items-start gap-3">
+          <div className="bg-brand-deep text-pearl px-5 py-4 flex items-start gap-3">
             <VelaAvatar size={44} ring />
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-0.5 text-gold">

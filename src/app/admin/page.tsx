@@ -97,7 +97,7 @@ export default async function AdminOverview() {
       </div>
 
       {/* Morning briefing — the AI-written one-paragraph summary */}
-      <div className="bg-gradient-to-br from-burgundy to-charcoal text-pearl rounded-2xl p-6 mb-6">
+      <div className="bg-brand-deep text-pearl rounded-2xl p-6 mb-6">
         <div className="flex items-center gap-2 mb-3 text-gold">
           <Sparkles className="w-4 h-4" />
           <span className="text-[10px] uppercase tracking-[0.25em]">

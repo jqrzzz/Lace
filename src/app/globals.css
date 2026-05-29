@@ -21,6 +21,13 @@
   --color-border-light: #F0EAE5;
   --color-paper: #FFFFFF;
 
+  /* Endpoints for the brand "deep" gradient (burgundy → charcoal). Kept as
+     dedicated tokens so the one .bg-brand-deep class renders correctly in
+     both themes — the raw --color-burgundy token flips to bright pink in
+     dark mode, which would be wrong for a filled surface. */
+  --grad-deep-from: #8B3A4A;
+  --grad-deep-to: #2C2527;
+
   --font-heading: var(--font-playfair), 'Playfair Display', Georgia, serif;
   --font-body: var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif;
 
@@ -57,16 +64,29 @@
   --color-border-light: #372730;
   --color-paper: #251725;
   --color-ink: #F7E8EE;
+  --grad-deep-from: #7B2C3D;
+  --grad-deep-to: #1E1219;
 }
 
 .dark body {
   color: #F7E8EE;
+  background: var(--color-ivory);
+}
+
+/* Viewport-locked candlelight glow. Painted on a fixed pseudo-element
+   instead of `background-attachment: fixed` on <body> — the latter is a
+   known iOS Safari scroll-jank trap, while a position:fixed layer is cleanly
+   composited. Sits behind all app content (z-index:-1). */
+.dark body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
   background:
     radial-gradient(ellipse 900px 600px at 15% 0%, rgba(245,176,185,0.08), transparent 60%),
     radial-gradient(ellipse 1100px 700px at 85% 100%, rgba(208,162,94,0.06), transparent 65%),
-    radial-gradient(ellipse 700px 500px at 50% 50%, rgba(97,56,67,0.12), transparent 70%),
-    var(--color-ivory);
-  background-attachment: fixed;
+    radial-gradient(ellipse 700px 500px at 50% 50%, rgba(97,56,67,0.12), transparent 70%);
 }
 
 /* Buttons/pills using bg-burgundy need a *dark* pink background in
@@ -74,8 +94,15 @@
    is now a light pink reserved for text). */
 .dark .bg-burgundy { background-color: #7B2C3D; }
 .dark .bg-burgundy\/90 { background-color: rgba(123,44,61,0.92); }
+.dark .bg-burgundy\/85 { background-color: rgba(123,44,61,0.88); }
+.dark .bg-burgundy\/80 { background-color: rgba(123,44,61,0.84); }
+.dark .bg-burgundy\/70 { background-color: rgba(123,44,61,0.72); }
+.dark .bg-burgundy\/60 { background-color: rgba(123,44,61,0.62); }
 .dark .bg-burgundy\/20 { background-color: rgba(123,44,61,0.28); }
+.dark .bg-burgundy\/12 { background-color: rgba(123,44,61,0.18); }
 .dark .bg-burgundy\/10 { background-color: rgba(123,44,61,0.18); }
+.dark .bg-burgundy\/8  { background-color: rgba(123,44,61,0.14); }
+.dark .bg-burgundy\/5  { background-color: rgba(123,44,61,0.10); }
 .dark .hover\:bg-burgundy:hover { background-color: #8E354A; }
 .dark .hover\:bg-burgundy\/90:hover { background-color: rgba(142,53,74,0.95); }
 .dark .border-burgundy { border-color: #B6505F; }
@@ -87,6 +114,17 @@
 .dark .to-charcoal { --tw-gradient-to: #1E1219; }
 .dark .from-burgundy { --tw-gradient-from: #7B2C3D; }
 .dark .to-burgundy { --tw-gradient-to: #7B2C3D; }
+.dark .to-burgundy\/90 { --tw-gradient-to: rgba(123,44,61,0.92); }
+
+/* via-burgundy powers the charcoal→burgundy→charcoal CTA bands across the
+   marketing pages (home, story, press, wholesale, journey, centennial,
+   mission). The raw token is bright-pink TEXT in dark mode, so without these
+   the middle of each dark section glows hot pink. Map every used opacity to
+   the deep-wine fill instead. */
+.dark .via-burgundy { --tw-gradient-via: #7B2C3D; }
+.dark .via-burgundy\/90 { --tw-gradient-via: rgba(123,44,61,0.92); }
+.dark .via-burgundy\/85 { --tw-gradient-via: rgba(123,44,61,0.88); }
+.dark .via-burgundy\/70 { --tw-gradient-via: rgba(123,44,61,0.72); }
 
 /* In light mode charcoal = primary text; in dark mode we want text
    bright but bg-charcoal sections should still stay dark. So we
@@ -245,6 +283,22 @@
   50% { border-color: rgba(201,169,110,0.35); }
 }
 
+/* ── Reduced motion ──
+   Honor the OS preference for the decorative, looping/entrance animations
+   (the omnipresent lace drift, floating orbs, gold shimmer, gentle pulses,
+   and Tailwind animate-* entrances). Functional transitions are left alone;
+   the JS-driven motion (rotator, counters, reveals) already guards itself.
+   Looping keyframes are stopped at their resting frame so nothing hides. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .lace-pattern,
+  .gold-particle,
+  .border-glow,
+  [class*="animate-"] {
+    animation: none !important;
+  }
+}
+
 /* ── Base ── */
 html {
   scroll-behavior: smooth;
@@ -268,6 +322,14 @@ h1, h2, h3, h4, h5, h6 {
 ::selection {
   background: var(--color-burgundy);
   color: white;
+}
+
+/* In dark mode --color-burgundy is the bright-pink TEXT token, so the raw
+   var would give pink-on-white selection. Use the dark-burgundy fill + the
+   bright ink color instead. */
+.dark ::selection {
+  background: #7B2C3D;
+  color: #F7E8EE;
 }
 
 ::-webkit-scrollbar { width: 5px; }
@@ -450,6 +512,35 @@ h1, h2, h3, h4, h5, h6 {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* ── Brand "deep" gradient ──
+   The single source for the burgundy → charcoal diagonal used on the
+   concierge header, admin briefing, newsletter block, etc. Theme-correct
+   in both modes via the --grad-deep-* tokens (see @theme / .dark). */
+.bg-brand-deep {
+  background-image: linear-gradient(
+    to bottom right,
+    var(--grad-deep-from),
+    var(--grad-deep-to)
+  );
+}
+
+/* ── Product color surface — dark scrim ──
+   Product cards/heros are built from pale variant hexes (or Tailwind
+   pastel gradient classes). On the dark plum page those would glow like
+   lightboxes. This invisible-in-light layer lays a hue-preserving plum
+   wash in dark mode so a card reads as "this product, in candlelight" and
+   sits as an elevated surface rather than a beacon. Place it in the DOM
+   after the gradient/texture/scrim layers and before the badges + content
+   so stacking (DOM order among auto z-index) keeps content legible. */
+.product-night-scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.dark .product-night-scrim {
+  background-color: rgba(35, 22, 32, 0.58);
 }
 
 /* ── Veil drape texture for placeholder cards ──

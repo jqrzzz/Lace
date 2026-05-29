@@ -59,7 +59,7 @@ export default function InlineNewsletter({
     <div
       className={
         isBurgundy
-          ? "relative rounded-2xl border border-gold/30 bg-gradient-to-br from-burgundy via-burgundy to-charcoal text-pearl overflow-hidden"
+          ? "relative rounded-2xl border border-gold/30 bg-brand-deep text-pearl overflow-hidden"
           : "relative rounded-2xl border border-border-light bg-cream overflow-hidden"
       }
     >

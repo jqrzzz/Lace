@@ -162,6 +162,7 @@ export default function ProductView({ product, related }: ProductViewProps) {
                 >
                   <div className="absolute inset-0 product-lace opacity-35 pointer-events-none" />
                   <div className="absolute inset-0 bg-gradient-to-t from-white/35 via-transparent to-white/15 pointer-events-none" />
+                  <div className="product-night-scrim" aria-hidden="true" />
                   <div className="absolute inset-x-0 bottom-6 flex justify-center pointer-events-none">
                     <div className="px-4 py-1.5 rounded-full bg-white/55 backdrop-blur-sm border border-white/60 text-[10px] tracking-[0.28em] uppercase text-charcoal/70 font-medium">
                       Shown · {variant?.color ?? ""}

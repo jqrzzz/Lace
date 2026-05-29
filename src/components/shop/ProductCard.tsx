@@ -50,6 +50,7 @@ export default function ProductCard({ product }: { product: Product }) {
             {/* Lace texture */}
             <div className="absolute inset-0 product-lace opacity-30 group-hover:opacity-50 transition-opacity duration-500" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/[0.06] via-transparent to-white/20" />
+            <div className="product-night-scrim" aria-hidden="true" />
 
             {/* Badges */}
             <div className="absolute top-4 left-4 flex flex-col gap-2">

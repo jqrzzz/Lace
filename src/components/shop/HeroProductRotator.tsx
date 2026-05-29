@@ -54,6 +54,7 @@ export default function HeroProductRotator({
         >
           <div className="absolute inset-0 product-lace opacity-40 pointer-events-none" />
           <div className="absolute inset-0 bg-gradient-to-t from-white/45 via-transparent to-white/15 pointer-events-none" />
+          <div className="product-night-scrim" aria-hidden="true" />
           <div className="absolute inset-0 flex items-center justify-center px-10">
             <div className="text-center">
               <p className="text-[10px] tracking-[0.32em] uppercase text-gold-dark font-medium mb-4">

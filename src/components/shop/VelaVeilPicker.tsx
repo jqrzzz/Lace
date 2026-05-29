@@ -259,6 +259,7 @@ export default function VelaVeilPicker({ products }: VelaVeilPickerProps) {
             >
               <div className="absolute inset-0 product-lace opacity-35 pointer-events-none" />
               <div className="absolute inset-0 bg-gradient-to-t from-white/35 via-transparent to-white/15 pointer-events-none" />
+              <div className="product-night-scrim" aria-hidden="true" />
               <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-burgundy/85 backdrop-blur-sm">
                 <Sparkles className="w-3 h-3 text-gold" strokeWidth={1.5} />
                 <span className="text-[9px] tracking-[0.22em] uppercase text-pearl font-semibold">
