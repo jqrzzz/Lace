@@ -20,7 +20,22 @@ import {
   Save,
 } from "lucide-react";
 import { adminFetch } from "@/lib/admin-fetch";
+import { cn } from "@/lib/utils";
 import type { Product } from "@/lib/products";
+
+// Named card-color presets so a non-technical owner picks a swatch instead of
+// typing Tailwind classes. The value is the gradient class string the rest of
+// the app already understands; the name is what she reads.
+const ACCENT_PRESETS: { name: string; cls: string }[] = [
+  { name: "Ivory & Gold", cls: "from-amber-50 via-orange-50 to-yellow-50" },
+  { name: "Blush Rose", cls: "from-pink-50 via-rose-50 to-pink-100" },
+  { name: "Warm Stone", cls: "from-stone-50 via-amber-50 to-stone-100" },
+  { name: "Pure White", cls: "from-gray-50 via-white to-gray-50" },
+  { name: "Champagne", cls: "from-yellow-50 via-amber-50 to-orange-50" },
+  { name: "Rose Petal", cls: "from-rose-50 via-pink-50 to-amber-50" },
+  { name: "Soft Lavender", cls: "from-purple-50 via-pink-50 to-rose-50" },
+  { name: "Sage Mist", cls: "from-emerald-50 via-teal-50 to-stone-50" },
+];
 
 interface FormState {
   slug: string;
@@ -124,6 +139,7 @@ export default function ProductForm({
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [archiving, setArchiving] = useState(false);
+  const [showCustomAccent, setShowCustomAccent] = useState(false);
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -408,17 +424,64 @@ export default function ProductForm({
           />
         </Field>
 
-        <Field
-          label="Accent gradient"
-          hint="Tailwind classes, e.g. 'from-rose-50 via-blush/10 to-cream'."
-        >
-          <input
-            type="text"
-            value={form.accentGradient}
-            onChange={(e) => set("accentGradient", e.target.value)}
-            className="w-full px-3 py-2 border border-border rounded-lg text-sm text-charcoal focus:outline-none focus:border-gold font-mono"
-          />
-        </Field>
+        <div>
+          <span className="text-sm text-charcoal block mb-1">Card color</span>
+          <span className="text-xs text-warm-gray block mb-2">
+            The soft gradient shown behind this veil until you add a photo. Pick
+            the one that best matches its tone.
+          </span>
+          <div className="grid grid-cols-4 sm:grid-cols-8 gap-2.5">
+            {ACCENT_PRESETS.map((preset) => {
+              const selected = form.accentGradient === preset.cls;
+              return (
+                <button
+                  key={preset.cls}
+                  type="button"
+                  onClick={() => set("accentGradient", preset.cls)}
+                  title={preset.name}
+                  aria-label={preset.name}
+                  aria-pressed={selected}
+                  className={cn(
+                    "relative aspect-square rounded-xl border-2 overflow-hidden transition-all bg-gradient-to-br",
+                    preset.cls,
+                    selected
+                      ? "border-burgundy ring-2 ring-burgundy/20 scale-105"
+                      : "border-border hover:border-rose-gold",
+                  )}
+                >
+                  <span className="absolute inset-0 product-lace opacity-30" />
+                  {selected && (
+                    <Check className="absolute top-1 right-1 w-3.5 h-3.5 text-burgundy drop-shadow" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          <div className="flex items-center justify-between mt-2">
+            <span className="text-xs text-warm-gray">
+              {ACCENT_PRESETS.find((p) => p.cls === form.accentGradient)?.name ??
+                (form.accentGradient ? "Custom" : "None selected")}
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowCustomAccent((v) => !v)}
+              className="text-[11px] text-warm-gray hover:text-charcoal underline"
+            >
+              {showCustomAccent ? "Hide advanced" : "Advanced"}
+            </button>
+          </div>
+          {(showCustomAccent ||
+            (form.accentGradient &&
+              !ACCENT_PRESETS.some((p) => p.cls === form.accentGradient))) && (
+            <input
+              type="text"
+              value={form.accentGradient}
+              onChange={(e) => set("accentGradient", e.target.value)}
+              placeholder="Tailwind classes, e.g. from-rose-50 via-blush/10 to-cream"
+              className="w-full mt-2 px-3 py-2 border border-border rounded-lg text-sm text-charcoal focus:outline-none focus:border-gold font-mono"
+            />
+          )}
+        </div>
 
         <Field
           label="Features"

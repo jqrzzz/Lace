@@ -22,6 +22,7 @@ import { computeScorecard } from "@/lib/lace/scorecard";
 import { PLAYBOOKS } from "@/lib/agent/playbooks";
 import { formatCents, timeAgo } from "@/lib/format";
 import Sparkline from "@/components/ui/Sparkline";
+import StartHereCard from "./StartHereCard";
 
 export const dynamic = "force-dynamic";
 
@@ -95,6 +96,8 @@ export default async function AdminOverview() {
           </span>
         )}
       </div>
+
+      <StartHereCard />
 
       {/* Morning briefing — the AI-written one-paragraph summary */}
       <div className="bg-brand-deep text-pearl rounded-2xl p-6 mb-6">
