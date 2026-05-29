@@ -1,17 +1,13 @@
 import Link from "next/link";
-import { Heart, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import VelaAvatar from "@/components/ui/VelaAvatar";
 
 export default function NotFound() {
   return (
     <section className="min-h-screen flex items-center justify-center py-24 px-4 bg-ivory">
       <div className="absolute inset-0 lace-pattern opacity-15 pointer-events-none" />
       <div className="relative max-w-md text-center animate-fade-up">
-        <div className="w-16 h-16 rounded-full bg-blush/30 flex items-center justify-center mx-auto mb-5">
-          <Heart
-            className="w-7 h-7 text-burgundy fill-burgundy/30"
-            strokeWidth={1.5}
-          />
-        </div>
+        <VelaAvatar size={120} whole ring={false} className="mx-auto mb-5" />
         <p className="text-[10px] tracking-[0.35em] uppercase text-gold mb-3 font-medium">
           Page not found
         </p>
@@ -19,8 +15,8 @@ export default function NotFound() {
           This veil isn&apos;t here
         </h1>
         <p className="text-warm-gray leading-relaxed mb-7">
-          The page you were looking for has moved or never existed. Let&apos;s
-          get you back on a familiar path.
+          I looked, but this page has wandered off. Let&apos;s get you back on a
+          familiar path.
         </p>
         <div className="flex flex-wrap justify-center gap-3">
           <Link

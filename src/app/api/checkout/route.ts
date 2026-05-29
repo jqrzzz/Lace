@@ -20,6 +20,17 @@ interface CartItem {
 
 const MAX_QUANTITY_PER_LINE = 20;
 const MAX_LINES = 20;
+const GIFT_MESSAGE_MAX = 250;
+
+/**
+ * Normalize a gift message for storage: collapse whitespace, trim, and cap
+ * length. Stripe metadata values must be strings ≤ 500 chars; we cap at 250
+ * to match the client field and leave headroom.
+ */
+export function sanitizeGiftMessage(raw: unknown): string {
+  if (typeof raw !== "string") return "";
+  return raw.replace(/\s+/g, " ").trim().slice(0, GIFT_MESSAGE_MAX);
+}
 
 export async function POST(req: NextRequest) {
   if (!process.env.STRIPE_SECRET_KEY) {
@@ -34,10 +45,14 @@ export async function POST(req: NextRequest) {
 
   try {
     const stripe = getStripe();
-    const { items, email } = (await req.json()) as {
+    const { items, email, isGift, giftMessage } = (await req.json()) as {
       items: CartItem[];
       email?: string;
+      isGift?: boolean;
+      giftMessage?: string;
     };
+    const gift = isGift === true;
+    const giftNote = gift ? sanitizeGiftMessage(giftMessage) : "";
 
     if (!items || items.length === 0) {
       return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
@@ -150,6 +165,8 @@ export async function POST(req: NextRequest) {
       metadata: {
         total_veils: resolved.reduce((s, r) => s + r.quantity, 0).toString(),
         gifted_veils: resolved.reduce((s, r) => s + r.quantity, 0).toString(),
+        is_gift: gift ? "true" : "false",
+        ...(giftNote ? { gift_message: giftNote } : {}),
       },
       success_url: `${origin}/order/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/cart`,

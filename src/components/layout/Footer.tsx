@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Heart, Check } from "lucide-react";
+import { AlertCircle, Heart, Check } from "lucide-react";
 import ThemeToggle from "@/components/ui/ThemeToggle";
+import { track } from "@/lib/analytics";
 
 export default function Footer() {
   const [subscribed, setSubscribed] = useState(false);
   const [subLoading, setSubLoading] = useState(false);
+  const [subError, setSubError] = useState<string | null>(null);
 
   const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,17 +19,25 @@ export default function Footer() {
     if (!email) return;
 
     setSubLoading(true);
+    setSubError(null);
     try {
-      await fetch("/api/newsletter", {
+      const res = await fetch("/api/newsletter", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, source: "footer" }),
       });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        setSubError(body.error ?? "Couldn't add you — try again in a moment.");
+        setSubLoading(false);
+        return;
+      }
+      setSubscribed(true);
+      track("newsletter_signup", { source: "footer" });
     } catch {
-      // Still show success — the UI feedback matters more than backend confirmation
+      setSubError("We couldn't reach the server. Please try again.");
     }
     setSubLoading(false);
-    setSubscribed(true);
   };
 
   return (
@@ -182,22 +192,38 @@ export default function Footer() {
                 <span className="text-sm text-gold">You&apos;re on the list!</span>
               </div>
             ) : (
-              <form className="flex flex-col sm:flex-row gap-2" onSubmit={handleNewsletterSubmit}>
-                <input
-                  name="footer-email"
-                  type="email"
-                  required
-                  placeholder="Your email"
-                  className="flex-1 px-4 py-2.5 bg-white/[0.06] border border-white/[0.12] rounded-full text-sm text-white placeholder:text-soft-gray/60 focus:outline-none focus:border-gold/50 focus:bg-white/[0.08] transition-all duration-300"
-                />
-                <button
-                  type="submit"
-                  disabled={subLoading}
-                  className="px-5 py-2.5 bg-gradient-to-r from-gold to-gold-light text-charcoal text-sm font-medium rounded-full hover:shadow-[0_4px_20px_rgba(201,169,110,0.3)] transition-all duration-300 disabled:opacity-60"
+              <>
+                <form
+                  className="flex flex-col sm:flex-row gap-2"
+                  onSubmit={handleNewsletterSubmit}
+                  aria-describedby={subError ? "footer-newsletter-error" : undefined}
                 >
-                  {subLoading ? "…" : "Join"}
-                </button>
-              </form>
+                  <input
+                    name="footer-email"
+                    type="email"
+                    required
+                    placeholder="Your email"
+                    className="flex-1 px-4 py-2.5 bg-white/[0.06] border border-white/[0.12] rounded-full text-sm text-white placeholder:text-soft-gray/60 focus:outline-none focus:border-gold/50 focus:bg-white/[0.08] transition-all duration-300"
+                  />
+                  <button
+                    type="submit"
+                    disabled={subLoading}
+                    className="px-5 py-2.5 bg-gradient-to-r from-gold to-gold-light text-charcoal text-sm font-medium rounded-full hover:shadow-[0_4px_20px_rgba(201,169,110,0.3)] transition-all duration-300 disabled:opacity-60"
+                  >
+                    {subLoading ? "…" : "Join"}
+                  </button>
+                </form>
+                {subError && (
+                  <p
+                    id="footer-newsletter-error"
+                    role="alert"
+                    className="mt-3 inline-flex items-center gap-2 text-xs text-rose-gold"
+                  >
+                    <AlertCircle className="w-3.5 h-3.5" strokeWidth={1.5} />
+                    {subError}
+                  </p>
+                )}
+              </>
             )}
           </div>
         </div>

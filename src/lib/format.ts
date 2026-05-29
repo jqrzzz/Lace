@@ -45,3 +45,71 @@ export function formatValue(v: unknown): string {
     return String(v);
   }
 }
+
+// Keys that are plumbing, not something the owner needs to read on an
+// approval card. Hidden from the humanized payload view.
+const HIDDEN_PAYLOAD_KEYS = new Set([
+  "id",
+  "tool",
+  "tool_call",
+  "tool_name",
+  "actor",
+  "actor_id",
+  "actor_label",
+  "approval_id",
+  "idempotency_key",
+]);
+
+function titleCase(key: string): string {
+  const spaced = key.replace(/_/g, " ").trim();
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+
+/**
+ * Turn a raw action payload (the JSON an agent tool would execute) into a
+ * short list of plain-language label/value pairs for the approvals card.
+ * Cents become dollars, booleans become Yes/No, internal IDs are dropped.
+ */
+export function humanizePayload(
+  payload: Record<string, unknown>,
+): { label: string; value: string }[] {
+  const out: { label: string; value: string }[] = [];
+  for (const [key, raw] of Object.entries(payload ?? {})) {
+    if (HIDDEN_PAYLOAD_KEYS.has(key) || key.endsWith("_id")) continue;
+    if (raw === null || raw === undefined || raw === "") continue;
+
+    if (key.endsWith("_cents") && typeof raw === "number") {
+      out.push({ label: titleCase(key.replace(/_cents$/, "")), value: formatCentsExact(raw) });
+      continue;
+    }
+    if (typeof raw === "boolean") {
+      out.push({ label: titleCase(key), value: raw ? "Yes" : "No" });
+      continue;
+    }
+    out.push({ label: titleCase(key), value: formatValue(raw) });
+  }
+  return out;
+}
+
+const TOOL_PHRASES: Record<string, string> = {
+  refund_order: "Issue a refund",
+  update_product_price: "Update a price",
+  mark_order_shipped: "Mark an order shipped",
+  add_tracking_number: "Add tracking",
+  tag_customer: "Tag a customer",
+  draft_inbox_reply: "Draft a reply",
+  draft_journal_post: "Draft a journal post",
+  assign_mission_gift: "Match a gift to a community",
+  mark_gift_delivered: "Mark a gift delivered",
+  send_broadcast: "Prepare an email",
+  archive_product: "Archive a product",
+  unsubscribe_customer: "Unsubscribe a customer",
+  create_product: "Add a product",
+  add_mission_recipient: "Add a community",
+};
+
+/** Friendly, plain-language phrase for an agent tool name. */
+export function humanizeToolName(tool: string | null | undefined): string {
+  if (!tool) return "Took an action";
+  return TOOL_PHRASES[tool] ?? "Took an action";
+}

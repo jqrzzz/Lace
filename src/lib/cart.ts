@@ -11,15 +11,23 @@ export interface CartItem {
   gradient: string;
 }
 
+/** Max characters accepted for a gift message (matches checkout sanitizer). */
+export const GIFT_MESSAGE_MAX = 250;
+
 interface CartState {
   items: CartItem[];
   isOpen: boolean;
+  /** Order-level gift intent — surfaced at checkout, not per item. */
+  isGift: boolean;
+  giftMessage: string;
   openCart: () => void;
   closeCart: () => void;
   toggleCart: () => void;
   addItem: (item: Omit<CartItem, "quantity">) => void;
   removeItem: (productId: string, color: string) => void;
   updateQuantity: (productId: string, color: string, quantity: number) => void;
+  setIsGift: (isGift: boolean) => void;
+  setGiftMessage: (message: string) => void;
   clearCart: () => void;
   totalItems: () => number;
   totalPrice: () => number;
@@ -30,6 +38,8 @@ export const useCart = create<CartState>()(
     (set, get) => ({
       items: [],
       isOpen: false,
+      isGift: false,
+      giftMessage: "",
 
       openCart: () => set({ isOpen: true }),
       closeCart: () => set({ isOpen: false }),
@@ -77,14 +87,29 @@ export const useCart = create<CartState>()(
                 ),
         })),
 
-      clearCart: () => set({ items: [] }),
+      setIsGift: (isGift) =>
+        set((state) => ({
+          isGift,
+          // Drop any message when gifting is turned off so we never send a
+          // stale note to checkout.
+          giftMessage: isGift ? state.giftMessage : "",
+        })),
+
+      setGiftMessage: (message) =>
+        set({ giftMessage: message.slice(0, GIFT_MESSAGE_MAX) }),
+
+      clearCart: () => set({ items: [], isGift: false, giftMessage: "" }),
       totalItems: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
       totalPrice: () =>
         get().items.reduce((sum, i) => sum + i.price * i.quantity, 0),
     }),
     {
       name: "lace-cart",
-      partialize: (state) => ({ items: state.items }),
+      partialize: (state) => ({
+        items: state.items,
+        isGift: state.isGift,
+        giftMessage: state.giftMessage,
+      }),
     }
   )
 );

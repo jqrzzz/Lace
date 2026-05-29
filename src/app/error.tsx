@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
-import { AlertCircle, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import VelaAvatar from "@/components/ui/VelaAvatar";
 
 export default function GlobalError({
   error,
@@ -19,14 +20,12 @@ export default function GlobalError({
     <section className="min-h-screen flex items-center justify-center py-24 px-4 bg-ivory">
       <div className="absolute inset-0 lace-pattern opacity-15 pointer-events-none" />
       <div className="relative max-w-md text-center animate-fade-up">
-        <div className="w-16 h-16 rounded-full bg-blush/30 flex items-center justify-center mx-auto mb-5">
-          <AlertCircle className="w-7 h-7 text-burgundy" strokeWidth={1.5} />
-        </div>
+        <VelaAvatar size={96} whole ring={false} className="mx-auto mb-5" />
         <h1 className="font-heading text-3xl text-charcoal mb-3">
           Something went a little sideways
         </h1>
         <p className="text-warm-gray leading-relaxed mb-6">
-          We logged the issue. Try the page again — and if it keeps misbehaving,
+          I logged the issue. Try the page again — and if it keeps misbehaving,
           take a moment, then come back to it.
         </p>
         {error.digest && (

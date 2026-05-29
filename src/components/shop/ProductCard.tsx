@@ -4,21 +4,38 @@ import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
 import type { Product } from "@/lib/products";
 import { useCart } from "@/lib/cart";
+import { useToast } from "@/components/ui/Toast";
+import { track } from "@/lib/analytics";
 import { formatPrice } from "@/lib/utils";
 
 export default function ProductCard({ product }: { product: Product }) {
   const cart = useCart();
+  const { toast } = useToast();
 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    const variant = product.variants[0];
+    if (!variant) return;
     cart.addItem({
       productId: product.id,
       name: product.name,
       price: product.price,
-      color: product.variants[0].color,
+      color: variant.color,
       slug: product.slug,
       gradient: product.placeholder.gradient,
+    });
+    toast(
+      `${product.name} in ${variant.color} added to your bag — and one will be gifted.`,
+      "success"
+    );
+    track("add_to_cart", {
+      item_id: product.slug,
+      item_name: product.name,
+      price: product.price,
+      color: variant.color,
+      quantity: 1,
+      source: "quick_add",
     });
   };
 
@@ -33,6 +50,7 @@ export default function ProductCard({ product }: { product: Product }) {
             {/* Lace texture */}
             <div className="absolute inset-0 product-lace opacity-30 group-hover:opacity-50 transition-opacity duration-500" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/[0.06] via-transparent to-white/20" />
+            <div className="product-night-scrim" aria-hidden="true" />
 
             {/* Badges */}
             <div className="absolute top-4 left-4 flex flex-col gap-2">

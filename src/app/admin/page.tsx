@@ -22,6 +22,7 @@ import { computeScorecard } from "@/lib/lace/scorecard";
 import { PLAYBOOKS } from "@/lib/agent/playbooks";
 import { formatCents, timeAgo } from "@/lib/format";
 import Sparkline from "@/components/ui/Sparkline";
+import StartHereCard from "./StartHereCard";
 
 export const dynamic = "force-dynamic";
 
@@ -96,8 +97,10 @@ export default async function AdminOverview() {
         )}
       </div>
 
+      <StartHereCard />
+
       {/* Morning briefing — the AI-written one-paragraph summary */}
-      <div className="bg-gradient-to-br from-burgundy to-charcoal text-pearl rounded-2xl p-6 mb-6">
+      <div className="bg-brand-deep text-pearl rounded-2xl p-6 mb-6">
         <div className="flex items-center gap-2 mb-3 text-gold">
           <Sparkles className="w-4 h-4" />
           <span className="text-[10px] uppercase tracking-[0.25em]">
@@ -110,7 +113,7 @@ export default async function AdminOverview() {
             href="/admin/chat"
             className="inline-flex items-center gap-2 bg-white text-charcoal text-sm font-medium px-4 py-2 rounded-full hover:bg-gold hover:text-charcoal transition-colors"
           >
-            Ask Luz a question
+            Ask Vela a question
             <ArrowUpRight className="w-3.5 h-3.5" />
           </Link>
           {briefing.pendingApprovals > 0 && (
@@ -125,7 +128,7 @@ export default async function AdminOverview() {
         </div>
       </div>
 
-      {/* Autonomy scorecard — the "how much is Luz doing for us" card */}
+      {/* Autonomy scorecard — the "how much is Vela doing for us" card */}
       <div className="grid md:grid-cols-[2fr_3fr] gap-4 mb-6">
         <div className="bg-white rounded-2xl border border-border-light p-6">
           <div className="flex items-center justify-between mb-3">
@@ -146,7 +149,7 @@ export default async function AdminOverview() {
             <p className="text-4xl font-heading text-charcoal">
               {Math.round(scorecard.autonomous_share * 100)}%
             </p>
-            <p className="text-xs text-warm-gray">of actions run by Luz</p>
+            <p className="text-xs text-warm-gray">of actions run by Vela</p>
           </div>
           <div className="mt-3 h-1.5 bg-cream rounded-full overflow-hidden">
             <div
@@ -169,7 +172,7 @@ export default async function AdminOverview() {
               Mission impact
             </p>
             <p className="text-lg text-charcoal leading-snug mb-2">
-              Luz saved about{" "}
+              Vela saved about{" "}
               <span className="font-heading text-2xl text-burgundy">
                 ${scorecard.dollars_saved}
               </span>{" "}
@@ -322,7 +325,7 @@ export default async function AdminOverview() {
               Playbooks
             </h2>
             <p className="text-xs text-warm-gray mt-0.5">
-              Canned workflows Luz can run end-to-end. Money and destructive
+              Canned workflows Vela can run end-to-end. Money and destructive
               steps still come back to you.
             </p>
           </div>

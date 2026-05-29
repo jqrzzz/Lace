@@ -189,7 +189,7 @@ export default async function AdminMissionPage() {
             </p>
             <p className="text-xs text-warm-gray max-w-sm mx-auto">
               Recipients are stored in lace.mission_recipients. Add the first
-              church through Supabase Studio or ask Luz to add one for you.
+              church through Supabase Studio or ask Vela to add one for you.
             </p>
           </div>
         ) : (

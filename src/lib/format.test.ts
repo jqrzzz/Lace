@@ -1,5 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
-import { formatCents, formatCentsExact, formatValue, timeAgo, timeLeft } from "./format";
+import {
+  formatCents,
+  formatCentsExact,
+  formatValue,
+  humanizePayload,
+  humanizeToolName,
+  timeAgo,
+  timeLeft,
+} from "./format";
 
 describe("formatCents", () => {
   it("formats whole dollars from cents", () => {
@@ -74,5 +82,48 @@ describe("formatValue", () => {
   it("json-stringifies objects", () => {
     expect(formatValue({ a: 1 })).toBe('{"a":1}');
     expect(formatValue([1, 2])).toBe("[1,2]");
+  });
+});
+
+describe("humanizePayload", () => {
+  it("converts *_cents to dollars and titles the label", () => {
+    expect(humanizePayload({ amount_cents: 8500 })).toEqual([
+      { label: "Amount", value: "$85.00" },
+    ]);
+  });
+
+  it("drops internal id / plumbing keys", () => {
+    const out = humanizePayload({
+      actor_id: "uuid-1",
+      approval_id: "uuid-2",
+      order_id: "uuid-3",
+      idempotency_key: "k",
+      tool: "refund_order",
+      reason: "Damaged in transit",
+    });
+    expect(out).toEqual([{ label: "Reason", value: "Damaged in transit" }]);
+  });
+
+  it("renders booleans as Yes/No and skips empty values", () => {
+    expect(humanizePayload({ full_refund: true, note: "" })).toEqual([
+      { label: "Full refund", value: "Yes" },
+    ]);
+  });
+
+  it("returns an empty list when nothing is presentable", () => {
+    expect(humanizePayload({ order_id: "x", actor_id: "y" })).toEqual([]);
+  });
+});
+
+describe("humanizeToolName", () => {
+  it("maps known tools to plain phrases", () => {
+    expect(humanizeToolName("refund_order")).toBe("Issue a refund");
+    expect(humanizeToolName("create_product")).toBe("Add a product");
+  });
+
+  it("falls back gracefully for unknown or missing tools", () => {
+    expect(humanizeToolName("some_new_tool")).toBe("Took an action");
+    expect(humanizeToolName(null)).toBe("Took an action");
+    expect(humanizeToolName(undefined)).toBe("Took an action");
   });
 });

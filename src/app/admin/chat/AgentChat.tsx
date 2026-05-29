@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Send, Sparkles, Wrench, ShieldCheck, User, Bot } from "lucide-react";
+import { Send, Wrench, ShieldCheck, User } from "lucide-react";
 import type { AgentMessage, AgentSession } from "@/lib/lace/types";
 import { cn } from "@/lib/utils";
+import { humanizeToolName } from "@/lib/format";
 import { adminFetchJSON } from "@/lib/admin-fetch";
+import VelaAvatar from "@/components/ui/VelaAvatar";
 
 const SUGGESTED_PROMPTS = [
   "How are we doing today?",
@@ -119,8 +121,8 @@ export default function AgentChat({
           )}
           {sending && (
             <div className="flex items-center gap-2 text-sm text-warm-gray">
-              <Sparkles className="w-4 h-4 text-gold animate-pulse" />
-              Luz is thinking…
+              <VelaAvatar size={24} pulse />
+              Vela is thinking…
             </div>
           )}
         </div>
@@ -150,7 +152,7 @@ export default function AgentChat({
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask Luz…"
+              placeholder="Ask Vela…"
               className="flex-1 px-4 py-3 border border-border rounded-xl text-sm text-charcoal focus:outline-none focus:border-gold bg-white"
             />
             <button
@@ -168,7 +170,7 @@ export default function AgentChat({
                 Demo mode
               </span>
             )}
-            Luz uses Claude + tool-use. Money and destructive steps route to
+            Vela uses Claude + tool-use. Money and destructive steps route to
             Approvals.
           </p>
         </div>
@@ -180,11 +182,9 @@ export default function AgentChat({
 function EmptyState({ onPick }: { onPick: (p: string) => void }) {
   return (
     <div className="flex flex-col items-center justify-center h-full text-center py-8">
-      <div className="w-12 h-12 rounded-full bg-gold/10 flex items-center justify-center mb-4">
-        <Sparkles className="w-5 h-5 text-gold" />
-      </div>
+      <VelaAvatar size={80} whole ring={false} className="mb-4" />
       <h3 className="font-heading text-xl text-charcoal mb-1">
-        How can I help?
+        Hola, soy Vela. How can I help?
       </h3>
       <p className="text-sm text-warm-gray max-w-md mb-6">
         I can look up orders and customers, draft replies and journal posts,
@@ -223,9 +223,7 @@ function MessageBubble({ message }: { message: AgentMessage }) {
   if (message.role === "assistant") {
     return (
       <div className="flex gap-3">
-        <div className="w-8 h-8 rounded-full bg-gold/20 text-gold flex-shrink-0 flex items-center justify-center">
-          <Bot className="w-4 h-4" />
-        </div>
+        <VelaAvatar size={32} />
         <div className="max-w-xl">
           <div className="bg-cream rounded-2xl rounded-tl-sm px-4 py-3">
             <p className="text-sm text-charcoal whitespace-pre-wrap">
@@ -235,8 +233,8 @@ function MessageBubble({ message }: { message: AgentMessage }) {
           {message.tool_name && (
             <div className="mt-2 inline-flex items-center gap-2 text-xs bg-white border border-border rounded-full px-3 py-1.5">
               <Wrench className="w-3 h-3 text-gold" />
-              <span className="text-warm-gray">
-                Called <code className="text-charcoal">{message.tool_name}</code>
+              <span className="text-charcoal">
+                {humanizeToolName(message.tool_name)}
               </span>
               {message.approval_id && (
                 <Link

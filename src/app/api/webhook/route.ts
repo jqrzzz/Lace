@@ -117,6 +117,9 @@ export async function handleCheckoutCompleted(
       total_cents: total,
       currency: (session.currency ?? "USD").toUpperCase(),
       shipping_address: shippingAddress,
+      // Gift note (set at checkout) surfaces on the order so the admin's
+      // "Gift note" panel shows it. Falls back to null for non-gift orders.
+      gift_note: session.metadata?.gift_message || null,
       metadata: { stripe_session_metadata: session.metadata ?? {} },
     })
     .select("id")

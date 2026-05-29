@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ArrowLeft, ArrowRight, Clock, Share2 } from "lucide-react";
 import Reveal from "@/components/ui/Reveal";
+import InlineNewsletter from "@/components/ui/InlineNewsletter";
 import {
   getPostBySlug,
   getRelatedPosts,
@@ -186,6 +187,13 @@ export default async function JournalPostPage({ params }: PageProps) {
         </div>
       </section>
 
+      {/* ── Inline newsletter — Vela's "stay close" moment ── */}
+      <section className="relative py-12 bg-ivory">
+        <div className="max-w-[680px] mx-auto px-4">
+          <InlineNewsletter source={`journal:${post.slug}`} />
+        </div>
+      </section>
+
       {/* ── Related ── */}
       {related.length > 0 && (
         <section className="relative py-20 bg-ivory">
@@ -314,14 +322,25 @@ function SectionRenderer({ section }: { section: JournalSection }) {
       return (
         <figure className="my-8">
           <div
-            className={`${aspect} rounded-2xl bg-gradient-to-br ${section.gradient} overflow-hidden relative`}
+            className={`${aspect} rounded-2xl bg-gradient-to-br ${section.gradient} overflow-hidden relative flex items-center justify-center`}
           >
-            <div className="absolute inset-0 product-lace opacity-40" />
+            <div className="absolute inset-0 product-lace opacity-40 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-t from-white/30 via-transparent to-white/10 pointer-events-none" />
+            {section.caption && (
+              <div
+                aria-hidden="true"
+                className="relative z-10 px-10 sm:px-16 max-w-xl text-center"
+              >
+                <div className="w-10 h-px bg-charcoal/30 mx-auto mb-5" />
+                <p className="font-heading text-xl sm:text-2xl text-charcoal/75 italic leading-snug">
+                  {section.caption}
+                </p>
+                <div className="w-10 h-px bg-charcoal/30 mx-auto mt-5" />
+              </div>
+            )}
           </div>
           {section.caption && (
-            <figcaption className="mt-3 text-center text-sm text-warm-gray italic">
-              {section.caption}
-            </figcaption>
+            <figcaption className="sr-only">{section.caption}</figcaption>
           )}
         </figure>
       );

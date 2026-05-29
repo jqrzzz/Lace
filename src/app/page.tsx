@@ -1,7 +1,16 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, Heart, Gift, Package, Sparkles } from "lucide-react";
 import ProductCard from "@/components/shop/ProductCard";
+import HeroProductRotator from "@/components/shop/HeroProductRotator";
+import GiftedCounter from "@/components/journey/GiftedCounter";
 import { listProducts } from "@/lib/lace/queries";
+import {
+  TOTAL_GIFTED,
+  TOTAL_COMMUNITIES,
+  TOTAL_COUNTRIES,
+  TOTAL_CONTINENTS,
+} from "@/lib/gifted";
 import Reveal from "@/components/ui/Reveal";
 import GoldShimmer from "@/components/ui/GoldShimmer";
 
@@ -80,22 +89,7 @@ export default async function HomePage() {
 
             {/* Hero Visual */}
             <div className="relative hidden lg:block animate-fade-up" style={{ animationDelay: "0.2s" }}>
-              <div className="aspect-[3/4] rounded-[2rem] bg-gradient-to-br from-rose/25 via-blush/40 via-60% to-champagne/30 border border-white/60 shadow-[0_30px_80px_rgba(139,58,74,0.12)] overflow-hidden relative product-lace-trim">
-                {/* Lace texture inside */}
-                <div className="absolute inset-0 product-lace opacity-40" />
-                <div className="absolute inset-0 bg-gradient-to-t from-white/60 via-transparent to-white/20" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="w-20 h-20 rounded-full bg-white/50 backdrop-blur-sm flex items-center justify-center mx-auto mb-4 border border-white/60">
-                      <Sparkles className="w-8 h-8 text-gold/60" />
-                    </div>
-                    <p className="text-[11px] text-warm-gray/50 tracking-[0.2em] uppercase font-medium">
-                      Product Photography
-                    </p>
-                    <p className="text-[10px] text-warm-gray/30 mt-1">Coming soon</p>
-                  </div>
-                </div>
-              </div>
+              <HeroProductRotator products={FEATURED} />
 
               {/* Floating badges */}
               <div className="absolute -bottom-5 -left-5 glass-card rounded-2xl px-5 py-3.5 animate-float">
@@ -111,6 +105,37 @@ export default async function HomePage() {
                 </p>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Impact strip — real numbers from /lib/gifted ── */}
+      <section className="relative bg-cream/60 border-y border-border-light py-14 overflow-hidden">
+        <div className="absolute inset-0 lace-pattern opacity-15 pointer-events-none" />
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            <p className="text-center text-[10px] tracking-[0.4em] uppercase text-gold font-medium mb-2">
+              So far · 2026
+            </p>
+            <p className="text-center text-sm text-warm-gray italic mb-10 max-w-md mx-auto">
+              The mission, in real numbers — every gift made possible by a sister
+              who bought one for herself.
+            </p>
+          </Reveal>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 sm:gap-4">
+            <GiftedCounter end={TOTAL_GIFTED} label="Veils gifted" accent="burgundy" />
+            <GiftedCounter end={TOTAL_COMMUNITIES} label="Sister communities" accent="gold" />
+            <GiftedCounter end={TOTAL_COUNTRIES} label="Countries reached" accent="rose" />
+            <GiftedCounter end={TOTAL_CONTINENTS} label="Continents touched" accent="burgundy" />
+          </div>
+          <div className="mt-10 text-center">
+            <Link
+              href="/journey"
+              className="inline-flex items-center gap-2 text-xs tracking-[0.18em] uppercase text-burgundy hover:text-charcoal transition-colors"
+            >
+              See where the veils have travelled
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
         </div>
       </section>
@@ -234,15 +259,15 @@ export default async function HomePage() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-14 items-center">
             <Reveal direction="left">
-              <div className="aspect-[4/5] rounded-[2rem] bg-gradient-to-br from-rose/15 via-blush/25 to-champagne/15 border border-border-light/60 flex items-center justify-center shadow-[0_20px_60px_rgba(44,37,39,0.06)] overflow-hidden relative product-lace-trim">
-                <div className="absolute inset-0 product-lace opacity-30" />
-                <div className="text-center relative">
-                  <Heart className="w-10 h-10 text-rose-gold/30 mx-auto mb-3" />
-                  <p className="text-[11px] text-warm-gray/50 tracking-[0.2em] uppercase">
-                    Founder photo
-                  </p>
-                  <p className="text-[10px] text-warm-gray/30 mt-1">Coming soon</p>
-                </div>
+              <div className="relative aspect-[4/5] rounded-[2rem] border border-border-light/60 shadow-[0_20px_60px_rgba(44,37,39,0.06)] overflow-hidden product-lace-trim">
+                <Image
+                  src="/images/founders.jpeg"
+                  alt="Our founder and her sister at La Luz del Mundo"
+                  fill
+                  className="object-cover object-top"
+                  sizes="(min-width: 1024px) 50vw, 100vw"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-charcoal/15 via-transparent to-transparent pointer-events-none" />
               </div>
             </Reveal>
 

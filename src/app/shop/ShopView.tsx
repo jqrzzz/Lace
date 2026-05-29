@@ -5,16 +5,24 @@ import { useSearchParams } from "next/navigation";
 import { Heart, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import ProductCard from "@/components/shop/ProductCard";
+import VelaVeilPicker from "@/components/shop/VelaVeilPicker";
 import { cn } from "@/lib/utils";
+import { track } from "@/lib/analytics";
 import Reveal from "@/components/ui/Reveal";
 import type { Product } from "@/lib/products";
 
-type FilterType = "all" | "collection" | "style";
+type FilterType = "all" | "collection" | "style" | "color";
+
+interface ColorOption {
+  color: string;
+  colorHex: string;
+}
 
 interface ShopViewProps {
   products: Product[];
   collections: string[];
   styles: string[];
+  colors: ColorOption[];
 }
 
 export default function ShopView(props: ShopViewProps) {
@@ -25,22 +33,35 @@ export default function ShopView(props: ShopViewProps) {
   );
 }
 
-function ShopContent({ products, collections, styles }: ShopViewProps) {
+function ShopContent({
+  products,
+  collections,
+  styles,
+  colors,
+}: ShopViewProps) {
   const searchParams = useSearchParams();
   const [filter, setFilter] = useState(() =>
-    initialFilter(searchParams, collections, styles),
+    initialFilter(searchParams, collections, styles, colors),
   );
   const { type: filterType, value: filterValue } = filter;
   const [sortBy, setSortBy] = useState<string>("featured");
 
+  // Single setter so every filter change is also reported to analytics.
+  function applyFilter(type: FilterType, value: string) {
+    setFilter({ type, value });
+    track("select_filter", { filter_type: type, filter_value: value || "all" });
+  }
+
   const filtered =
     filterType === "all"
       ? products
-      : products.filter((p) =>
-          filterType === "collection"
-            ? p.collection === filterValue
-            : p.style === filterValue,
-        );
+      : products.filter((p) => {
+          if (filterType === "collection") return p.collection === filterValue;
+          if (filterType === "style") return p.style === filterValue;
+          if (filterType === "color")
+            return p.variants.some((v) => v.color === filterValue);
+          return true;
+        });
 
   const sorted = [...filtered].sort((a, b) => {
     if (sortBy === "price-low") return a.price - b.price;
@@ -73,11 +94,16 @@ function ShopContent({ products, collections, styles }: ShopViewProps) {
       {/* Filters & Grid */}
       <section className="py-14">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Vela's veil picker — collapsed CTA by default */}
+          <div className="mb-12">
+            <VelaVeilPicker products={products} />
+          </div>
+
           {/* Controls */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-12">
             <div className="flex gap-2 overflow-x-auto sm:overflow-visible sm:flex-wrap pb-2 sm:pb-0 scrollbar-hide">
               <button
-                onClick={() => setFilter({ type: "all", value: "" })}
+                onClick={() => applyFilter("all", "")}
                 className={cn(
                   "px-5 py-2.5 text-[13px] rounded-full border transition-all duration-300 whitespace-nowrap flex-shrink-0",
                   filterType === "all"
@@ -90,7 +116,7 @@ function ShopContent({ products, collections, styles }: ShopViewProps) {
               {collections.map((c) => (
                 <button
                   key={c}
-                  onClick={() => setFilter({ type: "collection", value: c })}
+                  onClick={() => applyFilter("collection", c)}
                   className={cn(
                     "px-5 py-2.5 text-[13px] rounded-full border transition-all duration-300 whitespace-nowrap flex-shrink-0",
                     filterType === "collection" && filterValue === c
@@ -104,7 +130,7 @@ function ShopContent({ products, collections, styles }: ShopViewProps) {
               {styles.map((s) => (
                 <button
                   key={s}
-                  onClick={() => setFilter({ type: "style", value: s })}
+                  onClick={() => applyFilter("style", s)}
                   className={cn(
                     "px-5 py-2.5 text-[13px] rounded-full border transition-all duration-300 whitespace-nowrap flex-shrink-0",
                     filterType === "style" && filterValue === s
@@ -126,6 +152,41 @@ function ShopContent({ products, collections, styles }: ShopViewProps) {
               <option value="price-low">Price: Low to High</option>
               <option value="price-high">Price: High to Low</option>
             </select>
+          </div>
+
+          {/* Color filter row */}
+          <div className="flex items-center gap-3 mb-10 overflow-x-auto pb-2 scrollbar-hide">
+            <span className="text-[11px] tracking-[0.22em] uppercase text-warm-gray font-medium flex-shrink-0">
+              By color
+            </span>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {colors.map(({ color, colorHex }) => (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() =>
+                    filterType === "color" && filterValue === color
+                      ? applyFilter("all", "")
+                      : applyFilter("color", color)
+                  }
+                  title={color}
+                  aria-label={`Filter by ${color}`}
+                  aria-pressed={filterType === "color" && filterValue === color}
+                  className={cn(
+                    "w-7 h-7 rounded-full border-2 transition-all duration-300 flex-shrink-0 shadow-[inset_0_1px_2px_rgba(0,0,0,0.06)]",
+                    filterType === "color" && filterValue === color
+                      ? "border-charcoal scale-110 ring-2 ring-charcoal/15"
+                      : "border-border hover:border-rose-gold hover:scale-105",
+                  )}
+                  style={{ backgroundColor: colorHex }}
+                />
+              ))}
+            </div>
+            {filterType === "color" && (
+              <span className="text-[12px] text-warm-gray italic flex-shrink-0 ml-1">
+                Showing {filterValue}
+              </span>
+            )}
           </div>
 
           {/* Product Grid */}
@@ -152,7 +213,7 @@ function ShopContent({ products, collections, styles }: ShopViewProps) {
                 Try a different filter or browse all veils.
               </p>
               <button
-                onClick={() => setFilter({ type: "all", value: "" })}
+                onClick={() => applyFilter("all", "")}
                 className="btn-luxe inline-flex items-center gap-2 px-7 py-3 bg-burgundy text-white text-sm tracking-[0.04em] rounded-full"
               >
                 View All Veils
@@ -198,6 +259,7 @@ function initialFilter(
   params: URLSearchParams,
   collections: string[],
   styles: string[],
+  colors: ColorOption[],
 ): { type: FilterType; value: string } {
   const collection = params.get("collection");
   if (collection && collections.includes(collection)) {
@@ -206,6 +268,10 @@ function initialFilter(
   const style = params.get("style");
   if (style && styles.includes(style)) {
     return { type: "style", value: style };
+  }
+  const color = params.get("color");
+  if (color && colors.some((c) => c.color === color)) {
+    return { type: "color", value: color };
   }
   return { type: "all", value: "" };
 }

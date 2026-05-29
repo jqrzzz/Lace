@@ -9,10 +9,12 @@ import {
   X,
   ShoppingBag,
   Heart,
+  Gift,
   Lock,
   Loader2,
 } from "lucide-react";
-import { useCart } from "@/lib/cart";
+import { useCart, GIFT_MESSAGE_MAX } from "@/lib/cart";
+import { track } from "@/lib/analytics";
 import { formatPrice } from "@/lib/utils";
 
 export default function CartPage() {
@@ -25,6 +27,7 @@ export default function CartPage() {
   const handleCheckout = async () => {
     setCheckoutLoading(true);
     setCheckoutError("");
+    track("begin_checkout", { value: total, items: itemCount });
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
@@ -37,11 +40,13 @@ export default function CartPage() {
             color: i.color,
             quantity: i.quantity,
           })),
+          isGift: cart.isGift,
+          giftMessage: cart.isGift ? cart.giftMessage : "",
         }),
       });
       const data = await res.json();
       if (data.url) {
-        window.location.href = data.url;
+        window.location.assign(data.url);
       } else {
         setCheckoutError(data.error || "Something went wrong. Please try again.");
         setCheckoutLoading(false);
@@ -154,6 +159,51 @@ export default function CartPage() {
                 </div>
               </div>
             ))}
+
+            {/* Gift options — this is a gifting brand; let the buyer gift too. */}
+            <div className="luxury-card rounded-2xl p-5">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={cart.isGift}
+                  onChange={(e) => cart.setIsGift(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 accent-burgundy cursor-pointer"
+                />
+                <span>
+                  <span className="flex items-center gap-2 text-sm font-medium text-charcoal">
+                    <Gift className="w-4 h-4 text-burgundy" strokeWidth={1.5} />
+                    This is a gift
+                  </span>
+                  <span className="block text-[12px] text-warm-gray mt-0.5">
+                    Add a note and we&apos;ll include it, handwritten, with her
+                    veil.
+                  </span>
+                </span>
+              </label>
+
+              {cart.isGift && (
+                <div className="mt-4">
+                  <label
+                    htmlFor="gift-message"
+                    className="block text-[11px] tracking-[0.18em] uppercase text-warm-gray mb-2"
+                  >
+                    Gift message
+                  </label>
+                  <textarea
+                    id="gift-message"
+                    value={cart.giftMessage}
+                    onChange={(e) => cart.setGiftMessage(e.target.value)}
+                    maxLength={GIFT_MESSAGE_MAX}
+                    rows={3}
+                    placeholder="For my sister, on your confirmation — wear it in joy. With love, …"
+                    className="w-full px-3.5 py-2.5 text-sm border border-border rounded-xl bg-white text-charcoal placeholder:text-warm-gray/70 focus:outline-none focus:border-gold transition resize-none"
+                  />
+                  <p className="text-[11px] text-warm-gray/70 text-right mt-1 tabular-nums">
+                    {cart.giftMessage.length}/{GIFT_MESSAGE_MAX}
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Order Summary */}

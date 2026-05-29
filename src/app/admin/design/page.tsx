@@ -186,7 +186,7 @@ export default function DesignPage() {
             <p className="text-xs text-soft-gray mt-1">this week</p>
           </div>
 
-          <div className="bg-gradient-to-br from-burgundy to-charcoal text-pearl rounded-2xl p-5">
+          <div className="bg-brand-deep text-pearl rounded-2xl p-5">
             <div className="flex items-center gap-2 mb-2 text-gold">
               <Sparkles className="w-4 h-4" />
               <span className="text-[10px] uppercase tracking-[0.25em]">
